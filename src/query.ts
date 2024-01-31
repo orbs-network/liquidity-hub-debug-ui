@@ -5,13 +5,16 @@ import Web3 from "web3";
 import { api } from "./api/api";
 import { DEFAULT_SESSIONS_TIME_RANGE, REACTOR_ADDRESS } from "./config";
 import { useAppParams, useWeb3 } from "./hooks";
-import { Session, SessionType } from "./types";
+import { Session, SessionsFilter, SessionType } from "./types";
 import BN from "bignumber.js";
+import { convertScientificStringToDecimal, getContract } from "./helpers";
 const queryKey = {
   allSessions: "allSessions",
   session: "session",
   tokens: "tokens-logo",
   txDetails: "txDetails",
+  usdPrice1Token: "usdPrice1Token",
+  getSessionsByFilter: "getSessionsByFilter",
 };
 
 export const useGetSessionByIdQuery = (sessionsId?: string) => {
@@ -25,7 +28,7 @@ export const useGetSessionByIdQuery = (sessionsId?: string) => {
   });
 };
 
-export const useGetAllSessionsQuery = () => {
+export const useGetAllSessionsQuery = (filter?: SessionsFilter) => {
   const { query } = useAppParams();
 
   const timeRange = query.timeRange || DEFAULT_SESSIONS_TIME_RANGE;
@@ -42,7 +45,7 @@ export const useGetAllSessionsQuery = () => {
         type: query.sessionType as SessionType,
         signal,
         timeRange,
-        chainId: query.chainId as number | undefined,
+        filter,
       });
     },
     staleTime: Infinity,
@@ -58,14 +61,14 @@ export const useTxDetailsQuery = (session?: Session | null) => {
         ?.logs;
       if (!logs) return null;
 
-      return handleLogs(web3!, logs);
+      return handleLogs(web3!, logs, session?.chainId!);
     },
     staleTime: Infinity,
-    enabled: !!session?.txHash && !!web3,
+    enabled: !!session?.txHash && !!web3 && !!session?.chainId,
   });
 };
 
-const handleLogs = async (web3: Web3, logs: any[]) => {
+const handleLogs = async (web3: Web3, logs: any[], chainId: number) => {
   console.log({ logs });
 
   const res = await Promise.all(
@@ -104,43 +107,57 @@ const handleLogs = async (web3: Web3, logs: any[]) => {
       }
 
       if (parsed && Number(parsed.amount) > 0) {
-        const payTokenContract = createContarct(web3, log.address);
+        const payTokenContract = getContract(web3, log.address);
         let decimals;
         let symbol;
         try {
           decimals = (await payTokenContract.methods.decimals().call()) as any;
           symbol = (await payTokenContract.methods.symbol().call()) as any;
         } catch (error) {
+          console;
           return undefined;
         }
-
         if (!decimals) return;
         const tokenAmount = amountUi(
           Number(web3.utils.fromWei(decimals, "wei")),
           new BN(web3.utils.fromWei(parsed.amount as string, "wei"))
         );
 
-        const [fullNum,  _decimals] = tokenAmount.split(".");
+        // const [fullNum,  _decimals] = tokenAmount.split(".");
+
         if (
-          _.size(_decimals) > 18 ||
-           Number(fullNum) > 18 ||
           eqIgnoreCase(REACTOR_ADDRESS, parsed.fromAddress as string) ||
-          eqIgnoreCase(REACTOR_ADDRESS, parsed.toAddress as string)
+          eqIgnoreCase(REACTOR_ADDRESS, parsed.toAddress as string) ||
+          eqIgnoreCase(parsed.fromAddress as string, parsed.toAddress as string)
         ) {
           return undefined;
         }
+
+        let priceUsd = "0";
+
+        try {
+          priceUsd = await api.getTotalTokensUsdValue({
+            address: log.address,
+            chainId,
+            amount: tokenAmount,
+          });
+        } catch (error) {
+          console.error(error);
+        }
+
         return {
           tokenAmount,
           fromAddress: parsed.fromAddress as string,
           toAddress: parsed.toAddress as string,
           tokenAddress: log.address as string,
           tokenSymbol: symbol as string,
+          priceUsd,
         };
       }
     })
   );
 
-  return _.compact(res);
+  return _.uniqBy(_.compact(res), (v) => [v.fromAddress, v.toAddress].join());
 };
 export const amountUi = (decimals?: number, amount?: BN) => {
   if (!decimals || !amount) return "";
@@ -151,21 +168,28 @@ export const amountUi = (decimals?: number, amount?: BN) => {
   );
 };
 
-function convertScientificStringToDecimal(
-  scientificString: string,
-  decimals: number
-) {
-  // Check if the input string is in scientific notation
-  if (/e/i.test(scientificString)) {
-    // Convert scientific notation string to decimal string
-    let decimalString = parseFloat(scientificString).toFixed(decimals);
-    return decimalString;
-  } else {
-    // If not in scientific notation, return the original string
-    return scientificString;
-  }
-}
 
-const createContarct = (web3: Web3, address: any) => {
-  return new web3.eth.Contract(erc20abi as any, address);
+
+export const useUSDPrice = (address?: string, chainId?: number) => {
+  return useQuery({
+    queryFn: async () => {
+      if (!chainId || !address) return 0;
+
+      return api.fetchPrice(address, chainId);
+    },
+    queryKey: [queryKey.usdPrice1Token, chainId, address],
+    refetchInterval: 10_000,
+    staleTime: Infinity,
+  });
+};
+
+export const useGetSessionsByFilterQuery = (filter?: SessionsFilter) => {
+  return useQuery({
+    queryKey: [queryKey.session, filter],
+    queryFn: ({ signal }) => {
+      return api.getSessionsByFilter(filter!, signal);
+    },
+    enabled: !!filter,
+    staleTime: 10_000,
+  });
 };

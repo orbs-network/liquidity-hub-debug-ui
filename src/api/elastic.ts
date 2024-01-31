@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { SessionsFilter } from "../types";
 
-const termValue = (value: string | string[]) => {
+const termValue = (value: string | string[] | number) => {
   return Array.isArray(value) ? value : [value];
 };
 

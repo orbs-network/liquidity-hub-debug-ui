@@ -1,8 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import { ROUTES } from "./config";
-import { MainPage } from "./pages/main/MainPage";
-import { SessionPage } from "./pages/session/SessionPage";
+import { SessionPage, SessionsPage } from "./pages";
 
 export const router = createBrowserRouter([
   {
@@ -10,13 +9,22 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        element: <MainPage />,
+        element: <SessionsPage searchBy="all" />,
         index: true,
+      },
+      {
+        path: ROUTES.sessionsByAddress,
+        element: <SessionsPage searchBy="address" />,
+      },
+      {
+        path: ROUTES.sessionsByTxHash,
+        element: <SessionsPage searchBy='tx' />,
       },
       {
         path: ROUTES.session,
         element: <SessionPage />,
       },
+
       {
         path: "*",
         element: <Navigate to={ROUTES.main} />,

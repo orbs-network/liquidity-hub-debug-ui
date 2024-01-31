@@ -1,9 +1,13 @@
 
 export const ROUTES = {
   main: "/",
+  sessionsByAddress: "/address/:address",
+  sessionsByTxHash: "/tx/:txHash",
   session: "/session/:sessionId",
+
   navigate: {
     session: (sessionId: string) => `/session/${sessionId}`,
+    userAddressSessions: (address: string) => `/address/${address}`,
   },
 };
 

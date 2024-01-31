@@ -2,19 +2,34 @@ import { Link } from '@chakra-ui/react';
 import  { useMemo } from 'react'
 import { getExplorer, makeElipsisAddress } from '../helpers';
 import styled from 'styled-components';
-export function AddressLink({ address, chainId, text }: { address: string; chainId?: number, text?: string }) {
+import TextOverflow from 'react-text-overflow';
+export function AddressLink({
+  address,
+  chainId,
+  text,
+  path = "address",
+  short = false,
+}: {
+  address?: string;
+  chainId?: number;
+  text?: string;
+  path?: string;
+  short?: boolean;
+}) {
+  const url = useMemo(() => {
+    const explorer = getExplorer(chainId);
+    return `${explorer}/${path}/${address}`;
+  }, [chainId, path]);
 
-  const url = useMemo(
-    () => {
-      const explorer = getExplorer(chainId);
-      return `${explorer}/address/${address}`;
-    },
-    [chainId]
-  );
+  const _address = useMemo(() => {
+    if (text) return text;
+    if (!short) return address;
+    return makeElipsisAddress(address);
+  }, [address, short, text]);
 
   return (
     <StyledLink href={url} target="_blank">
-      {text || makeElipsisAddress(address)}
+      <TextOverflow text={_address || ""} />
     </StyledLink>
   );
 }

@@ -25,6 +25,8 @@ export interface Session {
   dex?: string;
   userAddress?: string;
   ip?: string;
+  amountOutDiff?: number;
+  dexAmountOut?: string;
   logs: {
     client: any;
     swap: any[];
@@ -35,7 +37,10 @@ export interface Session {
 
 export type SessionsFilter = {
   keyword: string;
-  value: string |  string[];
+  value: string |  string[] | number;
 }[];
 
 export type SessionType = "swap" | "success" | 'failed'  | "all";
+
+
+export type SessionsSearchBy = 'address' | 'tx' | 'all'

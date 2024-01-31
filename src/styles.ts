@@ -2,6 +2,7 @@ import { Text } from "@chakra-ui/react";
 import styled from "styled-components";
 export const RowFlex = styled.div<{
   $gap?: number;
+  $noGap?: boolean;
   $alignItems?: string;
   $justifyContent?: string;
 }>`
@@ -9,7 +10,7 @@ export const RowFlex = styled.div<{
   flex-direction: row;
   align-items: ${({ $alignItems }) => $alignItems || "center"};
   justify-content: ${({ $justifyContent }) => $justifyContent || "center"};
-  gap: ${({ $gap }) => $gap || 10}px;
+  gap: ${({ $gap, $noGap }) => $noGap ? 0 :  $gap || 10}px;
 `;
 
 export const ColumnFlex = styled.div<{
@@ -30,3 +31,8 @@ export const OverflowText = styled(Text)`
   text-overflow: ellipsis;
   flex:1;
 `;
+
+
+export const colors = {
+  border: "#e9ecef",
+};

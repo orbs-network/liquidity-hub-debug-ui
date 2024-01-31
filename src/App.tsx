@@ -1,11 +1,11 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
-import styled from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import { Navbar } from "./components";
 import { QueryParamProvider } from "use-query-params";
 import { ReactRouter6Adapter } from "use-query-params/adapters/react-router-6";
 import { useEffect, useState } from "react";
-
+import { theme } from "./theme";
 
 const useHeight = () => {
   const [height, setHeight] = useState(window.innerHeight);
@@ -17,20 +17,24 @@ const useHeight = () => {
   }, []);
 
   return height;
-}
+};
 
 function App() {
   const height = useHeight();
   return (
     <QueryParamProvider adapter={ReactRouter6Adapter}>
-      <ChakraProvider>
-        <Layout style={{
-          minHeight: height
-        }}>
-          <Navbar />
-          <Outlet />
-        </Layout>
-      </ChakraProvider>
+      <ThemeProvider theme={theme}>
+        <ChakraProvider>
+          <Layout
+            style={{
+              minHeight: height,
+            }}
+          >
+            <Navbar />
+            <Outlet />
+          </Layout>
+        </ChakraProvider>
+      </ThemeProvider>
     </QueryParamProvider>
   );
 }

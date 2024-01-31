@@ -35,8 +35,6 @@ export function ChainSelect() {
 
   const { query, setQuery } = useAppParams();
 
-
-
   const onSave = (value: number) => {
     onClose();
     setQuery({

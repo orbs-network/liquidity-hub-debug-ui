@@ -1,10 +1,10 @@
-import { Text } from "@chakra-ui/react";
+import { Tag, Text } from "@chakra-ui/react";
 import _ from "lodash";
-import { useNumericFormat } from "react-number-format";
 import styled from "styled-components";
 import { AddressLink } from "../../components";
+import { FormattedAmount } from "../../components/FormattedAmount";
 import { useTxDetailsQuery } from "../../query";
-import { ColumnFlex } from "../../styles";
+import { ColumnFlex, RowFlex } from "../../styles";
 import { useSession } from "./hooks";
 
 export const SessionEvents = () => {
@@ -20,49 +20,58 @@ export const SessionEvents = () => {
     <Container>
       {data.map((it, index) => {
         return (
-          <StyledText key={index}>
+          <StyledRow key={index}>
             <strong>From </strong>
             <AddressLink
               chainId={session?.chainId}
               address={it.fromAddress}
+              short
             />{" "}
             <strong> To </strong>
             <AddressLink
               chainId={session?.chainId}
               address={it.toAddress}
+              short
             />{" "}
-            <strong>For</strong> <Amount value={it.tokenAmount} />{" "}
+            <strong>For</strong> <FormattedAmount value={it.tokenAmount} />{" "}
+            <Tag>
+              <StyledUsd>
+                $<FormattedAmount value={it.priceUsd} />
+              </StyledUsd>
+            </Tag>
             <AddressLink
               chainId={session?.chainId}
               address={it.tokenAddress}
               text={it.tokenSymbol}
             />
-          </StyledText>
+          </StyledRow>
         );
       })}
     </Container>
   );
 };
 
-const Container = styled(ColumnFlex)`
+const StyledRow = styled(RowFlex)`
+    justify-content: flex-start;
+    width: 100%;
+`
 
+const StyledUsd = styled(Text)`
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const Container = styled(ColumnFlex)`
+  width: 100%;
 `;
 
 const StyledText = styled(Text)`
+  display: flex;
+  gap: 5px;
   width: 100%;
   text-align: left;
-  font-size: 15px;
+  font-size: 14px;
   strong {
     font-weight: 600;
   }
 `;
-
-const Amount = ({ value }: { value: string }) => {
-  const res = useNumericFormat({
-    value,
-    decimalScale: 5,
-    thousandSeparator: true,
-  });
-
-  return <span>{res.value}</span>;
-};

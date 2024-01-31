@@ -3,18 +3,27 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { RowFlex } from "../../styles";
+import { validator } from "web3-validator";
 import { ROUTES } from "../../config";
+
 
 export function SearchSession() {
   const [value, setVale] = useState("");
   const navigate = useNavigate();
+
   const searchSession = () => {
-    if (!value)  return;
-     navigate(ROUTES.navigate.session(value));
+    if (!value) return;
+    const isAddress = validator.validate(['address'], [value], {silent: true}) == null;
+    if(isAddress) {
+        navigate(ROUTES.navigate.userAddressSessions(value));
+    }
+    
+    // Web3Validator.isAddress(value)
+    //   ? navigate(ROUTES.navigate.address(value))
+    //   : navigate(ROUTES.navigate.session(value));
   };
 
   const onKeyDown = (e: any) => {
-
     if (e.key === "Enter") {
       searchSession();
     }
