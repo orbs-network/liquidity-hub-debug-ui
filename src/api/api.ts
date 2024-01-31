@@ -4,9 +4,8 @@ import {
   getIdsFromSessions,
   parseSessions,
   normalizeSessions,
-  handleSessionById,
 } from "../helpers";
-import { SessionsFilter, SessionType } from "../types";
+import { SessionsFilter } from "../types";
 import { createQueryBody } from "./elastic";
 import BN from "bignumber.js";
 const SERVER_SESSIONS = "orbs-clob-poc10.*";
@@ -53,118 +52,78 @@ const fetchClientSessions = async (args: Partial<FetchSessionArgs>) => {
   });
 };
 
-export const getSessionById = async (
-  sessionId: string,
-  signal?: AbortSignal
-) => {
-  const server = fetchServerSessions({
-    filter: [{ keyword: "sessionId", value: sessionId }],
-    timeRange: "30d",
-    signal,
-  });
-
-  const client = fetchClientSessions({
-    filter: [{ keyword: "sessionId", value: sessionId }],
-    timeRange: "30d",
-    signal,
-  });
-
-  const [serverRes, clientRes] = await Promise.all([server, client]);
-  return handleSessionById(_.flatten([serverRes, clientRes]));
-};
-
-export const getSessionsByFilter = async (
-  filter: SessionsFilter,
-  signal?: AbortSignal
-) => {
-  const server = await fetchServerSessions({
-    filter,
-    timeRange: "30d",
-    signal,
-  });
-
-  console.log({ server });
-
-  const ids = getIdsFromSessions(server);
-
-  const client = await fetchClientSessions({
-    filter: [{ keyword: "sessionId", value: ids }],
-    timeRange: "30d",
-    signal,
-  });
-
-  return parseSessions(_.flatten([server, client]));
-};
-
-export const getAllSessions = async ({
-  type,
+export const getSessions = async ({
   signal,
   timeRange,
   filter,
 }: {
-  type?: SessionType;
   signal?: AbortSignal;
   timeRange?: string;
   filter?: SessionsFilter;
 }) => {
-  type = type === "all" ? undefined : type;
-
   let args: Partial<FetchSessionArgs> = {
     signal,
     timeRange,
     filter,
   };
-
-  let internalFilter = filter || [];
-
-  if (!type) {
+  const swapFirst = () => {
+    return (
+      _.size(
+        filter?.must?.find(
+          (f) => f.keyword === "type" || f.keyword === "swapStatus" || f.keyword === "txHash"
+        )
+      ) > 0
+    );
+  };
+  
+  if (!swapFirst()) {
     const serverSessions = await fetchServerSessions(args);
 
     const ids = getIdsFromSessions(serverSessions);
 
     const clientSessions = await fetchClientSessions({
       ...args,
-      filter: [{ keyword: "sessionId", value: ids }],
+      filter: {
+        must: [{ keyword: "sessionId", value: ids }],
+        should: undefined,
+      },
     });
 
     return parseSessions(_.flatten([clientSessions, serverSessions]));
   }
 
-  if (type === "swap") {
-    internalFilter.push({ keyword: "type", value: "swap" });
-  } else {
-    internalFilter.push({ keyword: "swapStatus", value: type! });
-  }
-
-  const swapSessions = await fetchServerSessions({
-    ...args,
-    filter: internalFilter,
-  });
+  const swapSessions = await fetchServerSessions(args);
 
   const ids = getIdsFromSessions(swapSessions);
 
   const quoteSessions = fetchServerSessions({
     ...args,
-    filter: [
-      {
-        keyword: "sessionId",
-        value: ids,
-      },
-      {
-        keyword: "type",
-        value: "quote",
-      },
-    ],
+    filter: {
+      must: [
+        {
+          keyword: "sessionId",
+          value: ids,
+        },
+        {
+          keyword: "type",
+          value: "quote",
+        },
+      ],
+      should: undefined,
+    },
   });
 
   const clientSessions = fetchClientSessions({
     ...args,
-    filter: [
-      {
-        keyword: "sessionId",
-        value: ids,
-      },
-    ],
+    filter: {
+      must: [
+        {
+          keyword: "sessionId",
+          value: ids,
+        },
+      ],
+      should: undefined,
+    },
   });
 
   const [quoteRes, clientRes] = await Promise.all([
@@ -235,9 +194,7 @@ const getTotalTokensUsdValue = async ({
 };
 
 export const api = {
-  getAllSessions,
-  getSessionById,
+  getSessions,
   fetchPrice,
   getTotalTokensUsdValue,
-  getSessionsByFilter,
 };

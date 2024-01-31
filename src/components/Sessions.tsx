@@ -39,7 +39,7 @@ export const Sessions = ({
     return <Loader />;
   }
   if (_.isEmpty(sessions)) {
-    return <div>No sessions found</div>;
+    return <StyledEmpty>No sessions found</StyledEmpty>;
   }
 
   return (
@@ -63,6 +63,10 @@ export const Sessions = ({
     </StyledList>
   );
 };
+
+const StyledEmpty = styled.div`
+    padding: 20px;
+    `
 
 const Loader = styled(PageLoader)`
   padding: 20px;

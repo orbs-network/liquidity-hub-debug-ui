@@ -1,11 +1,17 @@
-import { erc20abi } from "@defi.org/web3-candies";
+import { eqIgnoreCase, erc20abi } from "@defi.org/web3-candies";
 import _ from "lodash";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import Web3 from "web3";
-import { BSC_RPC, POLYGON_INFURA_RPC } from "./config";
-import { amountUi } from "./query";
+import {
+  BSC_RPC,
+  CHAIN_CONFIG,
+  POLYGON_INFURA_RPC,
+  REACTOR_ADDRESS,
+} from "./config";
 import { Session } from "./types";
 import BN from "bignumber.js";
+import { amountUi } from "./query";
+import { api } from "./api/api";
 const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -34,15 +40,17 @@ export const parseSessions = (sessions: any[]) => {
       fromClient("timestamp");
 
     const dexAmountOut = fromQuote("amountOutUI");
-
+    const timestampMillis = moment(timestamp).valueOf();
+  
     return {
       id: key,
       amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
       amountInUI: fromQuote("amountInF"),
       amountOutRaw: fromQuote("amountOut") || fromClient("amountOut"),
       amountOutUI: fromQuote("amountOut"),
-      timestampMillis: moment(timestamp).valueOf(),
+      timestampMillis,
       timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
+      timeFromNow: datesDiff(moment(timestampMillis)),
       dexAmountOut,
       amountOutDiff:
         dexAmountOut === -1
@@ -71,6 +79,7 @@ export const parseSessions = (sessions: any[]) => {
         fromSwap("tokenOutSymbol") ||
         fromQuote("tokenOutSymbol") ||
         fromClient("dstTokenSymbol"),
+      txStatus: fromSwap("txStatus"),
       tokenInSymbol:
         fromSwap("tokenInSymbol") ||
         fromQuote("tokenInSymbol") ||
@@ -89,7 +98,6 @@ export const parseSessions = (sessions: any[]) => {
       signature: fromSwap("signature") || fromClient("signature"),
       swapStatus: fromSwap("swapStatus") || fromClient("swapStatus"),
       txHash: fromSwap("txHash") || fromClient("txHash"),
-      txStatus: fromSwap("txStatus") || fromClient("txStatus"),
       logs: {
         client: session.client,
         swap: session.swap,
@@ -134,7 +142,7 @@ export const getExplorer = (chainId?: number) => {
   }
 };
 
-export const getWeb3 = (chainId?: number) => {
+export const getRpc = (chainId?: number) => {
   if (!chainId) return undefined;
   let rpc = "";
   switch (chainId) {
@@ -196,7 +204,7 @@ export function convertScientificStringToDecimal(
   decimals: number
 ) {
   // Check if the input string is in scientific notation
-  if (/e/i.test(scientificString)) {
+  if (isScientificStringToDecimal(scientificString)) {
     // Convert scientific notation string to decimal string
     let decimalString = parseFloat(scientificString).toFixed(decimals);
     return decimalString;
@@ -206,35 +214,141 @@ export function convertScientificStringToDecimal(
   }
 }
 
+export const isScientificStringToDecimal = (scientificString: string) => {
+  // Check if the input string is in scientific notation
+  if (/e/i.test(scientificString)) {
+    return true;
+  } else {
+    return false;
+  }
+};
 
+export const isTxHash = (value?: string) => value?.startsWith("0x");
 
-export const handleSessionById = async (sessions: any[]): Promise<Session | null> => {
-  const session = _.first(parseSessions(sessions)) || null;
+export const getERC20Transfers = async (
+  web3: Web3,
+  logs: any[],
+  chainId: number
+) => {
+  const res = await Promise.all(
+    logs.map(async (log) => {
+      let parsed = undefined;
 
-  if (!session) return null;
+      if (_.size(log.topics) !== 3) return undefined;
+      try {
+        parsed = web3.eth.abi.decodeLog(
+          [
+            {
+              type: "uint256",
+              name: "amount",
+            },
+            {
+              type: "address",
+              name: "myNumber",
+              indexed: true,
+            },
+            {
+              type: "address",
+              name: "fromAddress",
+              indexed: true,
+            },
+            {
+              type: "address",
+              name: "toAddress",
+              indexed: true,
+            },
+          ],
+          log.data as string,
+          log.topics as string[]
+        );
+      } catch (error) {
+        return undefined;
+      }
 
-  const fromQuote = (key: string) =>
-    getValueFromSessionLogs(session.logs.quote, key);
+      if (parsed && Number(parsed.amount) > 0) {
+        const payTokenContract = getContract(web3, log.address);
+        let decimals;
+        let symbol;
+        try {
+          decimals = (await payTokenContract.methods.decimals().call()) as any;
+          symbol = (await payTokenContract.methods.symbol().call()) as any;
+        } catch (error) {
+          console;
+          return undefined;
+        }
+        if (!decimals) return;
+        const tokenAmount = amountUi(
+          Number(web3.utils.fromWei(decimals, "wei")),
+          new BN(web3.utils.fromWei(parsed.amount as string, "wei"))
+        );
 
-  const dexAmountOut = async () => {
-    const quoteValue = fromQuote("amountOutUI");
-    if (!quoteValue || !session.tokenOutAddress) return undefined;
+        // const [fullNum,  _decimals] = tokenAmount.split(".");
 
-    const web3 = getWeb3(session.chainId);
-    if (!web3) return undefined;
-    const contract = getContract(web3, session.tokenOutAddress);
-    if (!contract) return undefined;
-    let toTokenDecimals;
+        // if (
+        //   eqIgnoreCase(REACTOR_ADDRESS, parsed.fromAddress as string) ||
+        //   eqIgnoreCase(REACTOR_ADDRESS, parsed.toAddress as string) ||
+        //   eqIgnoreCase(parsed.fromAddress as string, parsed.toAddress as string)
+        // ) {
+        //   return undefined;
+        // }
 
-    try {
-      toTokenDecimals =
-        contract && ((await contract.methods.decimals().call()) as number);
-      if (!toTokenDecimals) return undefined;
-      return amountUi(toTokenDecimals, new BN(quoteValue));
-    } catch (error) {}
-  };
-  return {
-    ...session,
-    dexAmountOut: await dexAmountOut(),
-  };
+        let priceUsd = "0";
+
+        try {
+          priceUsd = await api.getTotalTokensUsdValue({
+            address: log.address,
+            chainId,
+            amount: tokenAmount,
+          });
+        } catch (error) {
+          console.error(error);
+        }
+
+        return {
+          tokenAmount,
+          fromAddress: parsed.fromAddress as string,
+          toAddress: parsed.toAddress as string,
+          tokenAddress: log.address as string,
+          tokenSymbol: symbol as string,
+          priceUsd,
+        };
+      }
+    })
+  );
+
+  return _.uniqBy(_.compact(res), (v) => [v.fromAddress, v.toAddress].join());
+};
+
+export const getChainConfig = (chainId?: number) => {
+  if (!chainId) return undefined;
+  return CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG];
+};
+
+const datesDiff = (date: Moment) => {
+  const duration = moment.duration(moment().diff(date));
+  const years = duration.asYears();
+  const days = duration.asDays();
+  const hours = duration.asHours();
+  const minutes = duration.asMinutes();
+  const seconds = duration.asSeconds();
+
+  if (years > 1) {
+    return `${Math.floor(years)} years ago`;
+  }
+
+  if (days > 1) {
+    return `${Math.floor(days)} days ago`;
+  }
+
+  if (hours > 1) {
+    return `${Math.floor(hours)} hours ago`;
+  }
+
+  if (minutes > 1) {
+    return `${Math.floor(minutes)} minutes ago`;
+  }
+
+  if (seconds > 1) {
+    return `${Math.floor(seconds)} seconds ago`;
+  }
 };

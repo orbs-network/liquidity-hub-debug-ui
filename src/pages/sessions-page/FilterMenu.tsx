@@ -31,12 +31,16 @@ const times = [
     title: "Last day",
     value: "1d",
   },
+  {
+    title: "All time",
+    value: 'all',
+  },
 ];
 
 const sessionTypes: { title: string; value: SessionType }[] = [
   {
     title: "All",
-    value: "all",
+    value: undefined,
   },
   {
     title: "Swap",
@@ -63,7 +67,7 @@ export function FilterMenu() {
     sessionType: query.sessionType,
   });
 
-  const update = (key: string, value: string) => {
+  const update = (key: string, value?: string) => {
     setValues({ ...values, [key]: value });
   };
 
@@ -94,11 +98,11 @@ export function FilterMenu() {
         <PopoverContent>
           <PopoverBody>
             <Section title="Time range">
-              {times.map((time) => (
+              {times.map((time, index) => (
                 <StyledButton
                   justifyContent="flex-start"
                   onClick={() => update("timeRange", time.value)}
-                  key={time.value}
+                  key={index}
                   variant={time.value === values.timeRange ? "solid" : "ghost"}
                 >
                   {time.title}
@@ -106,13 +110,13 @@ export function FilterMenu() {
               ))}
             </Section>
             <Section title="Session type">
-              {sessionTypes.map((type) => (
+              {sessionTypes.map((type, index) => (
                 <StyledButton
                   justifyContent="flex-start"
                   onClick={() =>
                     update("sessionType", type.value as SessionType)
                   }
-                  key={type.value}
+                  key={index}
                   variant={
                     type.value === values.sessionType ? "solid" : "ghost"
                   }

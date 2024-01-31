@@ -3,9 +3,8 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { RowFlex } from "../../styles";
-import { validator } from "web3-validator";
+import { isAddress } from "web3-validator";
 import { ROUTES } from "../../config";
-
 
 export function SearchSession() {
   const [value, setVale] = useState("");
@@ -13,14 +12,14 @@ export function SearchSession() {
 
   const searchSession = () => {
     if (!value) return;
-    const isAddress = validator.validate(['address'], [value], {silent: true}) == null;
-    if(isAddress) {
-        navigate(ROUTES.navigate.userAddressSessions(value));
-    }
+    console.log(isAddress(value));
     
-    // Web3Validator.isAddress(value)
-    //   ? navigate(ROUTES.navigate.address(value))
-    //   : navigate(ROUTES.navigate.session(value));
+    if (isAddress(value)) {
+      navigate(ROUTES.navigate.userAddressSessions(value));
+      return;
+    } else {
+      navigate(ROUTES.navigate.session(value));
+    }
   };
 
   const onKeyDown = (e: any) => {
@@ -34,10 +33,11 @@ export function SearchSession() {
       <InputGroup size="md">
         <StyledInput
           color="black"
-          placeholder="Session ID"
+          style={{ fontSize:'16px', fontWeight: 400 }}
+          placeholder="Search by Address / Session ID / Tx Hash"
           value={value}
           onKeyDown={onKeyDown}
-          onChange={(e) => setVale(e.target.value)}
+          onChange={(e: any) => setVale(e.target.value)}
         />
         <InputRightElement width="4.5rem">
           <Button onClick={searchSession} disabled={true} h="1.75rem" size="sm">
@@ -50,9 +50,12 @@ export function SearchSession() {
 }
 
 const StyledInputContainer = styled(RowFlex)`
-  width: 400px;
+  max-width: 600px;
+  flex: 1;
 `;
 
 const StyledInput = styled(Input)`
   flex: 1;
+  border: ${({ theme }) => `1px solid ${theme.colors.border}`}!important;
+  background-color: rgb(248, 249, 250)!important;
 `;

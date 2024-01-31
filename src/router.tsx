@@ -17,10 +17,6 @@ export const router = createBrowserRouter([
         element: <SessionsPage searchBy="address" />,
       },
       {
-        path: ROUTES.sessionsByTxHash,
-        element: <SessionsPage searchBy='tx' />,
-      },
-      {
         path: ROUTES.session,
         element: <SessionPage />,
       },

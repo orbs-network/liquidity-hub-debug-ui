@@ -1,10 +1,9 @@
+import {ethers} from "ethers";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
-import { getWeb3 } from "./helpers";
-import { useUSDPrice } from "./query";
-import BN from "bignumber.js";
+import { DEFAULT_SESSIONS_TIME_RANGE, RPC_API_KEY } from "./config";
+import { getRpc } from "./helpers";
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
     {
@@ -20,16 +19,17 @@ export const useAppParams = () => {
   return {
     query: {
       timeRange: query.timeRange || DEFAULT_SESSIONS_TIME_RANGE,
-      sessionType: query.sessionType || "all",
+      sessionType: query.sessionType,
       chainId: query.chainId,
     },
     setQuery,
-  };
+};
 };
 
 export const useWeb3 = (chainId?: number) => {
-  return useMemo(() => getWeb3(chainId), [chainId]);
+  return useMemo(() => getRpc(chainId), [chainId]);
 };
+
 
 export const useNumberFormatter = ({
   value,
