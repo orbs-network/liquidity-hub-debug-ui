@@ -1,15 +1,12 @@
-import { erc20abi } from "@defi.org/web3-candies";
+import { erc20abi, isNativeAddress } from "@defi.org/web3-candies";
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
-import {
-  BSC_RPC,
-  CHAIN_CONFIG,
-  POLYGON_INFURA_RPC,
-} from "./config";
+import { BSC_RPC, CHAIN_CONFIG, POLYGON_INFURA_RPC } from "./config";
 import BN from "bignumber.js";
 import { amountUi } from "./query";
-import { priceUsdService } from "services/price-usd";
+import { ethers } from "ethers";
+import { Token, TransferLog } from "types";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -19,7 +16,6 @@ export const getValueFromSessionLogs = (data?: any, key?: string) => {
     }) as any | undefined
   )?.[key];
 };
-
 
 export const normalizeSessions = (sessions: any[]) => {
   return _.map(sessions, (session) => {
@@ -67,15 +63,14 @@ export const getRpc = (chainId?: number) => {
       break;
   }
 
-  return rpc
+  return rpc;
 };
-
 
 export const getWeb3 = (chainId?: number) => {
   const rpc = getRpc(chainId);
   if (!rpc) return undefined;
   return new Web3(new Web3.providers.HttpProvider(rpc));
-}
+};
 
 export const getIdsFromSessions = (sessions: any[]) => {
   return _.map(sessions, (session) => session.sessionId).filter(
@@ -143,100 +138,6 @@ export const isScientificStringToDecimal = (scientificString: string) => {
 
 export const isTxHash = (value?: string) => value?.startsWith("0x");
 
-export const getERC20Transfers = async (
-  web3: Web3,
-  logs: any[],
-  chainId: number
-) => {
-  const res = await Promise.all(
-    logs.map(async (log) => {
-      let parsed = undefined;
-
-      if (_.size(log.topics) !== 3) return undefined;
-      try {
-        parsed = web3.eth.abi.decodeLog(
-          [
-            {
-              type: "uint256",
-              name: "amount",
-            },
-            {
-              type: "address",
-              name: "myNumber",
-              indexed: true,
-            },
-            {
-              type: "address",
-              name: "fromAddress",
-              indexed: true,
-            },
-            {
-              type: "address",
-              name: "toAddress",
-              indexed: true,
-            },
-          ],
-          log.data as string,
-          log.topics as string[]
-        );
-      } catch (error) {
-        return undefined;
-      }
-
-      if (parsed && Number(parsed.amount) > 0) {
-        const payTokenContract = getContract(web3, log.address);
-        let decimals;
-        let symbol;
-        try {
-          decimals = (await payTokenContract.methods.decimals().call()) as any;
-          symbol = (await payTokenContract.methods.symbol().call()) as any;
-        } catch (error) {
-          console;
-          return undefined;
-        }
-        if (!decimals) return;
-        const tokenAmount = amountUi(
-          Number(web3.utils.fromWei(decimals, "wei")),
-          new BN(web3.utils.fromWei(parsed.amount as string, "wei"))
-        );
-
-        // const [fullNum,  _decimals] = tokenAmount.split(".");
-
-        // if (
-        //   eqIgnoreCase(REACTOR_ADDRESS, parsed.fromAddress as string) ||
-        //   eqIgnoreCase(REACTOR_ADDRESS, parsed.toAddress as string) ||
-        //   eqIgnoreCase(parsed.fromAddress as string, parsed.toAddress as string)
-        // ) {
-        //   return undefined;
-        // }
-
-        let priceUsd = "0";
-
-        try {
-          priceUsd = await priceUsdService.getTotalTokensPrice({
-            address: log.address,
-            chainId,
-            amount: tokenAmount,
-          });
-        } catch (error) {
-          console.error(error);
-        }
-
-        return {
-          tokenAmount,
-          fromAddress: parsed.fromAddress as string,
-          toAddress: parsed.toAddress as string,
-          tokenAddress: log.address as string,
-          tokenSymbol: symbol as string,
-          priceUsd,
-        };
-      }
-    })
-  );
-
-  return _.uniqBy(_.compact(res), (v) => [v.fromAddress, v.toAddress].join());
-};
-
 export const getChainConfig = (chainId?: number) => {
   if (!chainId) return undefined;
   return CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG];
@@ -269,4 +170,78 @@ export const datesDiff = (date: Moment) => {
   if (seconds > 1) {
     return `${Math.floor(seconds)} seconds ago`;
   }
+};
+
+const ERC20_TRANSFER_EVENT_TOPIC = ethers.id(
+  "Transfer(address,address,uint256)"
+);
+
+export async function getTokenDetails(
+  tokenAddress: string,
+  web3: Web3,
+  chainId: number
+): Promise<Token> {
+  // if (tokenAddress == "0x0000000000000000000000000000000000000000") {
+  //   return {
+  //     name: "Wrapped Matic",
+  //     symbol: "WMATIC",
+  //     decimals: 18,
+  //     address: env.VITE_WRAPPED_MATIC,
+  //   };
+  // }
+
+  if (isNativeAddress(tokenAddress)) {
+    return getChainConfig(chainId)?.native as any as Token;
+  }
+
+  const contract = new web3.eth.Contract(erc20abi as any, tokenAddress);
+
+  const [name, symbol, decimals] = await Promise.all([
+    contract.methods.name().call(),
+    contract.methods.symbol().call(),
+    contract.methods.decimals().call(),
+  ]);
+
+  return {
+    name: name as any as string,
+    symbol: symbol as any as string,
+    decimals: parseInt((decimals as any).toString()),
+    address: tokenAddress,
+  };
+}
+
+export const getERC20Transfers = async (
+  web3: Web3,
+  logs: any[],
+  chainId: number
+): Promise<TransferLog[]> => {
+  const iface = new ethers.Interface(erc20abi as any);
+  const transferLogs = logs.filter(
+    (log) => log.topics[0] === ERC20_TRANSFER_EVENT_TOPIC
+  );
+
+  const transfersP = transferLogs.map(async (log) => {
+    return {
+      parsed: iface.parseLog(log),
+      address: log.address,
+      token: await getTokenDetails(log.address, web3, chainId),
+    };
+  });
+
+  const transfers = await Promise.all(transfersP);
+  const result = transfers.map((transfer) => {
+    if (!transfer.parsed) return undefined;
+    const decimals = transfer.token?.decimals
+      ? new BN(transfer.token?.decimals as any).toNumber()
+      : undefined;
+
+    return {
+      from: transfer.parsed.args.from,
+      to: transfer.parsed.args.to,
+      value: amountUi(decimals, new BN(transfer.parsed.args.value)),
+      token: transfer.token,
+    };
+  });
+
+  return _.compact(result);
 };

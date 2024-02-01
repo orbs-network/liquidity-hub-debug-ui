@@ -144,9 +144,15 @@ class Clob {
       const ids = getIdsFromSessions(serverSessions);
 
       const clientSessions = await this.fetchClientSessions({
-        ...args,
+        timeRange: args.timeRange,
+        signal: args.signal,
         filter: {
-          must: [{ keyword: "sessionId", value: ids }],
+          must: [
+            {
+              keyword: "sessionId",
+              value: ids,
+            },
+          ],
           should: undefined,
         },
       });
@@ -196,16 +202,12 @@ class Clob {
     return this.parseSessions(_.flatten([clientRes, swapSessions, quoteRes]));
   };
 
-  fetchSessions = async ({
-    url,
-    filter,
-    timeRange,
-    signal,
-  }: FetchSessionArgs) => {
+  async fetchSessions({ url, filter, timeRange, signal }: FetchSessionArgs) {
     const data = elastic.createQueryBody({
       filter: filter && _.size(filter) ? filter : undefined,
       timeRange,
     });
+    
 
     const response = await axios.post(
       `${elastic.endpoint}/${url}/_search`,
@@ -216,11 +218,12 @@ class Clob {
     return normalizeSessions(
       response.data.hits?.hits.map((hit: any) => hit.fields)
     );
-  };
-  fetchServerSessions = async (args: Partial<FetchSessionArgs>) => {
+  }
+  async fetchServerSessions(args: Partial<FetchSessionArgs>) {
     return this.fetchSessions({ url: this.SERVER_SESSIONS, ...args });
-  };
-  fetchClientSessions = async (args: Partial<FetchSessionArgs>) => {
+  }
+
+  async fetchClientSessions(args: Partial<FetchSessionArgs>) {
     const sessions = await this.fetchSessions({
       url: this.CLIENT_SESSIONS,
       ...args,
@@ -231,7 +234,7 @@ class Clob {
         type: "client",
       };
     });
-  };
+  }
 }
 
 export const clob = new Clob();

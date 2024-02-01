@@ -29,12 +29,12 @@ const times = [
   },
   {
     title: "Last day",
-    value: "1d",
+    value: "24h",
   },
   {
-    title: "All time",
-    value: 'all',
-  },
+    title: "Last month",
+    value: "730h",
+  }
 ];
 
 const sessionTypes: { title: string; value?: SessionType }[] = [

@@ -3,17 +3,17 @@ import {
   AddressLink,
   Card,
   FormattedAmount,
+  LogModal,
   PageLoader,
-} from "../../../components";
-import { ColumnFlex, RowFlex } from "../../../styles";
+} from "components";
+import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
-import { LogModal } from "./LogModal";
 import { useSession, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
-import { useNumberFormatter } from "../../../hooks";
-import { getChainConfig, swapStatusText } from "../../../helpers";
-import { ClobSession } from "types";
+import { useNumberFormatter } from "hooks";
+import { getChainConfig, swapStatusText } from "helpers";
+import { ClobSession, TransferLog } from "types";
 
 export function ClobSessionPage() {
   return (
@@ -119,43 +119,60 @@ const SessionDisplay = () => {
           </StyledRowText>
         </ListItem>
         <TxDetails />
-        <Transfers />
         <Logs />
+        <Transfers />
       </StyledList>
     </StyledSessionDisplay>
   );
 };
+
 
 const Logs = () => {
   const session = useSession().data;
   if (!session || !session.logs) return null;
   return (
     <>
+      <StyledDivider />
       {session.logs.client && (
         <ListItem label="Client logs">
-          {session.logs.client.map((it: any, index: number) => {
-            return <LogModal title={`Client ${index + 1}`} key={it} log={it} />;
-          })}
+          <StyledLogContent>
+            {session.logs.client.map((it: any, index: number) => {
+              return (
+                <LogModal title={`Client ${index + 1}`} key={it} log={it} />
+              );
+            })}
+          </StyledLogContent>
         </ListItem>
       )}
       {session.logs.quote && (
         <ListItem label="Quote logs">
-          {session.logs.quote.map((it: any, index: number) => {
-            return <LogModal title={`Quote ${index + 1}`} key={it} log={it} />;
-          })}
+          <StyledLogContent>
+            {session.logs.quote.map((it: any, index: number) => {
+              return (
+                <LogModal title={`Quote ${index + 1}`} key={it} log={it} />
+              );
+            })}
+          </StyledLogContent>
         </ListItem>
       )}
       {session.logs.swap && (
         <ListItem label="Swap logs">
-          {session.logs.swap.map((it: any, index: number) => {
-            return <LogModal title={`Swap ${index + 1}`} key={it} log={it} />;
-          })}
+          <StyledLogContent>
+            {session.logs.swap.map((it: any, index: number) => {
+              return <LogModal title={`Swap ${index + 1}`} key={it} log={it} />;
+            })}
+          </StyledLogContent>
         </ListItem>
       )}
     </>
   );
 };
 
+
+const StyledLogContent  = styled(RowFlex)`
+  justify-content: flex-start;
+  flex-wrap: wrap;
+`
 const TxDetails = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
@@ -184,7 +201,7 @@ const TxDetails = () => {
         <StyledRowText>
           {tx?.gasUsed}
           <small>{` (${tx?.gasUsedMatic} ${
-            getChainConfig(session?.chainId)?.symbol
+            getChainConfig(session?.chainId)?.native.symbol
           })`}</small>
         </StyledRowText>
       </ListItem>
@@ -218,57 +235,53 @@ const Transfers = () => {
   const { data: session } = useSession();
   const tx = useSessionTx()?.data;
 
-  if (!tx) return null;
+  if (!tx || !session) return null;
 
   return (
     <>
       <StyledDivider />
       <ListItem label="ERC-20 Tokens Transferred">
         <StyledTransfers>
-          {tx.logs?.map((it, index) => {
-            return (
-              <StyledRow key={index}>
-                <strong>From </strong>
-                <AddressLink
-                  chainId={session?.chainId}
-                  address={it.fromAddress}
-                  short
-                />{" "}
-                <strong> To </strong>
-                <AddressLink
-                  chainId={session?.chainId}
-                  address={it.toAddress}
-                  short
-                />{" "}
-                <strong>For</strong> <FormattedAmount value={it.tokenAmount} />{" "}
-                <Tag>
-                  <StyledUsd>
-                    $<FormattedAmount value={it.priceUsd} />
-                  </StyledUsd>
-                </Tag>
-                <AddressLink
-                  chainId={session?.chainId}
-                  address={it.tokenAddress}
-                  text={it.tokenSymbol}
-                />
-              </StyledRow>
-            );
+          {tx.transfers?.map((transfer, index) => {
+            return <Transfer session={session} key={index} log={transfer} />;
           })}
         </StyledTransfers>
       </ListItem>
-      <StyledDivider />
+      
     </>
+  );
+};
+
+const Transfer = ({
+  log,
+  session,
+}: {
+  log: TransferLog;
+  session: ClobSession;
+}) => {
+  return (
+    <StyledRow>
+      <strong>From </strong>
+      <AddressLink chainId={session?.chainId} address={log.from} short />{" "}
+      <strong> To </strong>
+      <AddressLink chainId={session?.chainId} address={log.to} short />{" "}
+      <strong>For</strong> <FormattedAmount value={log.value} />{" "}
+      <AddressLink
+        chainId={session?.chainId}
+        address={log.token.address}
+        text={log.token.symbol}
+      />
+    </StyledRow>
   );
 };
 
 const StyledRow = styled(RowFlex)`
   justify-content: flex-start;
   width: 100%;
-`;
-
-const StyledUsd = styled(Text)`
-  font-size: 12px;
-  font-weight: 600;
+  gap: 5px;
+  strong {
+    font-weight: 600;
+  }
 `;
 
 const StyledTransfers = styled(ColumnFlex)`

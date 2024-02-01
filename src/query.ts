@@ -4,10 +4,7 @@ import Web3 from "web3";
 import { useWeb3 } from "./hooks";
 import { SessionsFilter } from "./types";
 import BN from "bignumber.js";
-import {
-  convertScientificStringToDecimal,
-  getERC20Transfers,
-} from "./helpers";
+import { convertScientificStringToDecimal, getERC20Transfers } from "./helpers";
 import { clob } from "applications";
 import { priceUsdService } from "services/price-usd";
 export const queryKey = {
@@ -17,9 +14,10 @@ export const queryKey = {
   usdPrice1Token: "usdPrice1Token",
   getSessionsByFilter: "getSessionsByFilter",
   session: "session",
+  tokenAmountUsd: "tokenAmountUsd",
 };
 
-export const usegetClobSessionsQuery = (
+export const useGetClobSessionsQuery = (
   filter?: SessionsFilter,
   timeRange?: string
 ) => {
@@ -48,20 +46,17 @@ export const useTxDetailsQuery = ({
     queryKey: [queryKey.txDetails, txHash],
     queryFn: async () => {
       const receipt = await web3?.eth.getTransactionReceipt(txHash!);
-      
+
       const logs = receipt?.logs;
-      console.log(receipt);
-      
       if (!logs) return null;
-     logs.forEach((log) => {
-        console.log(log);
-         
-     });
-      
+
       return {
-        logs: await getERC20Transfers(web3!, logs, chainId!),
+        transfers: await getERC20Transfers(web3!, logs!, chainId!),
         gasUsed: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "gwei"),
-        gasUsedMatic: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "ether"),
+        gasUsedMatic: Web3.utils.fromWei(
+          receipt?.effectiveGasPrice || 0,
+          "ether"
+        ),
         blockNumber: receipt?.blockNumber.toString(),
         txStatus: receipt?.status.toString(),
       };
@@ -88,7 +83,6 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
       return priceUsdService.getPrice(address, chainId);
     },
     queryKey: [queryKey.usdPrice1Token, chainId, address],
-    refetchInterval: 10_000,
     staleTime: Infinity,
   });
 };

@@ -1,8 +1,10 @@
+import { useUSDPrice } from "query";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
 import { getWeb3 } from "./helpers";
+import BN from "bignumber.js";
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
     {
@@ -22,13 +24,12 @@ export const useAppParams = () => {
       chainId: query.chainId,
     },
     setQuery,
-};
+  };
 };
 
 export const useWeb3 = (chainId?: number) => {
   return useMemo(() => getWeb3(chainId), [chainId]);
 };
-
 
 export const useNumberFormatter = ({
   value,
@@ -64,3 +65,17 @@ export const useNumberFormatter = ({
   }).value;
 };
 
+export const useTokenAmountUsd = (
+  tokenAddress?: string,
+  amount?: string,
+  chainId?: number
+) => {
+    
+  const { data: price } = useUSDPrice(tokenAddress, chainId);
+
+
+  return useMemo(() => {
+    if (!amount || !price) return "";
+    return BN(amount).multipliedBy(price).toString();
+  }, [price, tokenAddress, amount]);
+};

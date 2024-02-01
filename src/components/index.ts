@@ -4,3 +4,4 @@ export * from "./AddressLink";
 export * from "./Card";
 export * from "./FormattedAmount";
 export * from "./Sessions";
+export * from "./LogModal";

@@ -1,3 +1,5 @@
+import { network } from "@defi.org/web3-candies";
+
 export const ROUTES = {
   main: "/",
   clobSessions: "/clob",
@@ -20,9 +22,9 @@ export const REACTOR_ADDRESS = "0x21Da9737764527e75C17F1AB26Cb668b66dEE0a0";
 
 export const CHAIN_CONFIG = {
   137: {
-    symbol: "Matic",
+    native: network(137).native,
   },
   56: {
-    symbol: "BNB",
+    native: network(56).native,
   },
 };

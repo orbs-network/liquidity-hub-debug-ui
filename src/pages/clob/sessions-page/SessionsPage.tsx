@@ -8,8 +8,7 @@ import { SessionsFilter, SessionsSearchBy } from "../../../types";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAppParams } from "../../../hooks";
-import { DEFAULT_SESSIONS_TIME_RANGE } from "../../../config";
-import { usegetClobSessionsQuery } from "query";
+import { useGetClobSessionsQuery } from "query";
 
 export function ClobSessionsPage({ searchBy }: { searchBy: SessionsSearchBy }) {
   return (
@@ -32,8 +31,7 @@ const StyledContent = styled(Card)`
 const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
   const params = useParams();
   const { query } = useAppParams();
-    const timeRange =
-      query.timeRange === "all" ? undefined : DEFAULT_SESSIONS_TIME_RANGE;
+
 
   const filter = useMemo((): SessionsFilter | undefined => {
     const sessionType = query.sessionType;
@@ -59,11 +57,12 @@ const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
     return result;
   }, [searchBy, params, query]);
 
-  const { data: sessions, isLoading } = usegetClobSessionsQuery(
+  const { data: sessions, isLoading } = useGetClobSessionsQuery(
     filter,
-    timeRange
+    query.timeRange
   );
 
+  
   return <Sessions sessions={sessions} isLoading={isLoading} />;
 };
 

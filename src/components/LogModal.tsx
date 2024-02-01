@@ -9,9 +9,9 @@ import {
   ModalOverlay,
   Tag,
 } from "@chakra-ui/react";
-import { ColumnFlex } from "../../../styles";
 import styled from "styled-components";
 import _ from "lodash";
+import { ColumnFlex } from "styles";
 
 const handleValue = (value: any) => {
   if (typeof value === "object") {
@@ -24,7 +24,6 @@ const handleValue = (value: any) => {
 
   return value;
 };
-
 
 export const LogModal = ({
   log,
@@ -65,11 +64,10 @@ export const LogModal = ({
 
 const StyledTag = styled(Tag)`
   cursor: pointer;
-`
-
+`;
 
 const StyledModalRowTitle = styled(Text)`
-width: 100%;
+  width: 100%;
   strong {
     font-weight: 600;
   }
