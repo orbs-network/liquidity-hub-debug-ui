@@ -11,7 +11,7 @@ import styled from "styled-components";
 import _ from "lodash";
 import { useSession, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
-import { useNumberFormatter } from "hooks";
+import { useNumberFormatter, useTokenAmountUsd } from "hooks";
 import { getChainConfig, swapStatusText } from "helpers";
 import { ClobSession, TransferLog } from "types";
 
@@ -25,7 +25,7 @@ export function ClobSessionPage() {
 
 const Content = () => {
   const { data: session, isLoading } = useSession();
-
+  
   if (isLoading) {
     return <PageLoader />;
   }
@@ -89,17 +89,13 @@ const SessionDisplay = () => {
         <ListItem label="Amount in">
           <StyledRowText>
             <FormattedAmount value={session.amountInUI} decimalScale={18} />
-            {session.amountInUSD && (
-              <small>{` ($${session.amountInUSD})`}</small>
-            )}
+            <AmountInUsd session={session} />
           </StyledRowText>
         </ListItem>
         <ListItem label="Amount out">
           <StyledRowText>
             <FormattedAmount value={session.amountOutUI} decimalScale={18} />
-            {session.amountOutUSD && (
-              <small>{` ($${session.amountOutUSD})`}</small>
-            )}
+            <AmountOutUsd session={session} />
           </StyledRowText>
         </ListItem>
         <ListItem label="Dex amount out">
@@ -126,6 +122,31 @@ const SessionDisplay = () => {
   );
 };
 
+const AmountInUsd = ({ session }: { session: ClobSession }) => {
+  const value = useTokenAmountUsd(
+    session.tokenInAddress,
+    session.amountInUI,
+    session.chainId
+  );
+
+  const result = useNumberFormatter({ value });
+  return <Small value={`$${result}`} />;
+};
+const AmountOutUsd = ({ session }: { session: ClobSession }) => {
+  const value = useTokenAmountUsd(
+    session.tokenOutAddress,
+    session.amountOutUI,
+    session.chainId
+  );
+
+  const result = useNumberFormatter({ value });
+  return <Small value={`$${result}`} />;
+};
+
+const Small = ({ value }: { value?: any }) => {
+  if (!value) return null;
+  return <small>{` (${value})`}</small>;
+};
 
 const Logs = () => {
   const session = useSession().data;
@@ -138,7 +159,7 @@ const Logs = () => {
           <StyledLogContent>
             {session.logs.client.map((it: any, index: number) => {
               return (
-                <LogModal title={`Client ${index + 1}`} key={it} log={it} />
+                <LogModal title={`Client ${index + 1}`} key={index} log={it} />
               );
             })}
           </StyledLogContent>
@@ -149,7 +170,7 @@ const Logs = () => {
           <StyledLogContent>
             {session.logs.quote.map((it: any, index: number) => {
               return (
-                <LogModal title={`Quote ${index + 1}`} key={it} log={it} />
+                <LogModal title={`Quote ${index + 1}`} key={index} log={it} />
               );
             })}
           </StyledLogContent>
@@ -159,7 +180,9 @@ const Logs = () => {
         <ListItem label="Swap logs">
           <StyledLogContent>
             {session.logs.swap.map((it: any, index: number) => {
-              return <LogModal title={`Swap ${index + 1}`} key={it} log={it} />;
+              return (
+                <LogModal title={`Swap ${index + 1}`} key={index} log={it} />
+              );
             })}
           </StyledLogContent>
         </ListItem>
@@ -168,11 +191,10 @@ const Logs = () => {
   );
 };
 
-
-const StyledLogContent  = styled(RowFlex)`
+const StyledLogContent = styled(RowFlex)`
   justify-content: flex-start;
   flex-wrap: wrap;
-`
+`;
 const TxDetails = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
@@ -247,7 +269,6 @@ const Transfers = () => {
           })}
         </StyledTransfers>
       </ListItem>
-      
     </>
   );
 };

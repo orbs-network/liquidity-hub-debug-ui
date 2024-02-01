@@ -12,7 +12,6 @@ export function SearchSession() {
 
   const searchSession = () => {
     if (!value) return;
-    console.log(isAddress(value));
     
     if (isAddress(value)) {
       navigate(ROUTES.navigate.clobUserAddressSessions(value));

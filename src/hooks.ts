@@ -67,7 +67,7 @@ export const useNumberFormatter = ({
 
 export const useTokenAmountUsd = (
   tokenAddress?: string,
-  amount?: string,
+  amount?: string | number,
   chainId?: number
 ) => {
     
