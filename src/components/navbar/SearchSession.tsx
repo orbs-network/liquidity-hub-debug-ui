@@ -15,10 +15,10 @@ export function SearchSession() {
     console.log(isAddress(value));
     
     if (isAddress(value)) {
-      navigate(ROUTES.navigate.userAddressSessions(value));
+      navigate(ROUTES.navigate.clobUserAddressSessions(value));
       return;
     } else {
-      navigate(ROUTES.navigate.session(value));
+      navigate(ROUTES.navigate.clobSession(value));
     }
   };
 

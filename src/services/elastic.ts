@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { SessionsFilter, SessionsFilterTerms } from "../types";
 
+const endpoint = "https://api.bi.orbs.network";
+
 const termValue = (value: string | string[] | number) => {
   return Array.isArray(value) ? value : [value];
 };
@@ -102,4 +104,11 @@ export const createQueryBody = (args: {
       },
     },
   };
+};
+
+
+
+export const elastic = {
+  createQueryBody,
+  endpoint,
 };

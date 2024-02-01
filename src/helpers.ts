@@ -1,4 +1,4 @@
-import { eqIgnoreCase, erc20abi } from "@defi.org/web3-candies";
+import { erc20abi } from "@defi.org/web3-candies";
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
@@ -6,13 +6,11 @@ import {
   BSC_RPC,
   CHAIN_CONFIG,
   POLYGON_INFURA_RPC,
-  REACTOR_ADDRESS,
 } from "./config";
-import { Session } from "./types";
 import BN from "bignumber.js";
 import { amountUi } from "./query";
-import { api } from "./api/api";
-const getValueFromSessionLogs = (data?: any, key?: string) => {
+import { priceUsdService } from "services/price-usd";
+export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
   return (
@@ -22,93 +20,6 @@ const getValueFromSessionLogs = (data?: any, key?: string) => {
   )?.[key];
 };
 
-export const parseSessions = (sessions: any[]) => {
-  const grouped = _.mapValues(_.groupBy(sessions, "sessionId"), (value) => {
-    return _.groupBy(value, "type");
-  });
-
-  const sessionValues = _.mapValues(grouped, (session, key): Session => {
-    const fromSwap = (key: string) =>
-      getValueFromSessionLogs(session.swap, key);
-    const fromQuote = (key: string) =>
-      getValueFromSessionLogs(session.quote, key);
-    const fromClient = (key: string) =>
-      getValueFromSessionLogs(session.client, key);
-    let timestamp =
-      fromSwap("timestamp") ||
-      fromQuote("timestamp") ||
-      fromClient("timestamp");
-
-    const dexAmountOut = fromQuote("amountOutUI");
-    const timestampMillis = moment(timestamp).valueOf();
-  
-    return {
-      id: key,
-      amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
-      amountInUI: fromQuote("amountInF"),
-      amountOutRaw: fromQuote("amountOut") || fromClient("amountOut"),
-      amountOutUI: fromQuote("amountOut"),
-      timestampMillis,
-      timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
-      timeFromNow: datesDiff(moment(timestampMillis)),
-      dexAmountOut,
-      amountOutDiff:
-        dexAmountOut === -1
-          ? ""
-          : fromSwap("amountOutDiff") ||
-            fromQuote("amountOutDiff") ||
-            (fromClient("clobDexPriceDiffPercent") &&
-              fromClient("clobDexPriceDiffPercent") / 10),
-      amountOutUSD:
-        fromSwap("dollarValue") ||
-        fromQuote("dollarValue") ||
-        fromClient("dstTokenUsdValue"),
-      amountInUSD: fromSwap("amountInUSD") || fromClient("amountInUSD"),
-      isAction: fromSwap("isAction") || fromClient("isAction"),
-      slippage:
-        fromSwap("slippage") || fromQuote("slippage") || fromClient("slippage"),
-      tokenOutAddress:
-        fromSwap("tokenOutAddress") ||
-        fromQuote("tokenOutAddress") ||
-        fromClient("dstTokenAddress"),
-      tokenInAddress:
-        fromSwap("tokenInAddress") ||
-        fromQuote("tokenInAddress") ||
-        fromClient("srcTokenAddress"),
-      tokenOutSymbol:
-        fromSwap("tokenOutSymbol") ||
-        fromQuote("tokenOutSymbol") ||
-        fromClient("dstTokenSymbol"),
-      txStatus: fromSwap("txStatus"),
-      tokenInSymbol:
-        fromSwap("tokenInSymbol") ||
-        fromQuote("tokenInSymbol") ||
-        fromClient("srcTokenSymbol"),
-      uaServer: fromSwap("uaServer") || fromClient("uaServer"),
-      chainId:
-        fromSwap("chainId") || fromQuote("chainId") || fromClient("chainId"),
-      dex: fromSwap("dex") || fromQuote("dex") || fromClient("partner"),
-      userAddress:
-        fromSwap("user") ||
-        fromQuote("userAddress") ||
-        fromClient("walletAddress"),
-      ip: fromSwap("ip") || fromClient("ip"),
-      serializedOrder:
-        fromSwap("serializedOrder") || fromClient("serializedOrder"),
-      signature: fromSwap("signature") || fromClient("signature"),
-      swapStatus: fromSwap("swapStatus") || fromClient("swapStatus"),
-      txHash: fromSwap("txHash") || fromClient("txHash"),
-      logs: {
-        client: session.client,
-        swap: session.swap,
-        quote: session.quote,
-      },
-    };
-  });
-
-  const _sessions = _.values(sessionValues);
-  return _.sortBy(_sessions, "timestampMillis").reverse();
-};
 
 export const normalizeSessions = (sessions: any[]) => {
   return _.map(sessions, (session) => {
@@ -156,8 +67,15 @@ export const getRpc = (chainId?: number) => {
       break;
   }
 
-  return new Web3(new Web3.providers.HttpProvider(rpc));
+  return rpc
 };
+
+
+export const getWeb3 = (chainId?: number) => {
+  const rpc = getRpc(chainId);
+  if (!rpc) return undefined;
+  return new Web3(new Web3.providers.HttpProvider(rpc));
+}
 
 export const getIdsFromSessions = (sessions: any[]) => {
   return _.map(sessions, (session) => session.sessionId).filter(
@@ -295,7 +213,7 @@ export const getERC20Transfers = async (
         let priceUsd = "0";
 
         try {
-          priceUsd = await api.getTotalTokensUsdValue({
+          priceUsd = await priceUsdService.getTotalTokensPrice({
             address: log.address,
             chainId,
             amount: tokenAmount,
@@ -324,7 +242,7 @@ export const getChainConfig = (chainId?: number) => {
   return CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG];
 };
 
-const datesDiff = (date: Moment) => {
+export const datesDiff = (date: Moment) => {
   const duration = moment.duration(moment().diff(date));
   const years = duration.asYears();
   const days = duration.asDays();

@@ -6,12 +6,12 @@ import TextOverflow from "react-text-overflow";
 import { IconButton, Text } from "@chakra-ui/react";
 import { ROUTES } from "../config";
 import { useNavigate } from "react-router-dom";
-import { Session } from "../types";
 import _ from "lodash";
 import { useNumberFormatter } from "../hooks";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { swapStatusText } from "../helpers";
 import { PageLoader } from "./PageLoader";
+import { ClobSession } from "types";
 const titles = [
   "Session id",
   "Tokens",
@@ -32,7 +32,7 @@ export const Sessions = ({
   sessions = [],
   isLoading,
 }: {
-  sessions?: Session[];
+  sessions?: ClobSession[];
   isLoading?: boolean;
 }) => {
   if (isLoading) {
@@ -65,19 +65,19 @@ export const Sessions = ({
 };
 
 const StyledEmpty = styled.div`
-    padding: 20px;
-    `
+  padding: 20px;
+`;
 
 const Loader = styled(PageLoader)`
   padding: 20px;
 `;
 
 export const ListSession = ({ index, style, data }: any) => {
-  const session = data[index] as Session;
+  const session = data[index] as ClobSession;
   const navigate = useNavigate();
 
   const onNavigate = () => {
-    navigate(ROUTES.navigate.session(session.id));
+    navigate(ROUTES.navigate.clobSession(session.id));
   };
 
   return (
@@ -121,7 +121,7 @@ const Dex = ({ dex }: { dex?: string }) => {
   );
 };
 
-const Tokens = ({ session }: { session: Session }) => {
+const Tokens = ({ session }: { session: ClobSession }) => {
   return (
     <StyledRow>
       <RowText text={`${session.tokenInSymbol} -> ${session.tokenOutSymbol}`} />

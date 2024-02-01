@@ -11,9 +11,9 @@ import {
 } from "@chakra-ui/react";
 import styled from "styled-components";
 import { ReactNode, useState } from "react";
-import { useAppParams } from "../../hooks";
-import { RowFlex, ColumnFlex } from "../../styles";
-import { SessionType } from "../../types";
+import { useAppParams } from "../../../hooks";
+import { RowFlex, ColumnFlex } from "../../../styles";
+import { SessionType } from "../../../types";
 const times = [
   {
     title: "Last 30 minutes",
@@ -37,7 +37,7 @@ const times = [
   },
 ];
 
-const sessionTypes: { title: string; value: SessionType }[] = [
+const sessionTypes: { title: string; value?: SessionType }[] = [
   {
     title: "All",
     value: undefined,

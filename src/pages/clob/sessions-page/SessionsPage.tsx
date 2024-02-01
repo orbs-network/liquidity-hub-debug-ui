@@ -2,16 +2,16 @@ import _ from "lodash";
 import styled from "styled-components";
 import { FilterMenu } from "./FilterMenu";
 import { ChainSelect } from "./ChainSelect";
-import { Card, Sessions } from "../../components";
-import { usegetSessionsQuery } from "../../query";
-import { RowFlex, ColumnFlex } from "../../styles";
-import { SessionsFilter, SessionsSearchBy } from "../../types";
+import { Card, Sessions } from "../../../components";
+import { RowFlex, ColumnFlex } from "../../../styles";
+import { SessionsFilter, SessionsSearchBy } from "../../../types";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { useAppParams } from "../../hooks";
-import { DEFAULT_SESSIONS_TIME_RANGE } from "../../config";
+import { useAppParams } from "../../../hooks";
+import { DEFAULT_SESSIONS_TIME_RANGE } from "../../../config";
+import { usegetClobSessionsQuery } from "query";
 
-export function SessionsPage({ searchBy }: { searchBy: SessionsSearchBy }) {
+export function ClobSessionsPage({ searchBy }: { searchBy: SessionsSearchBy }) {
   return (
     <Container>
       <RowFlex>
@@ -59,7 +59,7 @@ const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
     return result;
   }, [searchBy, params, query]);
 
-  const { data: sessions, isLoading } = usegetSessionsQuery(
+  const { data: sessions, isLoading } = usegetClobSessionsQuery(
     filter,
     timeRange
   );

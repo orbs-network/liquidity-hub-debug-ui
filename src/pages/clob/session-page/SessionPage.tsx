@@ -4,18 +4,18 @@ import {
   Card,
   FormattedAmount,
   PageLoader,
-} from "../../components";
-import { ColumnFlex, RowFlex } from "../../styles";
+} from "../../../components";
+import { ColumnFlex, RowFlex } from "../../../styles";
 import styled from "styled-components";
 import _ from "lodash";
 import { LogModal } from "./LogModal";
 import { useSession, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
-import { Session } from "../../types";
-import { useNumberFormatter } from "../../hooks";
-import { getChainConfig, swapStatusText } from "../../helpers";
+import { useNumberFormatter } from "../../../hooks";
+import { getChainConfig, swapStatusText } from "../../../helpers";
+import { ClobSession } from "types";
 
-export function SessionPage() {
+export function ClobSessionPage() {
   return (
     <Container>
       <Content />
@@ -192,7 +192,7 @@ const TxDetails = () => {
   );
 };
 
-const TxActionRow = ({ session }: { session: Session }) => {
+const TxActionRow = ({ session }: { session: ClobSession }) => {
   const amountInUI = useNumberFormatter({ value: session.amountInUI });
   const amountOutUI = useNumberFormatter({ value: session.amountOutUI });
 

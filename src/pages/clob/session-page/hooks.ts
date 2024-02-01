@@ -2,17 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../../api/api";
 import {
   convertScientificStringToDecimal,
   getContract,
-  getRpc,
+  getWeb3,
   isScientificStringToDecimal,
   isTxHash,
-} from "../../helpers";
-import { amountUi, queryKey, useTxDetailsQuery } from "../../query";
-import { Session, SessionsFilter } from "../../types";
+} from "../../../helpers";
+import { amountUi, queryKey, useTxDetailsQuery } from "../../../query";
+import { ClobSession, SessionsFilter } from "../../../types";
 import BN from "bignumber.js";
+import { clob } from "applications";
 
 export const useSession = () => {
   const params = useParams();
@@ -33,7 +33,7 @@ export const useSession = () => {
   return useQuery({
     queryKey: [queryKey.session, filter],
     queryFn: async ({ signal }) => {
-      const result = await api.getSessions({
+      const result = await clob.getSessions({
         signal,
         filter,
       });
@@ -46,12 +46,15 @@ export const useSession = () => {
 
 export const useSessionTx = () => {
   const session = useSession().data;
-  return useTxDetailsQuery(session)
+  return useTxDetailsQuery({
+    chainId: session?.chainId,
+    txHash: session?.txHash,
+  })
 };
 
 export const handleSession = async (
-  sessions: Session[]
-): Promise<Session | null> => {
+  sessions: ClobSession[]
+): Promise<ClobSession | null> => {
   const session = _.first(sessions);
 
   if (!session) return null;
@@ -59,7 +62,7 @@ export const handleSession = async (
   const parseDexAmountOut = async () => {
     if (!dexAmountOut || !session.tokenOutAddress) return undefined;
 
-    const web3 = getRpc(session.chainId);
+    const web3 = getWeb3(session.chainId);
     if (!web3) return undefined;
     const contract = getContract(web3, session.tokenOutAddress);
     if (!contract) return undefined;

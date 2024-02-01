@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import { ROUTES } from "./config";
-import { SessionPage, SessionsPage } from "./pages";
+import { ClobSessionPage, ClobSessionsPage } from "./pages";
 
 export const router = createBrowserRouter([
   {
@@ -9,16 +9,20 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        element: <SessionsPage searchBy="all" />,
+        element: <ClobSessionsPage searchBy="all" />,
         index: true,
       },
       {
-        path: ROUTES.sessionsByAddress,
-        element: <SessionsPage searchBy="address" />,
+        element: <ClobSessionsPage searchBy="all" />,
+        path: ROUTES.clobSessions,
       },
       {
-        path: ROUTES.session,
-        element: <SessionPage />,
+        path: ROUTES.clobSessionsByAddress,
+        element: <ClobSessionsPage searchBy="address" />,
+      },
+      {
+        path: ROUTES.clobSession,
+        element: <ClobSessionPage />,
       },
 
       {

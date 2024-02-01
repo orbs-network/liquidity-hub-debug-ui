@@ -1,17 +1,15 @@
-import { eqIgnoreCase } from "@defi.org/web3-candies";
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import Web3 from "web3";
-import { api } from "./api/api";
-import { REACTOR_ADDRESS } from "./config";
-import { useEthers, useWeb3 } from "./hooks";
-import { Session, SessionsFilter } from "./types";
+import { useWeb3 } from "./hooks";
+import { SessionsFilter } from "./types";
 import BN from "bignumber.js";
 import {
   convertScientificStringToDecimal,
-  getContract,
   getERC20Transfers,
 } from "./helpers";
+import { clob } from "applications";
+import { priceUsdService } from "services/price-usd";
 export const queryKey = {
   allSessions: "allSessions",
   tokens: "tokens-logo",
@@ -21,14 +19,14 @@ export const queryKey = {
   session: "session",
 };
 
-export const usegetSessionsQuery = (
+export const usegetClobSessionsQuery = (
   filter?: SessionsFilter,
   timeRange?: string
 ) => {
   return useQuery({
     queryKey: [queryKey.allSessions, timeRange, filter],
     queryFn: ({ signal }) => {
-      return api.getSessions({
+      return clob.getSessions({
         signal,
         timeRange,
         filter,
@@ -38,12 +36,18 @@ export const usegetSessionsQuery = (
   });
 };
 
-export const useTxDetailsQuery = (session?: Session | null) => {
-  const web3 = useWeb3(session?.chainId);
+export const useTxDetailsQuery = ({
+  chainId,
+  txHash,
+}: {
+  chainId?: number;
+  txHash?: string;
+}) => {
+  const web3 = useWeb3(chainId);
   return useQuery({
-    queryKey: [queryKey.txDetails, session?.txHash],
+    queryKey: [queryKey.txDetails, txHash],
     queryFn: async () => {
-      const receipt = await web3?.eth.getTransactionReceipt(session?.txHash!);
+      const receipt = await web3?.eth.getTransactionReceipt(txHash!);
       
       const logs = receipt?.logs;
       console.log(receipt);
@@ -55,7 +59,7 @@ export const useTxDetailsQuery = (session?: Session | null) => {
      });
       
       return {
-        logs: await getERC20Transfers(web3!, logs, session?.chainId!),
+        logs: await getERC20Transfers(web3!, logs, chainId!),
         gasUsed: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "gwei"),
         gasUsedMatic: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "ether"),
         blockNumber: receipt?.blockNumber.toString(),
@@ -63,7 +67,7 @@ export const useTxDetailsQuery = (session?: Session | null) => {
       };
     },
     staleTime: Infinity,
-    enabled: !!session?.txHash && !!web3 && !!session?.chainId,
+    enabled: !!txHash && !!web3 && !!chainId,
   });
 };
 
@@ -81,7 +85,7 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
     queryFn: async () => {
       if (!chainId || !address) return 0;
 
-      return api.fetchPrice(address, chainId);
+      return priceUsdService.getPrice(address, chainId);
     },
     queryKey: [queryKey.usdPrice1Token, chainId, address],
     refetchInterval: 10_000,

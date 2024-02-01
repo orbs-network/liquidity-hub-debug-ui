@@ -1,4 +1,4 @@
-export interface Session {
+export interface ClobSession {
   id: string;
   amountInRaw: string | number;
   amountInUI: string | number;

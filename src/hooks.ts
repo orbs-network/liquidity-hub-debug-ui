@@ -1,9 +1,8 @@
-import {ethers} from "ethers";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE, RPC_API_KEY } from "./config";
-import { getRpc } from "./helpers";
+import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
+import { getWeb3 } from "./helpers";
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
     {
@@ -27,7 +26,7 @@ export const useAppParams = () => {
 };
 
 export const useWeb3 = (chainId?: number) => {
-  return useMemo(() => getRpc(chainId), [chainId]);
+  return useMemo(() => getWeb3(chainId), [chainId]);
 };
 
 

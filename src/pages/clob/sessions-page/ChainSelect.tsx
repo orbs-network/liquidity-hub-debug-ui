@@ -9,11 +9,11 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useAppParams } from "../../hooks";
-import { ColumnFlex } from "../../styles";
+import { useAppParams } from "../../../hooks";
+import { ColumnFlex } from "../../../styles";
 import styled from "styled-components";
 import { ReactNode } from "react";
-import { getChainName } from "../../helpers";
+import { getChainName } from "../../../helpers";
 
 const chains = [
   {

@@ -1,7 +1,6 @@
 import {
   Text,
   useDisclosure,
-  Button,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -10,7 +9,7 @@ import {
   ModalOverlay,
   Tag,
 } from "@chakra-ui/react";
-import { ColumnFlex } from "../../styles";
+import { ColumnFlex } from "../../../styles";
 import styled from "styled-components";
 import _ from "lodash";
 

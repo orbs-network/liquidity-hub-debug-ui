@@ -1,11 +1,12 @@
 export const ROUTES = {
   main: "/",
-  sessionsByAddress: "/address/:address",
-  session: "/session/:identifier",
+  clobSessions: "/clob",
+  clobSessionsByAddress: "/clob/address/:address",
+  clobSession: "/clob/session/:identifier",
 
   navigate: {
-    session: (sessionId: string) => `/session/${sessionId}`,
-    userAddressSessions: (address: string) => `/address/${address}`,
+    clobSession: (sessionId: string) => `/clob/session/${sessionId}`,
+    clobUserAddressSessions: (address: string) => `/clob/address/${address}`,
   },
 };
 
