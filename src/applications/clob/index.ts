@@ -37,10 +37,14 @@ class Clob {
         fromSwap("timestamp") ||
         fromQuote("timestamp") ||
         fromClient("timestamp");
+        
 
-      const dexAmountOut = fromQuote("amountOutUI");
+      const dexAmountOut =
+        fromQuote("amountOutUI") || fromClient("dexAmountOut");
+
+      
       const timestampMillis = moment(timestamp).valueOf();
-
+        
       return {
         id: key,
         amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
@@ -50,6 +54,7 @@ class Clob {
         timestampMillis,
         timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
         timeFromNow: datesDiff(moment(timestampMillis)),
+        dexSwapTxHash: fromClient("txHash"),
         dexAmountOut,
         amountOutDiff:
           dexAmountOut === -1
@@ -64,6 +69,7 @@ class Clob {
           fromClient("dstTokenUsdValue"),
         amountInUSD: fromSwap("amountInUSD") || fromClient("amountInUSD"),
         isAction: fromSwap("isAction") || fromClient("isAction"),
+        isClobTrade: fromClient("isClobTrade"),
         slippage:
           fromSwap("slippage") ||
           fromQuote("slippage") ||

@@ -12,7 +12,7 @@ export const getValueFromSessionLogs = (data?: any, key?: string) => {
   if (!key || !data) return undefined;
   return (
     _.find(arr, (value: any) => {
-      return value[key];
+      return !_.isNaN(value[key]);
     }) as any | undefined
   )?.[key];
 };

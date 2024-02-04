@@ -25,7 +25,7 @@ export function ClobSessionPage() {
 
 const Content = () => {
   const { data: session, isLoading } = useSession();
-  
+
   if (isLoading) {
     return <PageLoader />;
   }
@@ -40,6 +40,7 @@ const SessionDisplay = () => {
   const session = useSession().data;
 
   if (!session) return null;
+  
   return (
     <StyledSessionDisplay>
       <StyledList>
@@ -68,6 +69,22 @@ const SessionDisplay = () => {
           </ListItem>
         )}
         <TxActionRow session={session} />
+        <ListItem label="Is clob trade">
+          <StyledRowText>
+            {!_.isBoolean(session.isClobTrade)
+              ? "-"
+              : session.isClobTrade
+              ? "true"
+              : "false"}
+          </StyledRowText>
+        </ListItem>
+        <ListItem label="Dex Transaction hash">
+          <AddressLink
+            address={session.dexSwapTxHash}
+            path="tx"
+            chainId={session.chainId}
+          />
+        </ListItem>
         <StyledDivider />
         <ListItem label="In token">
           <StyledRowColumn>
@@ -104,7 +121,7 @@ const SessionDisplay = () => {
           </StyledRowText>
         </ListItem>
         <ListItem label="Amount out diff">
-          <StyledRowText>{session.amountOutDiff}</StyledRowText>
+          <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
         </ListItem>
         <StyledDivider />
 
@@ -138,6 +155,7 @@ const AmountOutUsd = ({ session }: { session: ClobSession }) => {
     session.amountOutUI,
     session.chainId
   );
+  
 
   const result = useNumberFormatter({ value });
   return <Small value={`$${result}`} />;

@@ -23,8 +23,10 @@ export const REACTOR_ADDRESS = "0x21Da9737764527e75C17F1AB26Cb668b66dEE0a0";
 export const CHAIN_CONFIG = {
   137: {
     native: network(137).native,
+    wToken: network(137).wToken,
   },
   56: {
     native: network(56).native,
+    wToken: network(56).wToken,
   },
 };

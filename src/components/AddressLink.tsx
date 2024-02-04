@@ -27,6 +27,8 @@ export function AddressLink({
     return makeElipsisAddress(address);
   }, [address, short, text]);
 
+  if(!_address) return <>-</>;
+
   return (
     <StyledLink href={url} target="_blank">
       <TextOverflow text={_address || ""} />

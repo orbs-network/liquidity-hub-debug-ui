@@ -4,9 +4,14 @@ import Web3 from "web3";
 import { useWeb3 } from "./hooks";
 import { SessionsFilter } from "./types";
 import BN from "bignumber.js";
-import { convertScientificStringToDecimal, getERC20Transfers } from "./helpers";
+import {
+  convertScientificStringToDecimal,
+  getChainConfig,
+  getERC20Transfers,
+} from "./helpers";
 import { clob } from "applications";
 import { priceUsdService } from "services/price-usd";
+import { isNativeAddress } from "@defi.org/web3-candies";
 export const queryKey = {
   allSessions: "allSessions",
   tokens: "tokens-logo",
@@ -79,6 +84,12 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
   return useQuery({
     queryFn: async () => {
       if (!chainId || !address) return 0;
+
+      if (isNativeAddress(address)) {
+        const wToken = getChainConfig(chainId)?.wToken.address;
+        if (!wToken) return 0;
+        return priceUsdService.getPrice(wToken, chainId);
+      }
 
       return priceUsdService.getPrice(address, chainId);
     },
