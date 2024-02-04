@@ -30,6 +30,7 @@ export interface ClobSession {
   timeFromNow?: string;
   isClobTrade?: boolean;
   dexSwapTxHash?: string;
+  dutchPrice?: string;
 
   logs: {
     client: any;
@@ -64,4 +65,5 @@ export interface TransferLog {
   to: string;
   value: string;
   token: Token;
+  rawValue: string;
 }

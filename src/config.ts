@@ -30,3 +30,7 @@ export const CHAIN_CONFIG = {
     wToken: network(56).wToken,
   },
 };
+
+
+export const GAS_ADDRESS = "0x7ae466596C57241459eBaE32D2E64F51Da68F3B8";
+export const FEES_ADDRESS = "0xbd098dB9AD3dbaF2bDAF581340B2662d9A3CA8D2";

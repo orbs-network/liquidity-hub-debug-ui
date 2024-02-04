@@ -1,10 +1,9 @@
-import { erc20abi, isNativeAddress } from "@defi.org/web3-candies";
+import { erc20abi, isNativeAddress, parsebn, zero } from "@defi.org/web3-candies";
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
 import { BSC_RPC, CHAIN_CONFIG, POLYGON_INFURA_RPC } from "./config";
 import BN from "bignumber.js";
-import { amountUi } from "./query";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
@@ -181,14 +180,10 @@ export async function getTokenDetails(
   web3: Web3,
   chainId: number
 ): Promise<Token> {
-  // if (tokenAddress == "0x0000000000000000000000000000000000000000") {
-  //   return {
-  //     name: "Wrapped Matic",
-  //     symbol: "WMATIC",
-  //     decimals: 18,
-  //     address: env.VITE_WRAPPED_MATIC,
-  //   };
-  // }
+  const config = getChainConfig(chainId);
+  if (isNativeAddress(tokenAddress)) {
+    return config?.native as any as Token;
+  }
 
   if (isNativeAddress(tokenAddress)) {
     return getChainConfig(chainId)?.native as any as Token;
@@ -240,8 +235,25 @@ export const getERC20Transfers = async (
       to: transfer.parsed.args.to,
       value: amountUi(decimals, new BN(transfer.parsed.args.value)),
       token: transfer.token,
+      rawValue: transfer.parsed.args.value.toString(),
     };
   });
 
   return _.compact(result);
+};
+
+
+export const amountBN = (decimals?: number, amount?: string) => {
+  if (!decimals || !amount) return zero;
+
+  return parsebn(amount).times(new BN(10).pow(decimals || 0));
+};
+
+export const amountUi = (decimals?: number, amount?: BN) => {
+  if (!decimals || !amount) return "";
+  const percision = new BN(10).pow(decimals || 0);
+  return convertScientificStringToDecimal(
+    amount.times(percision).idiv(percision).div(percision).toString(),
+    decimals
+  );
 };

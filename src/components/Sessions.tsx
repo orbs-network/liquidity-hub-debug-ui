@@ -9,11 +9,13 @@ import { useNavigate } from "react-router-dom";
 import _ from "lodash";
 import { useNumberFormatter } from "../hooks";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
-import { swapStatusText } from "../helpers";
+import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { PageLoader } from "./PageLoader";
 import { ClobSession } from "types";
+import { AddressLink } from "./AddressLink";
 const titles = [
   "Session id",
+  "Tx hash",
   "Tokens",
   "Dex",
   "Timestamp",
@@ -84,6 +86,7 @@ export const ListSession = ({ index, style, data }: any) => {
     <div style={style}>
       <ListSessionContainer>
         <SessionId id={session.id} />
+        <TxHash session={session} />
         <Tokens session={session} />
         <Dex dex={session.dex} />
         <Timestamp timestamp={session.timestamp} />
@@ -134,6 +137,21 @@ const SessionId = ({ id }: { id?: string }) => {
     <StyledRow>
       <RowText text={id} />
     </StyledRow>
+  );
+};
+
+const TxHash = ({ session }: { session?: ClobSession }) => {
+  return (
+    <StyledItem>
+      <StyledText>
+        <AddressLink
+          text={makeElipsisAddress(session?.txHash)}
+          address={session?.txHash}
+          path="tx"
+          chainId={session?.chainId}
+        />
+      </StyledText>
+    </StyledItem>
   );
 };
 

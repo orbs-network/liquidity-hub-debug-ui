@@ -3,17 +3,19 @@ import _ from "lodash";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
+  amountUi,
   convertScientificStringToDecimal,
   getContract,
   getWeb3,
   isScientificStringToDecimal,
   isTxHash,
 } from "../../../helpers";
-import { amountUi, queryKey, useTxDetailsQuery } from "../../../query";
+import { queryKey, useTxDetailsQuery } from "../../../query";
 import { ClobSession, SessionsFilter } from "../../../types";
 import BN from "bignumber.js";
 import { clob } from "applications";
 import { isNativeAddress } from "@defi.org/web3-candies";
+import { useChainConfig } from "hooks";
 
 export const useSession = () => {
   const params = useParams();
@@ -47,11 +49,9 @@ export const useSession = () => {
 
 export const useSessionTx = () => {
   const session = useSession().data;
-  return useTxDetailsQuery({
-    chainId: session?.chainId,
-    txHash: session?.txHash,
-  });
+  return useTxDetailsQuery(session);
 };
+
 
 export const handleSession = async (
   sessions: ClobSession[]
@@ -95,3 +95,10 @@ export const handleSession = async (
     dexAmountOut: await parseDexAmountOut(),
   };
 };
+
+
+
+export const useSessionChainConfig = () => {
+  const chainId = useSession().data?.chainId;
+  return useChainConfig(chainId);
+}

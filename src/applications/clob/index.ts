@@ -54,7 +54,8 @@ class Clob {
         timestampMillis,
         timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
         timeFromNow: datesDiff(moment(timestampMillis)),
-        dexSwapTxHash: fromClient("txHash"),
+        dexSwapTxHash: fromClient("dexSwapTxHash"),
+        dutchPrice: fromSwap("dutchPrice"),
         dexAmountOut,
         amountOutDiff:
           dexAmountOut === -1

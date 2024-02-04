@@ -9,11 +9,12 @@ import {
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
-import { useSession, useSessionTx } from "./hooks";
+import { useSession, useSessionChainConfig, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
 import { useNumberFormatter, useTokenAmountUsd } from "hooks";
-import { getChainConfig, swapStatusText } from "helpers";
+import { swapStatusText } from "helpers";
 import { ClobSession, TransferLog } from "types";
+import { zeroAddress } from "@defi.org/web3-candies";
 
 export function ClobSessionPage() {
   return (
@@ -40,7 +41,7 @@ const SessionDisplay = () => {
   const session = useSession().data;
 
   if (!session) return null;
-  
+
   return (
     <StyledSessionDisplay>
       <StyledList>
@@ -104,16 +105,18 @@ const SessionDisplay = () => {
         </ListItem>
         <StyledDivider />
         <ListItem label="Amount in">
-          <StyledRowText>
-            <FormattedAmount value={session.amountInUI} decimalScale={18} />
-            <AmountInUsd session={session} />
-          </StyledRowText>
+          <WithUSD
+            decimalScale={18}
+            amount={session.amountInUI}
+            address={session.tokenInAddress}
+          />
         </ListItem>
         <ListItem label="Amount out">
-          <StyledRowText>
-            <FormattedAmount value={session.amountOutUI} decimalScale={18} />
-            <AmountOutUsd session={session} />
-          </StyledRowText>
+          <WithUSD
+            decimalScale={18}
+            amount={session.amountOutUI}
+            address={session.tokenOutAddress}
+          />
         </ListItem>
         <ListItem label="Dex amount out">
           <StyledRowText>
@@ -126,10 +129,10 @@ const SessionDisplay = () => {
         <StyledDivider />
 
         <ListItem label="Timestamp">
-          <StyledRowText>
-            {session.timestamp}
-            <small>{` (${session.timeFromNow})`}</small>
-          </StyledRowText>
+          <WithSmall
+            value={session.timestamp}
+            smallValue={session.timeFromNow}
+          />
         </ListItem>
         <TxDetails />
         <Logs />
@@ -137,33 +140,6 @@ const SessionDisplay = () => {
       </StyledList>
     </StyledSessionDisplay>
   );
-};
-
-const AmountInUsd = ({ session }: { session: ClobSession }) => {
-  const value = useTokenAmountUsd(
-    session.tokenInAddress,
-    session.amountInUI,
-    session.chainId
-  );
-
-  const result = useNumberFormatter({ value });
-  return <Small value={`$${result}`} />;
-};
-const AmountOutUsd = ({ session }: { session: ClobSession }) => {
-  const value = useTokenAmountUsd(
-    session.tokenOutAddress,
-    session.amountOutUI,
-    session.chainId
-  );
-  
-
-  const result = useNumberFormatter({ value });
-  return <Small value={`$${result}`} />;
-};
-
-const Small = ({ value }: { value?: any }) => {
-  if (!value) return null;
-  return <small>{` (${value})`}</small>;
 };
 
 const Logs = () => {
@@ -237,15 +213,23 @@ const TxDetails = () => {
       <ListItem label="Block number">
         <StyledRowText>{tx.blockNumber}</StyledRowText>
       </ListItem>
-      <ListItem label="Gas price">
-        <StyledRowText>
-          {tx?.gasUsed}
-          <small>{` (${tx?.gasUsedMatic} ${
-            getChainConfig(session?.chainId)?.native.symbol
-          })`}</small>
-        </StyledRowText>
-      </ListItem>
+      <GasPrice />
     </>
+  );
+};
+
+const GasPrice = () => {
+  const tx = useSessionTx().data;
+  const chainConfig = useSessionChainConfig();
+  const value = useNumberFormatter({ value: tx?.gasUsed });
+  const native = useNumberFormatter({ value: tx?.gasUsedMatic });
+  return (
+    <ListItem label="Gas price">
+      <WithSmall
+        value={`${value} gwei`}
+        smallValue={` ${native} ${chainConfig?.native.symbol}`}
+      />
+    </ListItem>
   );
 };
 
@@ -271,15 +255,136 @@ const TxActionRow = ({ session }: { session: ClobSession }) => {
   );
 };
 
+const GasUsed = () => {
+  const tx = useSessionTx().data;
+  const session = useSession().data;
+  const usd = useTokenAmountUsd(zeroAddress, tx?.gas, session?.chainId);
+  const gas = useNumberFormatter({ value: tx?.gas });
+  const _usd = useNumberFormatter({ value: usd });
+  const chainConfig = useSessionChainConfig();
+
+  return (
+    <ListItem label="Gas used">
+      <WithSmall
+        value={`${gas} ${chainConfig?.native.symbol}`}
+        smallValue={`$${_usd}`}
+      />
+    </ListItem>
+  );
+};
+
+const Fees = () => {
+  const tx = useSessionTx().data;
+  const session = useSession().data;
+  const chainConfig = useSessionChainConfig();
+  const usd = useTokenAmountUsd(zeroAddress, tx?.fees, session?.chainId);
+  const fee = useNumberFormatter({ value: tx?.fees });
+  const _usd = useNumberFormatter({ value: usd });
+  return (
+    <ListItem label="Fee">
+      <WithSmall
+        value={`${fee} ${chainConfig?.native.symbol}`}
+        smallValue={`$${_usd}`}
+      />
+    </ListItem>
+  );
+};
+
+const WithUSD = ({
+  decimalScale,
+  address,
+  amount,
+}: {
+  address?: string;
+  decimalScale?: number;
+  amount?: string | number;
+}) => {
+  const chainId = useSession().data?.chainId;
+  const _value = useNumberFormatter({ value: amount, decimalScale });
+  const usd = useTokenAmountUsd(address, amount, chainId);
+  const _usd = useNumberFormatter({ value: usd });
+
+  if (!_value) {
+    return <StyledRowText>-</StyledRowText>;
+  }
+
+  return <WithSmall value={_value} smallValue={`$${_usd}`} />;
+};
+
+const WithSmall = ({
+  value,
+  smallValue,
+}: {
+  value?: any;
+  smallValue?: string;
+}) => {
+  if (!value) return null;
+  return (
+    <StyledRowText>
+      {value}
+      {smallValue && <small>{` (${smallValue})`}</small>}
+    </StyledRowText>
+  );
+};
+
+
+const ExactAmountOut = () => {
+  const tx = useSessionTx()?.data;
+  const session = useSession().data;
+  return (
+    <ListItem label="Exact amount out">
+      <WithUSD address={session?.tokenOutAddress} amount={tx?.exactAmountOut} />
+    </ListItem>
+  );
+}
+
+const DucthPrice = () => {
+  const tx = useSessionTx()?.data;
+  const session = useSession().data;
+  return (
+    <ListItem label="Dutch price">
+      <WithUSD address={session?.tokenOutAddress} amount={tx?.dutchPrice} />
+    </ListItem>
+  );
+}
+
+const FeePercentFromExactAmountOut = () => {
+  const tx = useSessionTx()?.data;
+  const value = useNumberFormatter({ value: tx?.feesPercent, decimalScale: 2 });
+
+  return (
+    <ListItem label="Fee % from amount out">
+      <StyledRowText>{`${value}%`}</StyledRowText>
+    </ListItem>
+  );
+};
+
+const DucthPriceDiffPerecent = () => {
+  const tx = useSessionTx()?.data;
+  const value = useNumberFormatter({ value: tx?.comparedToDutch });
+
+  return (
+    <ListItem label="Dutch price diff">
+      <StyledRowText>{`${value}%`}</StyledRowText>
+    </ListItem>
+  );
+}
+
 const Transfers = () => {
   const { data: session } = useSession();
   const tx = useSessionTx()?.data;
-
   if (!tx || !session) return null;
 
   return (
     <>
       <StyledDivider />
+      <ExactAmountOut />
+      <Fees />
+      <FeePercentFromExactAmountOut />
+      <GasUsed />
+
+      <DucthPrice />
+      <DucthPriceDiffPerecent />
       <ListItem label="ERC-20 Tokens Transferred">
         <StyledTransfers>
           {tx.transfers?.map((transfer, index) => {
@@ -301,11 +406,22 @@ const Transfer = ({
   return (
     <StyledRow>
       <strong>From </strong>
-      <AddressLink chainId={session?.chainId} address={log.from} short />{" "}
+      <AddressLink
+        hideCopy
+        chainId={session?.chainId}
+        address={log.from}
+        short
+      />{" "}
       <strong> To </strong>
-      <AddressLink chainId={session?.chainId} address={log.to} short />{" "}
+      <AddressLink
+        hideCopy
+        chainId={session?.chainId}
+        address={log.to}
+        short
+      />{" "}
       <strong>For</strong> <FormattedAmount value={log.value} />{" "}
       <AddressLink
+        hideCopy
         chainId={session?.chainId}
         address={log.token.address}
         text={log.token.symbol}

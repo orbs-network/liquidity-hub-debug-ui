@@ -2,16 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import Web3 from "web3";
 import { useWeb3 } from "./hooks";
-import { SessionsFilter } from "./types";
+import { ClobSession, SessionsFilter } from "./types";
 import BN from "bignumber.js";
 import {
-  convertScientificStringToDecimal,
+  amountUi,
   getChainConfig,
   getERC20Transfers,
+  getTokenDetails,
 } from "./helpers";
 import { clob } from "applications";
 import { priceUsdService } from "services/price-usd";
-import { isNativeAddress } from "@defi.org/web3-candies";
+import { eqIgnoreCase, isNativeAddress } from "@defi.org/web3-candies";
+import { FEES_ADDRESS, GAS_ADDRESS } from "config";
 export const queryKey = {
   allSessions: "allSessions",
   tokens: "tokens-logo",
@@ -20,6 +22,7 @@ export const queryKey = {
   getSessionsByFilter: "getSessionsByFilter",
   session: "session",
   tokenAmountUsd: "tokenAmountUsd",
+  tokenDetails: "tokenDetails",
 };
 
 export const useGetClobSessionsQuery = (
@@ -39,24 +42,91 @@ export const useGetClobSessionsQuery = (
   });
 };
 
-export const useTxDetailsQuery = ({
-  chainId,
-  txHash,
-}: {
-  chainId?: number;
-  txHash?: string;
-}) => {
-  const web3 = useWeb3(chainId);
+export const useTxDetailsQuery = (session?: ClobSession | null) => {
+  const web3 = useWeb3(session?.chainId);
   return useQuery({
-    queryKey: [queryKey.txDetails, txHash],
+    queryKey: [queryKey.txDetails, session?.txHash],
     queryFn: async () => {
-      const receipt = await web3?.eth.getTransactionReceipt(txHash!);
+      if (!session) return null;
+      const receipt = await web3?.eth.getTransactionReceipt(session.txHash!);
 
       const logs = receipt?.logs;
       if (!logs) return null;
 
+      const transfers = await getERC20Transfers(web3!, logs!, session.chainId!);
+
+      const getExactAmountOutTrafer = () => {
+        const filtered = _.filter(
+          transfers,
+          (t) =>
+            eqIgnoreCase(t.to, session.userAddress || "") &&
+            eqIgnoreCase(t.token.address, session.tokenOutAddress || "")
+        );
+        return _.sortBy(filtered, (t) => t.value).reverse()[0];
+      };
+      const wToken = getChainConfig(session.chainId!)?.wToken;
+
+      const findTransfer = (address: string) => {
+        const filtered = _.find(transfers, (t) => eqIgnoreCase(t.to, address));
+        return filtered;
+      };
+      let toTokenUSD = 0;
+      let nativeTokenUSD = 0;
+      try {
+        nativeTokenUSD = await priceUsdService.getPrice(
+          wToken?.address!,
+          session.chainId!
+        );
+        toTokenUSD = await priceUsdService.getPrice(
+          session.tokenOutAddress!,
+          session.chainId!
+        );
+      } catch (error) {}
+
+      const nativeTokenPerOutToken = toTokenUSD / nativeTokenUSD;
+      const getFees = () => {
+        const toTokenValue = findTransfer(FEES_ADDRESS)?.value || "0";
+        return new BN(toTokenValue).times(nativeTokenPerOutToken).toString();
+      };
+
+      const getGas = () => {
+        const value = findTransfer(GAS_ADDRESS)?.value || "0";
+        return new BN(value).times(nativeTokenPerOutToken).toString();
+      };
+      const exactAmountOutTransfer = getExactAmountOutTrafer();
+      console.log({ nativeTokenPerOutToken });
+      
+      const fees = getFees();
+      const exactAmountOut = exactAmountOutTransfer.value;
+      const toToken = await getTokenDetails(
+        session.tokenOutAddress!,
+        web3!,
+        session.chainId!
+      );
+      const dutchPrice = amountUi(
+        toToken.decimals,
+        new BN(session.dutchPrice || "0")
+      );
+
+      const getFeesPercent = () => {
+        const diff = nativeTokenUSD / toTokenUSD;
+
+        return new BN(fees).times(diff).div(exactAmountOut).times(100).toString();
+      }
+      
+      console.log(getFeesPercent());
+      
+
       return {
-        transfers: await getERC20Transfers(web3!, logs!, chainId!),
+        exactAmountOut,
+        comparedToDutch: new BN(exactAmountOutTransfer.value)
+          .div(dutchPrice)
+          .toString(),
+        gas: getGas(),
+        fees,
+        dutchPrice,
+        feesPercent: getFeesPercent(),
+        transfers: await getERC20Transfers(web3!, logs!, session.chainId!),
         gasUsed: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "gwei"),
         gasUsedMatic: Web3.utils.fromWei(
           receipt?.effectiveGasPrice || 0,
@@ -67,20 +137,12 @@ export const useTxDetailsQuery = ({
       };
     },
     staleTime: Infinity,
-    enabled: !!txHash && !!web3 && !!chainId,
+    enabled: !!session?.txHash && !!web3 && !!session?.chainId,
   });
 };
 
-export const amountUi = (decimals?: number, amount?: BN) => {
-  if (!decimals || !amount) return "";
-  const percision = new BN(10).pow(decimals || 0);
-  return convertScientificStringToDecimal(
-    amount.times(percision).idiv(percision).div(percision).toString(),
-    decimals
-  );
-};
 
-export const useUSDPrice = (address?: string, chainId?: number) => {
+export const useUSDPriceQuery = (address?: string, chainId?: number) => {
   return useQuery({
     queryFn: async () => {
       if (!chainId || !address) return 0;
@@ -97,3 +159,14 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
     staleTime: Infinity,
   });
 };
+
+
+export const useTokenDetailsQuery = (address?: string, chainId?: number) => {
+  const web3 = useWeb3(chainId);
+  return useQuery({
+    queryFn: async () => getTokenDetails(address!, useWeb3(chainId)!, chainId!),
+    queryKey: [queryKey.tokenDetails, chainId, address],
+    staleTime: Infinity,
+    enabled: !!address && !!chainId && !!web3,
+  });
+}
