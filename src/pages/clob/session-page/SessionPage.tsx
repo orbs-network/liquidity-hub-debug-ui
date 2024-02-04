@@ -222,11 +222,11 @@ const GasPrice = () => {
   const tx = useSessionTx().data;
   const chainConfig = useSessionChainConfig();
   const value = useNumberFormatter({ value: tx?.gasUsed });
-  const native = useNumberFormatter({ value: tx?.gasUsedMatic });
+  const native = useNumberFormatter({ value: tx?.gasPrice });
   return (
     <ListItem label="Gas price">
       <WithSmall
-        value={`${value} gwei`}
+        value={`${value} Gwei`}
         smallValue={` ${native} ${chainConfig?.native.symbol}`}
       />
     </ListItem>
@@ -258,8 +258,12 @@ const TxActionRow = ({ session }: { session: ClobSession }) => {
 const GasUsed = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
-  const usd = useTokenAmountUsd(zeroAddress, tx?.gas, session?.chainId);
-  const gas = useNumberFormatter({ value: tx?.gas });
+  const usd = useTokenAmountUsd(
+    zeroAddress,
+    tx?.gasUsedNativeToken,
+    session?.chainId
+  );
+  const gas = useNumberFormatter({ value: tx?.gasUsedNativeToken });
   const _usd = useNumberFormatter({ value: usd });
   const chainConfig = useSessionChainConfig();
 

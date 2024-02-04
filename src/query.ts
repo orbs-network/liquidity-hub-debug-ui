@@ -13,7 +13,7 @@ import {
 import { clob } from "applications";
 import { priceUsdService } from "services/price-usd";
 import { eqIgnoreCase, isNativeAddress } from "@defi.org/web3-candies";
-import { FEES_ADDRESS, GAS_ADDRESS } from "config";
+import { FEES_ADDRESS } from "config";
 export const queryKey = {
   allSessions: "allSessions",
   tokens: "tokens-logo",
@@ -84,18 +84,27 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
       } catch (error) {}
 
       const nativeTokenPerOutToken = toTokenUSD / nativeTokenUSD;
+
       const getFees = () => {
         const toTokenValue = findTransfer(FEES_ADDRESS)?.value || "0";
         return new BN(toTokenValue).times(nativeTokenPerOutToken).toString();
       };
 
-      const getGas = () => {
-        const value = findTransfer(GAS_ADDRESS)?.value || "0";
-        return new BN(value).times(nativeTokenPerOutToken).toString();
-      };
-      const exactAmountOutTransfer = getExactAmountOutTrafer();
-      console.log({ nativeTokenPerOutToken });
+      const gasUsed = Web3.utils.fromWei(receipt?.gasUsed || 0, "gwei");
+
+      const gasPrice = Web3.utils.fromWei(
+        receipt?.effectiveGasPrice || 0,
+        "gwei"
+      );
+      console.log({ receipt });
       
+
+      const gasUsedNativeToken = new BN(gasUsed)
+        .multipliedBy(new BN(gasPrice))
+        .toString();
+
+      const exactAmountOutTransfer = getExactAmountOutTrafer();
+
       const fees = getFees();
       const exactAmountOut = exactAmountOutTransfer.value;
       const toToken = await getTokenDetails(
@@ -111,27 +120,25 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
       const getFeesPercent = () => {
         const diff = nativeTokenUSD / toTokenUSD;
 
-        return new BN(fees).times(diff).div(exactAmountOut).times(100).toString();
-      }
-      
-      console.log(getFeesPercent());
-      
+        return new BN(fees)
+          .times(diff)
+          .div(exactAmountOut)
+          .times(100)
+          .toString();
+      };
 
       return {
         exactAmountOut,
         comparedToDutch: new BN(exactAmountOutTransfer.value)
           .div(dutchPrice)
           .toString(),
-        gas: getGas(),
         fees,
         dutchPrice,
         feesPercent: getFeesPercent(),
         transfers: await getERC20Transfers(web3!, logs!, session.chainId!),
+        gasUsedNativeToken,
         gasUsed: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "gwei"),
-        gasUsedMatic: Web3.utils.fromWei(
-          receipt?.effectiveGasPrice || 0,
-          "ether"
-        ),
+        gasPrice: Web3.utils.fromWei(receipt?.effectiveGasPrice || 0, "ether"),
         blockNumber: receipt?.blockNumber.toString(),
         txStatus: receipt?.status.toString(),
       };
@@ -140,7 +147,6 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
     enabled: !!session?.txHash && !!web3 && !!session?.chainId,
   });
 };
-
 
 export const useUSDPriceQuery = (address?: string, chainId?: number) => {
   return useQuery({
@@ -160,7 +166,6 @@ export const useUSDPriceQuery = (address?: string, chainId?: number) => {
   });
 };
 
-
 export const useTokenDetailsQuery = (address?: string, chainId?: number) => {
   const web3 = useWeb3(chainId);
   return useQuery({
@@ -169,4 +174,4 @@ export const useTokenDetailsQuery = (address?: string, chainId?: number) => {
     staleTime: Infinity,
     enabled: !!address && !!chainId && !!web3,
   });
-}
+};
