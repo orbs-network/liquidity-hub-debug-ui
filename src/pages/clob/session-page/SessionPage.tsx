@@ -192,8 +192,7 @@ const StyledLogContent = styled(RowFlex)`
 const TxDetails = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
-  if (!tx || !session) return null;
-
+  if (!session) return null;
   return (
     <>
       <ListItem label="Transaction hash">
@@ -204,14 +203,18 @@ const TxDetails = () => {
         />
       </ListItem>
       <ListItem label="Status">
-        <Tag>
-          <StyledRowText>
-            {tx.txStatus === "1" ? "Success" : "Failure"}
-          </StyledRowText>
-        </Tag>
+        {tx ? (
+          <Tag>
+            <StyledRowText>
+              {tx.txStatus === "1" ? "Success" : "Failure"}
+            </StyledRowText>
+          </Tag>
+        ) : (
+          "-"
+        )}
       </ListItem>
       <ListItem label="Block number">
-        <StyledRowText>{tx.blockNumber}</StyledRowText>
+        {tx ? <StyledRowText>{tx.blockNumber}</StyledRowText> : "-"}
       </ListItem>
       <GasPrice />
     </>
@@ -331,7 +334,6 @@ const WithSmall = ({
   );
 };
 
-
 const ExactAmountOut = () => {
   const tx = useSessionTx()?.data;
   const session = useSession().data;
@@ -340,7 +342,7 @@ const ExactAmountOut = () => {
       <WithUSD address={session?.tokenOutAddress} amount={tx?.exactAmountOut} />
     </ListItem>
   );
-}
+};
 
 const DucthPrice = () => {
   const tx = useSessionTx()?.data;
@@ -350,7 +352,7 @@ const DucthPrice = () => {
       <WithUSD address={session?.tokenOutAddress} amount={tx?.dutchPrice} />
     </ListItem>
   );
-}
+};
 
 const FeePercentFromExactAmountOut = () => {
   const tx = useSessionTx()?.data;
@@ -372,11 +374,12 @@ const DucthPriceDiffPerecent = () => {
       <StyledRowText>{`${value}%`}</StyledRowText>
     </ListItem>
   );
-}
+};
 
 const Transfers = () => {
   const { data: session } = useSession();
-  const tx = useSessionTx()?.data;
+  const { data: tx } = useSessionTx();
+
   if (!tx || !session) return null;
 
   return (
@@ -386,7 +389,6 @@ const Transfers = () => {
       <Fees />
       <FeePercentFromExactAmountOut />
       <GasUsed />
-
       <DucthPrice />
       <DucthPriceDiffPerecent />
       <ListItem label="ERC-20 Tokens Transferred">

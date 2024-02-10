@@ -62,6 +62,7 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
             eqIgnoreCase(t.to, session.userAddress || "") &&
             eqIgnoreCase(t.token.address, session.tokenOutAddress || "")
         );
+        
         return _.sortBy(filtered, (t) => t.value).reverse()[0];
       };
       const wToken = getChainConfig(session.chainId!)?.wToken;
@@ -106,7 +107,7 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
       const exactAmountOutTransfer = getExactAmountOutTrafer();
 
       const fees = getFees();
-      const exactAmountOut = exactAmountOutTransfer.value;
+      const exactAmountOut = exactAmountOutTransfer?.value;
       const toToken = await getTokenDetails(
         session.tokenOutAddress!,
         web3!,
@@ -129,7 +130,7 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
 
       return {
         exactAmountOut,
-        comparedToDutch: new BN(exactAmountOutTransfer.value)
+        comparedToDutch: new BN(exactAmountOutTransfer?.value || 0)
           .div(dutchPrice)
           .toString(),
         fees,
