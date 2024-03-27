@@ -48,10 +48,9 @@ export const useSession = () => {
 };
 
 export const useSessionTx = () => {
-  const session = useSession().data;
+  const session = useSession().data;  
   return useTxDetailsQuery(session);
 };
-
 
 export const handleSession = async (
   sessions: ClobSession[]
@@ -59,9 +58,10 @@ export const handleSession = async (
   const session = _.first(sessions);
 
   if (!session) return null;
-  const { dexAmountOut } = session;
   const parseDexAmountOut = async () => {
-    if (!dexAmountOut || !session.tokenOutAddress) return undefined;
+    console.log(session.dexAmountOut);
+    
+    if (!session.dexAmountOut || !session.tokenOutAddress || !BN(session.dexAmountOut).gt(0)) return undefined;
 
     const web3 = getWeb3(session.chainId);
     if (!web3) return undefined;
@@ -81,24 +81,41 @@ export const handleSession = async (
     if (!toTokenDecimals) return undefined;
 
     try {
-      if (isScientificStringToDecimal(dexAmountOut)) {
-        const _dexAmountOut = convertScientificStringToDecimal(dexAmountOut, 6);
-        return amountUi(toTokenDecimals, new BN(_dexAmountOut));
+
+         
+          
+      if (session.dexAmountOut && BN(session.dexAmountOut).gt(0) && isScientificStringToDecimal(session.dexAmountOut || '')) {        
+        const _dexAmountOut = convertScientificStringToDecimal(
+          session.dexAmountOut || '0',
+          6
+        );
+        return amountUi(toTokenDecimals, new BN(_dexAmountOut ||'0'));
       }
-      return amountUi(toTokenDecimals, new BN(dexAmountOut));
+      return amountUi(toTokenDecimals, new BN(session.dexAmountOut || '0'));
     } catch (error) {
       console.log(error);
     }
   };
+
+  const dexAmountOut = await parseDexAmountOut();
+  const getAmountOutDiff = () => {
+    if (dexAmountOut === "-1") {
+      return undefined;
+    }
+
+    // GET DIFF IN PERCENT  
+    return BN(session.amountOutUI || "0")
+      .dividedBy(BN( dexAmountOut || "0")).minus(1).multipliedBy(100).toNumber();
+  };
+
   return {
     ...session,
     dexAmountOut: await parseDexAmountOut(),
+    amountOutDiff: getAmountOutDiff(),
   };
 };
-
-
 
 export const useSessionChainConfig = () => {
   const chainId = useSession().data?.chainId;
   return useChainConfig(chainId);
-}
+};

@@ -39,15 +39,20 @@ class Clob {
         fromClient("timestamp");
         
 
-      const dexAmountOut =
-        fromQuote("amountOutUI") || fromClient("dexAmountOut");
-
+      const dexAmountOut =  fromQuote("amountOutUI")      
       
       const timestampMillis = moment(timestamp).valueOf();
-        
+
+   
+          console.log(fromQuote("auctionData.gasCostF"));
+          
       return {
+        gasCost: fromQuote("auctionData.gasCostF")?.[0],
+        gasCostUsd: fromQuote("auctionData.gasCostUsd")?.[0],
+        gasUnits: fromQuote("auctionData.gasUnits")?.[0],
+        auctionWinner:fromQuote("auctionWinner"),
         id: key,
-        amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
+        amountInRaw: fromQuote("amountIn ") || fromClient("amountIn"),
         amountInUI: fromQuote("amountInF"),
         amountOutRaw: fromQuote("amountOut") || fromClient("amountOut"),
         amountOutUI: fromQuote("amountOut"),
@@ -57,13 +62,6 @@ class Clob {
         dexSwapTxHash: fromClient("dexSwapTxHash"),
         dutchPrice: fromSwap("dutchPrice"),
         dexAmountOut,
-        amountOutDiff:
-          dexAmountOut === -1
-            ? ""
-            : fromSwap("amountOutDiff") ||
-              fromQuote("amountOutDiff") ||
-              (fromClient("clobDexPriceDiffPercent") &&
-                fromClient("clobDexPriceDiffPercent") / 10),
         amountOutUSD:
           fromSwap("dollarValue") ||
           fromQuote("dollarValue") ||

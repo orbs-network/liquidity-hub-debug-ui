@@ -54,11 +54,14 @@ const SessionDisplay = () => {
         <ListItem label="Session ID">
           <StyledRowText>{session.id} </StyledRowText>
         </ListItem>
-        <ListItem label="Wallet address">
+        <ListItem label="User address">
           <AddressLink address={session.userAddress} />
         </ListItem>
         <ListItem label="Slippage">
-          <StyledRowText>{session.slippage}</StyledRowText>
+          <StyledRowText>{`${session.slippage}%`}</StyledRowText>
+        </ListItem>
+        <ListItem label="Auction winner">
+          <StyledRowText>{session.auctionWinner}</StyledRowText>
         </ListItem>
         {session.swapStatus && (
           <ListItem label="Swap status">
@@ -70,62 +73,30 @@ const SessionDisplay = () => {
           </ListItem>
         )}
         <TxActionRow session={session} />
-        <ListItem label="Is clob trade">
-          <StyledRowText>
-            {!_.isBoolean(session.isClobTrade)
-              ? "-"
-              : session.isClobTrade
-              ? "true"
-              : "false"}
-          </StyledRowText>
-        </ListItem>
-        <ListItem label="Dex Transaction hash">
-          <AddressLink
-            address={session.dexSwapTxHash}
-            path="tx"
-            chainId={session.chainId}
-          />
-        </ListItem>
-        <StyledDivider />
-        <ListItem label="In token">
-          <StyledRowColumn>
-            <StyledRowText>Symbol: {session.tokenInSymbol}</StyledRowText>
-            <RowFlex>
-              Address: <AddressLink address={session.tokenInAddress} />
-            </RowFlex>
-          </StyledRowColumn>
-        </ListItem>
-        <ListItem label="Out token">
-          <StyledRowColumn>
-            <StyledRowText>Symbol: {session.tokenOutSymbol}</StyledRowText>
-            <RowFlex>
-              Address: <AddressLink address={session.tokenOutAddress} />
-            </RowFlex>
-          </StyledRowColumn>
-        </ListItem>
-        <StyledDivider />
+
         <ListItem label="Amount in">
           <WithUSD
-            decimalScale={18}
             amount={session.amountInUI}
             address={session.tokenInAddress}
           />
         </ListItem>
         <ListItem label="Amount out">
           <WithUSD
-            decimalScale={18}
             amount={session.amountOutUI}
             address={session.tokenOutAddress}
           />
         </ListItem>
         <ListItem label="Dex amount out">
           <StyledRowText>
-            <FormattedAmount value={session.dexAmountOut} decimalScale={18} />
+            <FormattedAmount value={session.dexAmountOut} />
           </StyledRowText>
         </ListItem>
         <ListItem label="Amount out diff">
-          <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
+          <StyledRowText>
+            <Amount suffix="%" value={session.amountOutDiff} decimalScale={2} />
+          </StyledRowText>
         </ListItem>
+        
         <StyledDivider />
 
         <ListItem label="Timestamp">
@@ -140,6 +111,22 @@ const SessionDisplay = () => {
       </StyledList>
     </StyledSessionDisplay>
   );
+};
+
+const Amount = ({
+  value,
+  decimalScale,
+  suffix = '' ,
+  prefix = ''
+}: {
+  value?: string | number;
+  decimalScale?: number;
+  suffix?: string;
+  prefix?: string;
+}) => {
+  const result = useNumberFormatter({ value, decimalScale });
+
+  return <>{!result ? "-" : `${prefix}${result}${suffix}`}</>;
 };
 
 const Logs = () => {
@@ -193,6 +180,7 @@ const TxDetails = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
   if (!session) return null;
+  
   return (
     <>
       <ListItem label="Transaction hash">
@@ -206,7 +194,7 @@ const TxDetails = () => {
         {tx ? (
           <Tag>
             <StyledRowText>
-              {tx.txStatus === "1" ? "Success" : "Failure"}
+              {tx.txStatus === "1" ? "Mined" : "Reverted"}
             </StyledRowText>
           </Tag>
         ) : (
@@ -216,25 +204,30 @@ const TxDetails = () => {
       <ListItem label="Block number">
         {tx ? <StyledRowText>{tx.blockNumber}</StyledRowText> : "-"}
       </ListItem>
-      <GasPrice />
+      <ListItem label="Gas cost">
+      <StyledRowText>
+        <Amount value={session.gasCost} /></StyledRowText> 
+      </ListItem>
+      <ListItem label="Gas cost Usd">
+      <StyledRowText>$<Amount value={session.gasCostUsd} /></StyledRowText> 
+      </ListItem>
+      <ListItem label="Gas units">
+      <StyledRowText>{session.gasUnits}</StyledRowText> 
+      </ListItem>
     </>
   );
 };
 
-const GasPrice = () => {
-  const tx = useSessionTx().data;
-  const chainConfig = useSessionChainConfig();
-  const value = useNumberFormatter({ value: tx?.gasUsed });
-  const native = useNumberFormatter({ value: tx?.gasPrice });
-  return (
-    <ListItem label="Gas price">
-      <WithSmall
-        value={`${value} Gwei`}
-        smallValue={` ${native} ${chainConfig?.native.symbol}`}
-      />
-    </ListItem>
-  );
-};
+// const GasPrice = () => {
+//   const tx = useSessionTx().data;
+  
+//   const value = useNumberFormatter({ value: tx?.gasUsed });
+//   return (
+//     <ListItem label="Gas price">
+//       <StyledRowText>{value} Gwei</StyledRowText>
+//     </ListItem>
+//   );
+// };
 
 const TxActionRow = ({ session }: { session: ClobSession }) => {
   const amountInUI = useNumberFormatter({ value: session.amountInUI });
@@ -380,7 +373,7 @@ const Transfers = () => {
   const { data: session } = useSession();
   const { data: tx } = useSessionTx();
 
-  if (!tx || !session) return null;
+  if (!tx || !session)  return null;
 
   return (
     <>
@@ -447,11 +440,6 @@ const StyledRow = styled(RowFlex)`
 
 const StyledTransfers = styled(ColumnFlex)`
   width: 100%;
-`;
-
-const StyledRowColumn = styled(ColumnFlex)`
-  align-items: flex-start;
-  gap: 5px;
 `;
 
 const StyledSessionDisplay = styled(ColumnFlex)`

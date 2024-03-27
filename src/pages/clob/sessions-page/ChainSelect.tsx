@@ -28,6 +28,10 @@ const chains = [
     title: "BSC",
     value: 56,
   },
+  {
+    title: "FTM",
+    value: 250,
+  },
 ];
 
 export function ChainSelect() {

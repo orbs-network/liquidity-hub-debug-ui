@@ -84,6 +84,8 @@ export const getChainName = (chainId?: number) => {
       return "Polygon";
     case 56:
       return "BSC";
+      case 250:
+        return "FTM";
     default:
       break;
   }
@@ -100,9 +102,9 @@ export const swapStatusText = (status?: string) => {
   if (!status) return "-";
   switch (status) {
     case "success":
-      return "Success";
+      return "Mined";
     case "failed":
-      return "Failed";
+      return "Reverted";
     default:
       return "-";
   }
@@ -114,7 +116,7 @@ export const getContract = (web3: Web3, address: string) =>
 export function convertScientificStringToDecimal(
   scientificString: string,
   decimals: number
-) {
+) {  
   // Check if the input string is in scientific notation
   if (isScientificStringToDecimal(scientificString)) {
     // Convert scientific notation string to decimal string

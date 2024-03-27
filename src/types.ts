@@ -1,4 +1,8 @@
 export interface ClobSession {
+  gasCost: string;
+  gasCostUsd: string;
+  gasUnits: string;
+  auctionWinner: string;
   id: string;
   amountInRaw: string | number;
   amountInUI: string | number;
@@ -7,7 +11,7 @@ export interface ClobSession {
   chainId?: number;
   timestampMillis?: number;
   timestamp?: string;
-  gasUnits?: number;
+
   amountOutUSD?: number;
   amountInUSD?: number;
   isAction?: boolean;
