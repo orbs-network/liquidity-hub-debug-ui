@@ -6,18 +6,18 @@ import {
   amountUi,
   convertScientificStringToDecimal,
   getContract,
-  getWeb3,
   isScientificStringToDecimal,
   isTxHash,
 } from "../../../helpers";
-import { queryKey, useTxDetailsQuery } from "../../../query";
+import { queryKey, useTxDetailsQuery, useUSDPriceQuery } from "../../../query";
 import { ClobSession, SessionsFilter } from "../../../types";
 import BN from "bignumber.js";
 import { clob } from "applications";
 import { isNativeAddress } from "@defi.org/web3-candies";
-import { useChainConfig } from "hooks";
+import { useChainConfig, useWeb3 } from "hooks";
+import axios from "axios";
 
-export const useSession = () => {
+export const useRawSession = () => {
   const params = useParams();
 
   const filter = useMemo((): SessionsFilter | undefined => {
@@ -36,86 +36,155 @@ export const useSession = () => {
   return useQuery({
     queryKey: [queryKey.session, filter],
     queryFn: async ({ signal }) => {
-      const result = await clob.getSessions({
+      const sessions = await clob.getSessions({
         signal,
         filter,
       });
-
-      return handleSession(result);
+      return _.first(sessions);
     },
     staleTime: Infinity,
   });
 };
 
+export const useLogTrace = () => {
+  const session = useRawSession().data;
+
+  return useQuery({
+    queryKey: ["useLogTrace", session?.id],
+    queryFn: async ({ signal }) => {
+      if (!session) return;
+      const result = await axios.post(
+        "http://10.11.11.26:3000",
+        {
+          chainId: session.chainId,
+          blockNumber: session.blockNumber,
+          txData: session.txData,
+        },
+        {
+          signal,
+        }
+      );        
+      return result.data;
+    },
+  });
+};
+
 export const useSessionTx = () => {
-  const session = useSession().data;  
+  const session = useRawSession().data;
   return useTxDetailsQuery(session);
 };
 
-export const handleSession = async (
-  sessions: ClobSession[]
-): Promise<ClobSession | null> => {
-  const session = _.first(sessions);
+export const useSession = () => {
+  const session = useRawSession().data;
 
-  if (!session) return null;
-  const parseDexAmountOut = async () => {
-    console.log(session.dexAmountOut);
-    
-    if (!session.dexAmountOut || !session.tokenOutAddress || !BN(session.dexAmountOut).gt(0)) return undefined;
+  const toTokenDecimals = 18;
 
-    const web3 = getWeb3(session.chainId);
-    if (!web3) return undefined;
-    const contract = getContract(web3, session.tokenOutAddress);
+  const toTokenUsd = useUSDPriceQuery(session?.tokenOutAddress).data;
+  return useMemo(() => {
+    if (!session) return;
+    const dexAmountOut =
+      toTokenDecimals && getDexAmountOut(session, toTokenDecimals);
+    const { estimatedGasCost, actualGasCost } = handleGasPrice(
+      session,
+      toTokenDecimals
+    );
 
-    if (!contract) return undefined;
-    let toTokenDecimals;
+    return {
+      ...session,
+      dexAmountOut,
+      amountOutDiff: dexAmountOut
+        ? getAmountOutDiff(session, dexAmountOut)
+        : undefined,
+      estimatedGasCost,
+      estimatedGasCostUsd: BN(estimatedGasCost || "0").multipliedBy(
+        BN(toTokenUsd || "0")
+      ),
+      actualGasCost,
+      actualGasCostUsd: BN(actualGasCost || "0").multipliedBy(
+        BN(toTokenUsd || "0")
+      ),
+    };
+  }, [toTokenDecimals, session]);
+};
+// gasPriceGwei
 
-    try {
-      if (isNativeAddress(session.tokenOutAddress)) {
-        toTokenDecimals = 18;
-      } else {
-        toTokenDecimals =
-          contract && ((await contract.methods.decimals().call()) as number);
-      }
-    } catch (error) {}
-    if (!toTokenDecimals) return undefined;
-
-    try {
-
-         
-          
-      if (session.dexAmountOut && BN(session.dexAmountOut).gt(0) && isScientificStringToDecimal(session.dexAmountOut || '')) {        
-        const _dexAmountOut = convertScientificStringToDecimal(
-          session.dexAmountOut || '0',
-          6
-        );
-        return amountUi(toTokenDecimals, new BN(_dexAmountOut ||'0'));
-      }
-      return amountUi(toTokenDecimals, new BN(session.dexAmountOut || '0'));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const dexAmountOut = await parseDexAmountOut();
-  const getAmountOutDiff = () => {
-    if (dexAmountOut === "-1") {
-      return undefined;
-    }
-
-    // GET DIFF IN PERCENT  
-    return BN(session.amountOutUI || "0")
-      .dividedBy(BN( dexAmountOut || "0")).minus(1).multipliedBy(100).toNumber();
-  };
-
+const handleGasPrice = (session: ClobSession, decimals?: number) => {
+  if (!decimals) return { estimatedGasCost: "0", actualGasCost: "0" };
   return {
-    ...session,
-    dexAmountOut: await parseDexAmountOut(),
-    amountOutDiff: getAmountOutDiff(),
+    estimatedGasCost: amountUi(decimals, BN(session.gasCost || "0")),
+    actualGasCost: BN(session.gasUsed || "")
+      .multipliedBy(BN(session.gasPriceGwei || "0"))
+      .dividedBy(1e9)
+      .toString(),
   };
 };
 
+const getAmountOutDiff = (session: ClobSession, dexAmountOut?: string) => {
+  if (dexAmountOut === "-1") {
+    return undefined;
+  }
+
+  // GET DIFF IN PERCENT
+  return BN(session.amountOutUI || "0")
+    .dividedBy(BN(dexAmountOut || "0"))
+    .minus(1)
+    .multipliedBy(100)
+    .toNumber();
+};
+
+const getDexAmountOut = (session: ClobSession, toTokenDecimals: number) => {
+  if (
+    !session.dexAmountOut ||
+    !session.tokenOutAddress ||
+    !BN(session.dexAmountOut).gt(0)
+  ) {
+    return undefined;
+  }
+
+  try {
+    if (
+      session.dexAmountOut &&
+      BN(session.dexAmountOut).gt(0) &&
+      isScientificStringToDecimal(session.dexAmountOut || "")
+    ) {
+      const _dexAmountOut = convertScientificStringToDecimal(
+        session.dexAmountOut || "0",
+        6
+      );
+      return amountUi(toTokenDecimals, new BN(_dexAmountOut || "0"));
+    }
+    return amountUi(toTokenDecimals, new BN(session.dexAmountOut || "0"));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const useTokenDecimals = (chainId?: number, tokenAddress?: string) => {
+  const web3 = useWeb3(chainId);
+
+  const query = useQuery({
+    queryKey: ["useTokenDecimals", tokenAddress],
+    queryFn: async () => {
+      console.log("useTokenDecimals");
+
+      if (!tokenAddress) return undefined;
+      if (isNativeAddress(tokenAddress)) {
+        return 18;
+      } else {
+        if (!web3) {
+          return undefined;
+        }
+        const contract = getContract(web3, tokenAddress);
+
+        return (await contract.methods.decimals().call()) as number;
+      }
+    },
+    enabled: !!tokenAddress && !!web3,
+  });
+  return query.data;
+};
+
 export const useSessionChainConfig = () => {
-  const chainId = useSession().data?.chainId;
+  const chainId = useRawSession().data?.chainId;
   return useChainConfig(chainId);
 };

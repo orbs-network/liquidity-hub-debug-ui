@@ -40,15 +40,16 @@ class Clob {
         
 
       const dexAmountOut =  fromQuote("amountOutUI")      
-      
       const timestampMillis = moment(timestamp).valueOf();
 
-   
-          console.log(fromQuote("auctionData.gasCostF"));
-          
+            
       return {
-        gasCost: fromQuote("auctionData.gasCostF")?.[0],
-        gasCostUsd: fromQuote("auctionData.gasCostUsd")?.[0],
+        blockNumber: Number(fromSwap("blockNumber") || '0'),
+        txData: fromSwap("txData"),
+        gasPriceGwei: fromSwap("gasPriceGwei"),
+        gasUsed: fromSwap("gasUsed"),
+        gasCost: fromQuote("auctionData.gasCost")?.[0],
+        gasCostUsd: fromQuote("auctionData.gasCostF")?.[0],
         gasUnits: fromQuote("auctionData.gasUnits")?.[0],
         auctionWinner:fromQuote("auctionWinner"),
         id: key,
@@ -145,7 +146,6 @@ class Clob {
 
     if (!swapFirst()) {
       const serverSessions = await this.fetchServerSessions(args);
-
       const ids = getIdsFromSessions(serverSessions);
 
       const clientSessions = await this.fetchClientSessions({
