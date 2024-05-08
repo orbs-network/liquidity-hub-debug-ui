@@ -16,6 +16,7 @@ import { clob } from "applications";
 import { isNativeAddress } from "@defi.org/web3-candies";
 import { useChainConfig, useWeb3 } from "hooks";
 import axios from "axios";
+import {TX_TRACE_SERVER} from "../../../config";
 
 export const useRawSession = () => {
   const params = useParams();
@@ -54,7 +55,7 @@ export const useLogTrace = () => {
     queryFn: async ({ signal }) => {
       if (!session) return;
       const result = await axios.post(
-        "http://10.11.11.26:3000",
+          TX_TRACE_SERVER,
         {
           chainId: session.chainId,
           blockNumber: session.blockNumber,

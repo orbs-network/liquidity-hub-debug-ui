@@ -20,6 +20,9 @@ import { useNumberFormatter, useTokenAmountUsd } from "hooks";
 import { formatNumber } from "helpers";
 import { ClobSession, TransferLog } from "types";
 import { eqIgnoreCase, zeroAddress } from "@defi.org/web3-candies";
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-sh';
+import 'ace-builds/src-noconflict/theme-terminal';
 
 export function ClobSessionPage() {
   return (
@@ -143,18 +146,25 @@ const SessionDisplay = ({ session }: { session: ClobSession }) => {
         <Logs />
         <Transfers />
         <StyledDivider />
-        <LogTrade />
+        <LogTrace />
       </StyledList>
     </StyledSessionDisplay>
   );
 };
 
-const LogTrade = () => {
+const LogTrace = () => {
   const {data, isLoading, error} = useLogTrace();
 
   return (
-    <ListItem label="Log trade">
-      <p style={{lineBreak:'anywhere'}}>{isLoading ? 'Loading...' : error ? `Error: ${error}` :  data}</p>
+    <ListItem label="Log trace">
+      <AceEditor
+          mode="sh" // Set mode to shell script
+          theme="terminal" // Set theme to a terminal-like theme
+          value={isLoading ? 'Loading...' : error ? `Error: ${error}` :  data}
+          readOnly={true} // Make it read-only to resemble a terminal output
+          width="100%" // Adjust width as needed
+          fontSize={18} // Set the font size here
+      />
     </ListItem>
   );
 };
