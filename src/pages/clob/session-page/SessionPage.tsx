@@ -11,15 +11,16 @@ import styled from "styled-components";
 import _ from "lodash";
 import {
   useLogTrace,
+  useRawSession,
   useSession,
   useSessionChainConfig,
   useSessionTx,
 } from "./hooks";
-import { ReactNode, useMemo } from "react";
+import { ReactNode } from "react";
 import { useNumberFormatter, useTokenAmountUsd } from "hooks";
 import { formatNumber } from "helpers";
 import { ClobSession, TransferLog } from "types";
-import { eqIgnoreCase, zeroAddress } from "@defi.org/web3-candies";
+import { zeroAddress } from "@defi.org/web3-candies";
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-sh';
 import 'ace-builds/src-noconflict/theme-terminal';
@@ -33,7 +34,7 @@ export function ClobSessionPage() {
 }
 
 const Content = () => {
-  const session = useSession();
+  const session = useRawSession().data;
 
   if (!session) {
     return <PageLoader />;
@@ -170,18 +171,18 @@ const LogTrace = () => {
 };
 
 const Fees = () => {
-  const session = useSession();
-  const { data: tx } = useSessionTx();
+  // const session = useSession();
+  // const { data: tx } = useSessionTx();
 
-  const userSavingDstToken = useMemo(() => {
-    return _.last(
-      tx?.transfers?.filter(
-        (it) =>
-          eqIgnoreCase(it.from, session?.userAddress || "") ||
-          eqIgnoreCase(it.to, session?.userAddress || "")
-      )
-    )?.value;
-  }, [tx?.transfers]);
+  // const userSavingDstToken = useMemo(() => {
+  //   return _.last(
+  //     tx?.transfers?.filter(
+  //       (it) =>
+  //         eqIgnoreCase(it.from, session?.userAddress || "") ||
+  //         eqIgnoreCase(it.to, session?.userAddress || "")
+  //     )
+  //   )?.value;
+  // }, [tx?.transfers]);
 
   return null;
 };
@@ -417,7 +418,8 @@ const DucthPriceDiffPerecent = () => {
 };
 
 const Transfers = () => {
-  const session = useSession();
+  const session = useRawSession().data;
+
   const { data: tx } = useSessionTx();
 
   if (!tx || !session) return null;

@@ -78,7 +78,7 @@ export const useSessionTx = () => {
 export const useSession = () => {
   const session = useRawSession().data;
 
-  const toTokenDecimals = 18;
+  const toTokenDecimals = useTokenDecimals(session?.tokenOutAddress);
 
   const toTokenUsd = useUSDPriceQuery(session?.tokenOutAddress).data;
   return useMemo(() => {
@@ -160,27 +160,26 @@ const getDexAmountOut = (session: ClobSession, toTokenDecimals: number) => {
   }
 };
 
-const useTokenDecimals = (chainId?: number, tokenAddress?: string) => {
-  const web3 = useWeb3(chainId);
+const useTokenDecimals = (tokenAddress?: string) => {
+  const session = useRawSession().data;
+
+  const web3 = useWeb3(session?.chainId);
 
   const query = useQuery({
-    queryKey: ["useTokenDecimals", tokenAddress],
+    queryKey: ["useTokenDecimals", tokenAddress, session?.chainId],
     queryFn: async () => {
-      console.log("useTokenDecimals");
-
-      if (!tokenAddress) return undefined;
-      if (isNativeAddress(tokenAddress)) {
+      if (isNativeAddress(tokenAddress!)) {
         return 18;
       } else {
         if (!web3) {
           return undefined;
         }
-        const contract = getContract(web3, tokenAddress);
+        const contract = getContract(web3, tokenAddress!);
 
         return (await contract.methods.decimals().call()) as number;
       }
     },
-    enabled: !!tokenAddress && !!web3,
+    enabled: !!tokenAddress && !!web3 && !!session?.chainId,
   });
   return query.data;
 };

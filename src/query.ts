@@ -47,7 +47,6 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
   return useQuery({
     queryKey: [queryKey.txDetails, session?.txHash],
     queryFn: async () => {
-      return null
       if (!session) return null;
 
       
