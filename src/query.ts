@@ -47,7 +47,10 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
   return useQuery({
     queryKey: [queryKey.txDetails, session?.txHash],
     queryFn: async () => {
+      return null
       if (!session) return null;
+
+      
       const receipt = await web3?.eth.getTransactionReceipt(session.txHash!);
 
       const logs = receipt?.logs;
@@ -97,8 +100,6 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
         receipt?.effectiveGasPrice || 0,
         "gwei"
       );
-      console.log({ receipt });
-      
 
       const gasUsedNativeToken = new BN(gasUsed)
         .multipliedBy(new BN(gasPrice))
@@ -164,15 +165,5 @@ export const useUSDPriceQuery = (address?: string, chainId?: number) => {
     },
     queryKey: [queryKey.usdPrice1Token, chainId, address],
     staleTime: Infinity,
-  });
-};
-
-export const useTokenDetailsQuery = (address?: string, chainId?: number) => {
-  const web3 = useWeb3(chainId);
-  return useQuery({
-    queryFn: async () => getTokenDetails(address!, useWeb3(chainId)!, chainId!),
-    queryKey: [queryKey.tokenDetails, chainId, address],
-    staleTime: Infinity,
-    enabled: !!address && !!chainId && !!web3,
   });
 };

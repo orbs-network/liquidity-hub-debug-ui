@@ -6,6 +6,7 @@ import { BSC_RPC, CHAIN_CONFIG, POLYGON_INFURA_RPC } from "./config";
 import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
+import { numericFormatter } from "react-number-format";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -67,6 +68,7 @@ export const getRpc = (chainId?: number) => {
 
 export const getWeb3 = (chainId?: number) => {
   const rpc = getRpc(chainId);
+  
   if (!rpc) return undefined;
   return new Web3(new Web3.providers.HttpProvider(rpc));
 };
@@ -259,3 +261,40 @@ export const amountUi = (decimals?: number, amount?: BN) => {
     decimals
   );
 };
+
+
+export const formatNumber = (
+  value?: string | number,
+  decimalScale?: number
+) => {
+  return numericFormatter(value?.toString() || "", {
+    decimalScale: formatNumberDecimals(decimalScale, value),
+    allowLeadingZeros: true,
+    thousandSeparator: ",",
+    displayType: "text",
+  });
+};
+
+export const formatNumberDecimals = (
+  decimalScale = 2,
+  value?: string | number
+) => {
+  const maxZero = 5;
+
+  if (!value) return 0;
+  const [, decimal] = value.toString().split(".");
+  if (!decimal) return 0;
+  const arr = decimal.split("");
+  let count = 0;
+
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === "0") {
+      count++;
+    } else {
+      break;
+    }
+  }
+  if (count > maxZero) return 0;
+  return !count ? decimalScale : count + decimalScale;
+};
+

@@ -1,4 +1,6 @@
 export interface ClobSession {
+  gasPriceGwei: string;
+  gasUsed?: string;
   gasCost: string;
   gasCostUsd: string;
   gasUnits: string;
@@ -35,6 +37,8 @@ export interface ClobSession {
   isClobTrade?: boolean;
   dexSwapTxHash?: string;
   dutchPrice?: string;
+  blockNumber?: number;
+  txData?: string;
 
   logs: {
     client: any;

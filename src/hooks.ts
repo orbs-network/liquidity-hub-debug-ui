@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
-import { getChainConfig, getWeb3 } from "./helpers";
+import { formatNumberDecimals, getChainConfig, getWeb3 } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
 
@@ -35,7 +35,7 @@ export const useWeb3 = (chainId?: number) => {
 
 export const useNumberFormatter = ({
   value,
-  decimalScale = 4,
+  decimalScale = 2,
   dynamicDecimals = true,
 }: {
   value?: string | number;
@@ -43,21 +43,7 @@ export const useNumberFormatter = ({
   dynamicDecimals?: boolean;
 }) => {
   const decimals = useMemo(() => {
-    if (!value) return 0;
-    const [, decimal] = value.toString().split(".");
-    if (!decimal) return 0;
-    const arr = decimal.split("");
-    let count = 0;
-
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i] === "0") {
-        count++;
-      } else {
-        break;
-      }
-    }
-
-    return !count ? decimalScale : count + decimalScale;
+    return formatNumberDecimals(decimalScale, value);
   }, [value, decimalScale]);
 
   return useNumericFormat({
