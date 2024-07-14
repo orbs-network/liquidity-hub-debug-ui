@@ -17,7 +17,7 @@ export const RPC_API_KEY = "7f79fe8f32bc4c29848c1f49a0b7fbb7";
 export const POLYGON_INFURA_RPC = `https://polygon-mainnet.infura.io/v3/${RPC_API_KEY}`;
 export const BSC_RPC = "https://bsc.publicnode.com";
 export const REACTOR_ADDRESS = "0x21Da9737764527e75C17F1AB26Cb668b66dEE0a0";
-export const TX_TRACE_SERVER = "https://utils.orbs.network/tx-trace"
+export const TX_TRACE_SERVER = "https://lh-tools.orbs.network/tx-trace"
 
 export const CHAIN_CONFIG = {
   137: {
