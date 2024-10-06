@@ -1,6 +1,6 @@
 import { Link } from '@chakra-ui/react';
 import  { useMemo } from 'react'
-import { getExplorer, makeElipsisAddress } from '../helpers';
+import { makeElipsisAddress } from '../helpers';
 import styled from 'styled-components';
 import TextOverflow from 'react-text-overflow';
 import {CopyIcon} from '@chakra-ui/icons'
@@ -25,9 +25,13 @@ export function AddressLink({
     e.preventDefault();
     copy(address!);
   };
+  // const url = useMemo(() => {
+  //   const explorer = getExplorer(chainId);
+  //   return `${explorer}/${path}/${address}`;
+  // }, [chainId, path]);
+
   const url = useMemo(() => {
-    const explorer = getExplorer(chainId);
-    return `${explorer}/${path}/${address}`;
+    return `/public/${address}`;
   }, [chainId, path]);
 
   const _address = useMemo(() => {
@@ -40,7 +44,7 @@ export function AddressLink({
 
   return (
     <Container>
-      <StyledLink href={url} target="_blank">
+      <StyledLink href={url}>
         <TextOverflow text={_address || ""} />
       </StyledLink>
      {!hideCopy &&  <StyledIcon onClick={onCopy} />}

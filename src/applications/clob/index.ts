@@ -9,6 +9,7 @@ import {
 import { ClobSession, SessionsFilter } from "types";
 import { elastic } from "services/elastic";
 import moment from "moment";
+import { bn } from "@defi.org/web3-candies";
 
 interface FetchSessionArgs {
   url: string;
@@ -25,12 +26,13 @@ class Clob {
     const grouped = _.mapValues(_.groupBy(sessions, "sessionId"), (value) => {
       return _.groupBy(value, "type");
     });
-
+    
     const sessionValues = _.mapValues(grouped, (session, key): ClobSession => {
+      console.log({"session.quote": session})
       const fromSwap = (key: string) =>
         getValueFromSessionLogs(session.swap, key);
       const fromQuote = (key: string) =>
-        getValueFromSessionLogs(session.quote, key);
+        getValueFromSessionLogs(session.quote, key) || fromSwap(key);
       const fromClient = (key: string) =>
         getValueFromSessionLogs(session.client, key);
       let timestamp =
@@ -38,31 +40,40 @@ class Clob {
         fromQuote("timestamp") ||
         fromClient("timestamp");
         
+      debugger;
+      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");
 
-      const dexAmountOut =  fromQuote("amountOutUI")      
+      
       const timestampMillis = moment(timestamp).valueOf();
+      
+      const savings = fromSwap("exactOutAmountSavings");
+    
+      const amountOutRaw = fromQuote("amountOut") || fromClient("amountOut");
+      const amountOutF = fromQuote("amountOutF");
 
-            
+      const exactOutAmount = fromSwap("exactOutAmount");
       return {
-        blockNumber: Number(fromSwap("blockNumber") || '0'),
-        txData: fromSwap("txData"),
-        gasPriceGwei: fromSwap("gasPriceGwei"),
-        gasUsed: fromSwap("gasUsed"),
-        gasCost: fromQuote("auctionData.gasCost")?.[0],
-        gasCostUsd: fromQuote("auctionData.gasCostF")?.[0],
-        gasUnits: fromQuote("auctionData.gasUnits")?.[0],
-        auctionWinner:fromQuote("auctionWinner"),
         id: key,
-        amountInRaw: fromQuote("amountIn ") || fromClient("amountIn"),
-        amountInUI: fromQuote("amountInF"),
-        amountOutRaw: fromQuote("amountOut") || fromClient("amountOut"),
-        amountOutUI: fromQuote("amountOut"),
+        amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
+        amountInUI: fromQuote("amountInF") || fromClient("srcAmountUI"),
+        amountOutRaw: amountOutRaw,
+
+        //@ts-ignore
+        amountOutF: amountOutF,
         timestampMillis,
         timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
         timeFromNow: datesDiff(moment(timestampMillis)),
         dexSwapTxHash: fromClient("dexSwapTxHash"),
         dutchPrice: fromSwap("dutchPrice"),
-        dexAmountOut,
+        amountOut: fromQuote("amountOut"),
+        dexAmountOut: dexAmountOut,
+        amountOutDiff:
+          dexAmountOut === -1
+            ? ""
+            : fromSwap("amountOutDiff") ||
+              fromQuote("amountOutDiff") ||
+              (fromClient("clobDexPriceDiffPercent") &&
+                fromClient("clobDexPriceDiffPercent") / 10),
         amountOutUSD:
           fromSwap("dollarValue") ||
           fromQuote("dollarValue") ||
@@ -105,6 +116,11 @@ class Clob {
         signature: fromSwap("signature") || fromClient("signature"),
         swapStatus: fromSwap("swapStatus") || fromClient("swapStatus"),
         txHash: fromSwap("txHash") || fromClient("txHash"),
+        gasPriceGwei: fromSwap("gasPriceGwei") || fromClient("gasPriceGwei"),
+        gasUsed: fromSwap("gasUsed") || fromClient("gasUsed"),
+        exactOutAmount: exactOutAmount,
+        exactOutAmountUsd: fromSwap("exactOutAmountUsd"),
+        savings: savings,
         logs: {
           client: session.client,
           swap: session.swap,
@@ -146,6 +162,7 @@ class Clob {
 
     if (!swapFirst()) {
       const serverSessions = await this.fetchServerSessions(args);
+
       const ids = getIdsFromSessions(serverSessions);
 
       const clientSessions = await this.fetchClientSessions({

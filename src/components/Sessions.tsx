@@ -3,20 +3,33 @@ import { RowFlex } from "../styles";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 import TextOverflow from "react-text-overflow";
-import { Text } from "@chakra-ui/react";
+import { IconButton, Text } from "@chakra-ui/react";
 import { ROUTES } from "../config";
 import { useNavigate } from "react-router-dom";
 import _ from "lodash";
 import { useNumberFormatter } from "../hooks";
+import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { PageLoader } from "./PageLoader";
 import { ClobSession } from "types";
 import { AddressLink } from "./AddressLink";
+import { useChainLogo } from "pages";
+const titles = [
+  
+  "Session id",
+  "Tx hash",
+  "Tokens",
+  "Dex",
+  "Timestamp",
+  "$USD",
+  "Swap status",
+];
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
-  padding-right: 10px;
-  justify-content: flex-start;
+  padding-right: 0px;
+  
+  width: calc(100% / ${_.size(titles)} - 15px);
 `;
 
 export const Sessions = ({
@@ -63,6 +76,19 @@ const Loader = styled(PageLoader)`
   padding: 20px;
 `;
 
+const Network = ({chainId}: {chainId?: string}) => {
+  const networkName = '';
+  const logo = useChainLogo(Number(chainId));
+  return (
+    <StyledRow style={{width: "32px"}}>
+      <span style={{display: "flex", alignItems: "center", gap: "5px"}}>
+      <img style={{width: "20px", height: "20px"}} src={logo} alt={networkName} />
+      {networkName}
+      </span >
+      </StyledRow>
+  )
+}
+
 export const ListSession = ({ index, style, data }: any) => {
   const session = data[index] as ClobSession;
   const navigate = useNavigate();
@@ -73,66 +99,94 @@ export const ListSession = ({ index, style, data }: any) => {
 
   return (
     <div style={style}>
-      <ListSessionContainer onClick={onNavigate}>
-        {SessionsListData.map((item, index) => {
-          const Component = item.Component;
-          return (
-            <StyledItem $width={item.width} key={index}>
-              <Component session={session} />
-            </StyledItem>
-          );
-        })}
+      <ListSessionContainer>
+        <Network chainId={session.chainId?.toString()} />
+        <SessionId id={session.id} />
+        <TxHash session={session} />
+        <Tokens session={session} />
+        <Dex dex={session.dex} />
+        <Timestamp timestamp={session.timestamp} />
+        <AmountOutUI value={session.amountOutUSD} />
+        <SwapStatus status={session.swapStatus} />
+        <StyledButtons>
+          <IconButton
+            isRound={true}
+            variant="solid"
+            colorScheme="teal"
+            aria-label="Done"
+            fontSize="15px"
+            size={"sm"}
+            icon={<ArrowForwardIcon />}
+            onClick={onNavigate}
+          />
+        </StyledButtons>
       </ListSessionContainer>
     </div>
   );
 };
-const Timestamp = ({ session }: { session?: ClobSession }) => {
+const Timestamp = ({ timestamp }: { timestamp?: string }) => {
   return (
-    <RowText text={session?.timestamp} />
+    <StyledItem>
+      <RowText text={timestamp} />
+    </StyledItem>
   );
 };
 
-const Dex = ({ session }: { session?: ClobSession }) => {
+const Dex = ({ dex }: { dex?: string }) => {
   return (
-    <RowText text={session?.dex} />
+    <StyledItem>
+      <RowText text={dex} />
+    </StyledItem>
   );
 };
 
 const Tokens = ({ session }: { session: ClobSession }) => {
   return (
-    <RowText text={`${session.tokenInSymbol} -> ${session.tokenOutSymbol}`} />
+    <StyledRow>
+      <RowText text={`${session.tokenInSymbol} -> ${session.tokenOutSymbol}`} />
+    </StyledRow>
   );
 };
 
-const SessionId = ({ session }: { session?: ClobSession }) => {
+const SessionId = ({ id }: { id?: string }) => {
   return (
-    <RowText text={session?.id} />
+    <StyledRow>
+      <RowText text={id} />
+    </StyledRow>
   );
 };
 
 const TxHash = ({ session }: { session?: ClobSession }) => {
   return (
-    <StyledText>
-      <AddressLink
-        text={makeElipsisAddress(session?.txHash)}
-        address={session?.txHash}
-        path="tx"
-        chainId={session?.chainId}
-      />
-    </StyledText>
+    <StyledItem>
+      <StyledText>
+        <AddressLink
+          text={makeElipsisAddress(session?.txHash)}
+          address={session?.txHash}
+          path="tx"
+          chainId={session?.chainId}
+        />
+      </StyledText>
+    </StyledItem>
   );
 };
 
-const SwapStatus = ({ session }: { session?: ClobSession }) => {
-  return <RowText text={swapStatusText(session?.swapStatus)} />;
+const SwapStatus = ({ status }: { status?: string }) => {
+  return (
+    <StyledItem>
+      <RowText text={swapStatusText(status)} />
+    </StyledItem>
+  );
 };
 
-const AmountOutUI = ({ session }: { session?: ClobSession }) => {
-  const result = useNumberFormatter({
-    value: session?.amountOutUSD,
-  })?.toString();
+const AmountOutUI = ({ value, decimalScale }: { value?: number | string, decimalScale?: number }) => {
+  const result = useNumberFormatter({ value, decimalScale })?.toString();
 
-  return <RowText text={result ? `$${result}` : "-"} />;
+  return (
+    <StyledItem>
+      <RowText text={result ? `$${result}` : "-"} />
+    </StyledItem>
+  );
 };
 
 const RowText = ({ text = "-" }: { text?: string }) => {
@@ -143,12 +197,17 @@ const RowText = ({ text = "-" }: { text?: string }) => {
   );
 };
 
-const StyledItem = styled(StyledRow)<{ $width: string }>`
-  width: ${({ $width }) => $width};
-`;
+const StyledItem = styled(StyledRow)``;
 
 const StyledText = styled(Text)`
   font-size: 14px;
+`;
+
+const StyledButtons = styled.div`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 `;
 
 const ListSessionContainer = styled(RowFlex)`
@@ -159,21 +218,13 @@ const ListSessionContainer = styled(RowFlex)`
   border-bottom: ${({ theme }) => `1px solid ${theme.colors.border}`};
   padding: 0px 15px;
   gap: 0px;
-  cursor: pointer;
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
 `;
 
 const ListHeader = () => {
   return (
     <StyledHeader>
-      {_.map(SessionsListData, (it, index) => {
-        return (
-          <StyledHeaderItem $width={it.width} key={index}>
-            {it.title}
-          </StyledHeaderItem>
-        );
+      {_.map(titles, (title, index) => {
+        return <StyledHeaderItem key={index}>{title}</StyledHeaderItem>;
       })}
     </StyledHeader>
   );
@@ -188,22 +239,11 @@ const StyledHeader = styled(RowFlex)`
   font-weight: 500;
 `;
 
-const StyledHeaderItem = styled(StyledRow)<{ $width: string }>`
+const StyledHeaderItem = styled(StyledRow)`
   font-size: 14px;
-  width: ${({ $width }) => $width};
 `;
 
 const StyledList = styled.div`
   flex: 1;
   width: 100%;
 `;
-
-export const SessionsListData = [
-  { title: "Session id", width: "15%", Component: SessionId },
-  { title: "Tx hash", width: "15%", Component: TxHash },
-  { title: "Tokens", width: "15%", Component: Tokens },
-  { title: "Dex", width: "15%", Component: Dex },
-  { title: "Timestamp", width: "15%", Component: Timestamp },
-  { title: "Amount out Usd", width: "15%", Component: AmountOutUI },
-  { title: "Swap status", width: "10%", Component: SwapStatus },
-];

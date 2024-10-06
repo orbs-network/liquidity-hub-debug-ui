@@ -3,9 +3,10 @@ import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
-import { formatNumberDecimals, getChainConfig, getWeb3 } from "./helpers";
+import { getChainConfig, getTokenDetails } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
+import Web3 from "web3";
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -28,14 +29,20 @@ export const useAppParams = () => {
     setQuery,
   };
 };
+export const useTokenDecimals = (tokenAddress?: string, chainId?: number) => {
+  return useMemo(() => {
+    if (!tokenAddress || !chainId) return 18; // Default to 18 decimals
+    return getTokenDetails(tokenAddress, useWeb3(chainId!!) , chainId!!);
+  }, [tokenAddress, chainId]);
+};
 
 export const useWeb3 = (chainId?: number) => {
-  return useMemo(() => getWeb3(chainId), [chainId]);
+  return useMemo(() => new Web3(new Web3.providers.HttpProvider(`https://rpcman.orbs.network/rpc?chainId=${chainId}`)), [chainId]);
 };
 
 export const useNumberFormatter = ({
   value,
-  decimalScale = 2,
+  decimalScale = 4,
   dynamicDecimals = true,
 }: {
   value?: string | number;
@@ -43,7 +50,21 @@ export const useNumberFormatter = ({
   dynamicDecimals?: boolean;
 }) => {
   const decimals = useMemo(() => {
-    return formatNumberDecimals(decimalScale, value);
+    if (!value) return 0;
+    const [, decimal] = value.toString().split(".");
+    if (!decimal) return 0;
+    const arr = decimal.split("");
+    let count = 0;
+
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i] === "0") {
+        count++;
+      } else {
+        break;
+      }
+    }
+
+    return !count ? decimalScale : count + decimalScale;
   }, [value, decimalScale]);
 
   return useNumericFormat({

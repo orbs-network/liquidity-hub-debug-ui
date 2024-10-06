@@ -69,7 +69,7 @@ const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
 const Container = styled(ColumnFlex)`
   width: 100%;
   height: 500px;
-  gap: 20px;
+  gap: 10px;
   align-items: flex-start;
   justify-content: flex-start;
   flex: 1;

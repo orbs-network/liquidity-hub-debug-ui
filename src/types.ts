@@ -1,10 +1,4 @@
 export interface ClobSession {
-  gasPriceGwei: string;
-  gasUsed?: string;
-  gasCost: string;
-  gasCostUsd: string;
-  gasUnits: string;
-  auctionWinner: string;
   id: string;
   amountInRaw: string | number;
   amountInUI: string | number;
@@ -13,7 +7,7 @@ export interface ClobSession {
   chainId?: number;
   timestampMillis?: number;
   timestamp?: string;
-
+  gasUnits?: number;
   amountOutUSD?: number;
   amountInUSD?: number;
   isAction?: boolean;
@@ -32,19 +26,30 @@ export interface ClobSession {
   userAddress?: string;
   ip?: string;
   amountOutDiff?: number;
-  dexAmountOut?: string;
+  dexAmountIn?: string;
   timeFromNow?: string;
   isClobTrade?: boolean;
   dexSwapTxHash?: string;
   dutchPrice?: string;
-  blockNumber?: number;
-  txData?: string;
-
+  tokenInDecimals?: number;
+  tokenOutDecimals?: number;  
+  dexAmountOut?: string;
+  dexAmountOutWS?: string;
+  dexAmountOutUSD?: string;
+  exactAmountOut?: string;
   logs: {
     client: any;
     swap: any[];
     quote: any[];
   };
+  gasPriceGwei?: string;
+  gasUsed?: string;
+  gasPrice?: string;
+  amountOut?: string;
+  amountOutF?: string;
+  exactOutAmount?: string;
+  exactOutAmountUsd?: string;
+  savings?: string;
 }
 
 export type SessionsFilterTerms = {
