@@ -21,6 +21,11 @@ const useHeight = () => {
 
 function App() {
   const height = useHeight();
+
+  useEffect(() => {
+    document.title = "Liquidity Hub Explorer";
+  }, []);
+
   return (
     <QueryParamProvider adapter={ReactRouter6Adapter}>
       <ThemeProvider theme={theme}>
