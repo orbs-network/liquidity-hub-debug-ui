@@ -13,20 +13,22 @@ import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { PageLoader } from "./PageLoader";
 import { ClobSession } from "types";
 import { AddressLink } from "./AddressLink";
+import { useChainLogo } from "pages";
 const titles = [
+  
   "Session id",
   "Tx hash",
   "Tokens",
   "Dex",
   "Timestamp",
-  "Amount out Usd",
+  "$USD",
   "Swap status",
 ];
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
-  padding-right: 10px;
-  justify-content: flex-start;
+  padding-right: 0px;
+  
   width: calc(100% / ${_.size(titles)} - 15px);
 `;
 
@@ -74,6 +76,19 @@ const Loader = styled(PageLoader)`
   padding: 20px;
 `;
 
+const Network = ({chainId}: {chainId?: string}) => {
+  const networkName = '';
+  const logo = useChainLogo(Number(chainId));
+  return (
+    <StyledRow style={{width: "32px"}}>
+      <span style={{display: "flex", alignItems: "center", gap: "5px"}}>
+      <img style={{width: "20px", height: "20px"}} src={logo} alt={networkName} />
+      {networkName}
+      </span >
+      </StyledRow>
+  )
+}
+
 export const ListSession = ({ index, style, data }: any) => {
   const session = data[index] as ClobSession;
   const navigate = useNavigate();
@@ -85,6 +100,7 @@ export const ListSession = ({ index, style, data }: any) => {
   return (
     <div style={style}>
       <ListSessionContainer>
+        <Network chainId={session.chainId?.toString()} />
         <SessionId id={session.id} />
         <TxHash session={session} />
         <Tokens session={session} />
@@ -163,8 +179,8 @@ const SwapStatus = ({ status }: { status?: string }) => {
   );
 };
 
-const AmountOutUI = ({ value }: { value?: number }) => {
-  const result = useNumberFormatter({ value })?.toString();
+const AmountOutUI = ({ value, decimalScale }: { value?: number | string, decimalScale?: number }) => {
+  const result = useNumberFormatter({ value, decimalScale })?.toString();
 
   return (
     <StyledItem>

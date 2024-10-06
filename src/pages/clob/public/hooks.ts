@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   amountUi,
   getContract,
-  getTokenDetails,
   getWeb3,
   isTxHash,
 } from "../../../helpers";
@@ -14,7 +13,7 @@ import { ClobSession, SessionsFilter } from "../../../types";
 import BN from "bignumber.js";
 import { clob } from "applications";
 import { isNativeAddress } from "@defi.org/web3-candies";
-import { useChainConfig, useWeb3 } from "hooks";
+import { useChainConfig } from "hooks";
 
 export const useSession = () => {
   const params = useParams();
@@ -51,25 +50,6 @@ export const useSessionTx = () => {
   return useTxDetailsQuery(session);
 };
 
-export const useGetToken = (tokenAddress?: string, chainId?: number) => {
-  const getTokenDetails = useGetTokenDetails(chainId!!);
-  return useQuery({
-    queryKey: ["useGetToken", tokenAddress, chainId],
-    queryFn: async () => {
-      return getTokenDetails(tokenAddress!!);
-    },
-    enabled: !!tokenAddress && !!chainId,
-    staleTime: Infinity,
-  });
-}
-
-const useGetTokenDetails = (chainId: number) => {
-  const w3 = useWeb3(chainId);
-  
-  return useCallback((tokenAddress: string) => {
-    return getTokenDetails(tokenAddress, w3, chainId);
-  }, [w3, chainId]);
-}
 
 export const handleSession = async (
   sessions: ClobSession[]

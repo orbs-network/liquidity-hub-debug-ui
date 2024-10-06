@@ -26,17 +26,30 @@ export interface ClobSession {
   userAddress?: string;
   ip?: string;
   amountOutDiff?: number;
-  dexAmountOut?: string;
+  dexAmountIn?: string;
   timeFromNow?: string;
   isClobTrade?: boolean;
   dexSwapTxHash?: string;
   dutchPrice?: string;
-
+  tokenInDecimals?: number;
+  tokenOutDecimals?: number;  
+  dexAmountOut?: string;
+  dexAmountOutWS?: string;
+  dexAmountOutUSD?: string;
+  exactAmountOut?: string;
   logs: {
     client: any;
     swap: any[];
     quote: any[];
   };
+  gasPriceGwei?: string;
+  gasUsed?: string;
+  gasPrice?: string;
+  amountOut?: string;
+  amountOutF?: string;
+  exactOutAmount?: string;
+  exactOutAmountUsd?: string;
+  savings?: string;
 }
 
 export type SessionsFilterTerms = {

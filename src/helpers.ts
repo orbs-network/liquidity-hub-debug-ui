@@ -1,8 +1,8 @@
-import { erc20abi, isNativeAddress, parsebn, zero } from "@defi.org/web3-candies";
+import { erc20abi,  isNativeAddress, parsebn, zero } from "@defi.org/web3-candies";
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
-import { BSC_RPC, CHAIN_CONFIG, POLYGON_INFURA_RPC } from "./config";
+import { CHAIN_CONFIG } from "./config";
 import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
@@ -43,30 +43,34 @@ export const getExplorer = (chainId?: number) => {
       return "https://polygonscan.com";
     case 56:
       return "https://bscscan.com";
+    case 59144:
+      return "https://lineascan.build"
+    case 8453:
+      return "https://sepolia.scrollscan.com"
+    case 250:
+      return "https://ftmscan.com"
     default:
       break;
   }
 };
 
-export const getRpc = (chainId?: number) => {
-  if (!chainId) return undefined;
-  let rpc = "";
+export const getLogo = (chainId?: number) => {
+  if (!chainId) return "";
   switch (chainId) {
     case 137:
-      rpc = POLYGON_INFURA_RPC;
-      break;
+      return "https://polygonscan.com";
     case 56:
-      rpc = BSC_RPC;
-      break;
-    default:
-      break;
+      return "https://bscscan.com";
   }
+}
 
-  return rpc;
+export const getRpcUrl = (chainId?: number) => {
+  if (!chainId) return undefined;
+  return `https://rpcman.orbs.network/rpc?chainId=${chainId}`;
 };
 
 export const getWeb3 = (chainId?: number) => {
-  const rpc = getRpc(chainId);
+  const rpc = getRpcUrl(chainId);
   if (!rpc) return undefined;
   return new Web3(new Web3.providers.HttpProvider(rpc));
 };
@@ -100,16 +104,17 @@ export const swapStatusText = (status?: string) => {
   if (!status) return "-";
   switch (status) {
     case "success":
-      return "Success";
+      return "✅ Success";
     case "failed":
-      return "Failed";
+      return "❌ Failed";
     default:
       return "-";
   }
 };
 
-export const getContract = (web3: Web3, address: string) =>
-  new web3.eth.Contract(erc20abi as any, address);
+export const getContract = (web3: Web3, address: string) => {
+  return new web3.eth.Contract(erc20abi as any, address);
+}
 
 export function convertScientificStringToDecimal(
   scientificString: string,

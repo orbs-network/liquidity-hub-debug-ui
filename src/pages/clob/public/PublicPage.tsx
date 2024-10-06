@@ -3,7 +3,6 @@ import {
   AddressLink,
   Card,
   FormattedAmount,
-  LogModal,
   PageLoader,
 } from "components";
 import { ColumnFlex, RowFlex } from "styles";
@@ -12,11 +11,20 @@ import _ from "lodash";
 import { useSession, useSessionChainConfig, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
 import { useNumberFormatter, useTokenAmountUsd } from "hooks";
-import { swapStatusText } from "helpers";
+import { amountUi } from "helpers";
 import { ClobSession, TransferLog } from "types";
 import { zeroAddress } from "@defi.org/web3-candies";
+import { useGetToken } from "../session-page/hooks";
+import bn from "bignumber.js";
 
-export function ClobSessionPage() {
+import fantomLogo from "../../../assets/networks/fantom.png"
+import bscLogo from "../../../assets/networks/bsc.png"
+import polygonLogo from "../../../assets/networks/polygon.png"
+import lineaLogo from "../../../assets/networks/linea.png"
+
+
+
+export function PublicPage() {
   return (
     <Container>
       <Content />
@@ -37,226 +45,268 @@ const Content = () => {
 
   return <SessionDisplay />;
 };
+
+
+const Savings = () => {
+  const session = useSession().data;
+  const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
+
+  const amountWithDecimals = amountUi(outToken?.data?.decimals, bn(session?.savings||"0")); 
+  const usdValue = useNumberFormatter({value: useTokenAmountUsd(session?.tokenOutAddress, amountWithDecimals, session?.chainId), decimalScale:3});
+  //@ts-ignore
+  return  (<ListItem label="Savings">
+    <WithSmall value={useNumberFormatter({ value:amountWithDecimals, decimalScale:3})} smallValue={`$${usdValue}`} />
+  </ListItem>)
+  
+}
+
+const Network = () => {
+  const session = useSession().data;
+  const networkName = useChainName(session?.chainId);
+  const logo = useChainLogo(session?.chainId);
+  return <ListItem label="Network">
+    <StyledRowText>
+      <span style={{display: "flex", alignItems: "center", gap: "5px"}}>
+      <img style={{width: "20px", height: "20px"}} src={logo} alt={networkName} />
+      {networkName}
+      </span >
+      </StyledRowText>
+  </ListItem>
+}
+
 const SessionDisplay = () => {
   const session = useSession().data;
   
   if (!session) return null;
 
+
+  const amountInUI = useNumberFormatter({ value: session.amountInUI });
+  const amountInUSD = useNumberFormatter({ value: session.amountInUSD, decimalScale: 0 });
+  
+  const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut });
+  
+  
   return (
     <StyledSessionDisplay>
       <StyledList>
-        <ListItem label="Dex">
-          <StyledRowText>{session.dex}</StyledRowText>
-        </ListItem>
-        <ListItem label="Chain ID">
-          <StyledRowText>{session.chainId}</StyledRowText>
-        </ListItem>
-        <ListItem label="Session ID">
-          <StyledRowText>{session.id} </StyledRowText>
-        </ListItem>
-        <ListItem label="Wallet address">
-          <AddressLink address={session.userAddress} />
-        </ListItem>
-        <ListItem label="Slippage">
-          <StyledRowText>{session.slippage}</StyledRowText>
-        </ListItem>
-        {session.swapStatus && (
-          <ListItem label="Swap status">
-            <Tag>
-              <StyledRowText>
-                {swapStatusText(session.swapStatus)}
-              </StyledRowText>
-            </Tag>
-          </ListItem>
-        )}
-        <TxActionRow session={session} />
-        <ListItem label="Is clob trade">
-          <StyledRowText>
-            {!_.isBoolean(session.isClobTrade)
-              ? "-"
-              : session.isClobTrade
-              ? "true"
-              : "false"}
-          </StyledRowText>
-        </ListItem>
-        <ListItem label="Dex Transaction hash">
-          <AddressLink
-            address={session.dexSwapTxHash}
-            path="tx"
-            chainId={session.chainId}
-          />
-        </ListItem>
-        <StyledDivider />
-        <ListItem label="In token">
-          <StyledRowColumn>
-            <StyledRowText>Symbol: {session.tokenInSymbol}</StyledRowText>
-            <RowFlex>
-              Address: <AddressLink address={session.tokenInAddress} />
-            </RowFlex>
-          </StyledRowColumn>
-        </ListItem>
-        <ListItem label="Out token">
-          <StyledRowColumn>
-            <StyledRowText>Symbol: {session.tokenOutSymbol}</StyledRowText>
-            <RowFlex>
-              Address: <AddressLink address={session.tokenOutAddress} />
-            </RowFlex>
-          </StyledRowColumn>
-        </ListItem>
-        <StyledDivider />
-        <ListItem label="Amount in">
-          <WithUSD
-            decimalScale={3}
-            amount={session.amountInUI}
-            address={session.tokenInAddress}
-          />
-        </ListItem>
-        <ListItem label="Amount out">
-          <WithUSD
-            decimalScale={3}
-            amount={session.amountOutUI}
-            address={session.tokenOutAddress}
-          />
-        </ListItem>
-        <ListItem label="Dex amount out">
-          <WithUSD
-            decimalScale={3}
-            amount={session.dexAmountOut}
-            address={session.tokenOutAddress}
-            />
-        </ListItem>
-        <ListItem label="Amount out diff">
-          <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
-        </ListItem>
-        <StyledDivider />
-
-        <ListItem label="Timestamp">
+      <Network />
+      <ListItem label="Timestamp">
           <WithSmall
             value={session.timestamp}
             smallValue={session.timeFromNow}
           />
         </ListItem>
-        <TxDetails />
-        <Logs />
-        <Transfers />
-      </StyledList>
-    </StyledSessionDisplay>
-  );
-};
-
-const Logs = () => {
-  const session = useSession().data;
-  if (!session || !session.logs) return null;
-  return (
-    <>
-      <StyledDivider />
-      {session.logs.client && (
-        <ListItem label="Client logs">
-          <StyledLogContent>
-            {session.logs.client.map((it: any, index: number) => {
-              return (
-                <LogModal title={`Client ${index + 1}`} key={index} log={it} />
-              );
-            })}
-          </StyledLogContent>
-        </ListItem>
-      )}
-      {session.logs.quote && (
-        <ListItem label="Quote logs">
-          <StyledLogContent>
-            {session.logs.quote.map((it: any, index: number) => {
-              return (
-                <LogModal title={`Quote ${index + 1}`} key={index} log={it} />
-              );
-            })}
-          </StyledLogContent>
-        </ListItem>
-      )}
-      {session.logs.swap && (
-        <ListItem label="Swap logs">
-          <StyledLogContent>
-            {session.logs.swap.map((it: any, index: number) => {
-              return (
-                <LogModal title={`Swap ${index + 1}`} key={index} log={it} />
-              );
-            })}
-          </StyledLogContent>
-        </ListItem>
-      )}
-    </>
-  );
-};
-
-const StyledLogContent = styled(RowFlex)`
-  justify-content: flex-start;
-  flex-wrap: wrap;
-`;
-const TxDetails = () => {
-  const tx = useSessionTx().data;
-  const session = useSession().data;
-  if (!session) return null;
-  return (
-    <>
-      <ListItem label="Transaction hash">
+        <ListItem label="Transaction hash">
         <AddressLink
           address={session.txHash}
           path="tx"
           chainId={session.chainId}
         />
       </ListItem>
+        <ListItem label="Dex">
+          <StyledRowText>{session.dex} Chain ID: {session.chainId}</StyledRowText>
+        </ListItem>
+        <ListItem label="User's address">
+          <AddressLink address={session.userAddress} />
+        </ListItem>
+        <ListItem label="Slippage">
+          <StyledRowText>{session.slippage?.toFixed(2)}%</StyledRowText>
+        </ListItem>
+        {session.swapStatus && (
+          <ListItem label="Swap status">
+            <Tag>
+              <StyledRowText>
+                {session.txStatus}
+              </StyledRowText>
+            </Tag>
+          </ListItem>
+        )}
+        <TxComparison session={session} />
+        <TxActionRow session={session} />
+        
+        <StyledDivider />
+        <ListItem label="Amount in">
+          <span>{amountInUI}</span>
+          <span> (${amountInUSD})</span>
+        </ListItem>
+        <ListItem label="Amount out">
+          <AmountOut amount={session.amountOutF!!} amountOutUSD={session.amountOutUSD}  />
+        </ListItem>
+        <ListItem label="Dex amount out">
+          <span>{dexAmountOut}</span>
+        </ListItem>
+        <ListItem label="Amount out diff">
+          <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
+        </ListItem>
+          <Savings />
+        
+        <StyledDivider />
+
+        
+        <TxDetails />
+        {/* <Logs /> */}
+        <Transfers />
+      </StyledList>
+    </StyledSessionDisplay>
+  );
+};
+
+// const Logs = () => {
+//   const session = useSession().data;
+//   if (!session || !session.logs) return null;
+//   return (
+//     <>
+//       <StyledDivider />
+//       {session.logs.client && (
+//         <ListItem label="Client logs">
+//           <StyledLogContent>
+//             {session.logs.client.map((it: any, index: number) => {
+//               return (
+//                 <LogModal title={`Client ${index + 1}`} key={index} log={it} />
+//               );
+//             })}
+//           </StyledLogContent>
+//         </ListItem>
+//       )}
+//       {session.logs.quote && (
+//         <ListItem label="Quote logs">
+//           <StyledLogContent>
+//             {session.logs.quote.map((it: any, index: number) => {
+//               return (
+//                 <LogModal title={`Quote ${index + 1}`} key={index} log={it} />
+//               );
+//             })}
+//           </StyledLogContent>
+//         </ListItem>
+//       )}
+//       {session.logs.swap && (
+//         <ListItem label="Swap logs">
+//           <StyledLogContent>
+//             {session.logs.swap.map((it: any, index: number) => {
+//               return (
+//                 <LogModal title={`Swap ${index + 1}`} key={index} log={it} />
+//               );
+//             })}
+//           </StyledLogContent>
+//         </ListItem>
+//       )}
+//     </>
+//   );
+// };
+
+// const StyledLogContent = styled(RowFlex)`
+//   justify-content: flex-start;
+//   flex-wrap: wrap;
+// `;
+const TxDetails = () => {
+  const session = useSession().data;
+  if (!session) return null;
+  return (
+    <>
+      
       <ListItem label="Status">
-        {tx ? (
+        {session.txStatus ? (
           <Tag>
             <StyledRowText>
-              {tx.txStatus === "1" ? "Success" : "Failure"}
+              {session.txStatus === "Mined" ? "Success" : "Failure"}
             </StyledRowText>
           </Tag>
         ) : (
           "-"
         )}
       </ListItem>
-      <ListItem label="Block number">
+      {/* <ListItem label="Block number">
         {tx ? <StyledRowText>{tx.blockNumber}</StyledRowText> : "-"}
-      </ListItem>
+      </ListItem> */}
       <GasPrice />
     </>
   );
 };
 
 const GasPrice = () => {
+  const session = useSession().data;
   const tx = useSessionTx().data;
   const chainConfig = useSessionChainConfig();
-  const value = useNumberFormatter({ value: tx?.gasUsed });
   const native = useNumberFormatter({ value: tx?.gasPrice });
   return (
     <ListItem label="Gas price">
       <WithSmall
-        value={`${value} Gwei`}
+        value={`${session?.gasPriceGwei} Gwei`}
         smallValue={` ${native} ${chainConfig?.native.symbol}`}
       />
+      
+      <span>{`Gas Units:${session?.gasUsed}`}</span>
     </ListItem>
   );
 };
 
+
+
+const AmountOut = ({amount, amountOutUSD}: {amount?: string, amountOutUSD?: number }) => {
+  return (<>
+    <span>{`${amount}`}</span>
+    <span>{`($${amountOutUSD})`}</span>
+  </>)
+}
+
+
+
+const TxComparison = ({ session }: { session: ClobSession }) => {
+  const lhAmountOutF = useNumberFormatter({ value: session.amountOutF });
+  const lhAmountOutUSD = useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 });
+
+  const dexAmount = useNumberFormatter({ value: session.dexAmountOut });
+  const dexAmountUSD = useNumberFormatter({ value: session.dexAmountOutUSD, decimalScale: 0 });
+
+  return (
+    <ListItem label="Transaction Comparison">
+      <RowFlex $justifyContent="flex-start" $gap={5}>
+        <span>LH Price {lhAmountOutF}</span>
+        <span>(${lhAmountOutUSD}) </span>
+        <span>Vs Dex: {dexAmount}</span>
+        <span>(${dexAmountUSD}) </span>
+      </RowFlex>
+    </ListItem>
+  )
+
+}
+
 const TxActionRow = ({ session }: { session: ClobSession }) => {
-  
+
   const amountInUI = useNumberFormatter({ value: session.amountInUI });
-  const amountOutUI = useNumberFormatter({ value: session.amountOutUI });
-  const amountOutUSD = useNumberFormatter({ value: session.amountOutUSD, decimalScale: 2 });
+  const amountInUIUsd = useNumberFormatter({ value: session.amountInUSD, decimalScale: 0 });
+
+  const amountOutF = useNumberFormatter({ value: session.amountOutF }) as string;
+  const amountOutUSD = Number(useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 }));
+  
+
+  const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
+  
+  const exactAmountOutF = parseFloat(amountUi(outToken?.data?.decimals || 18, bn(session?.exactOutAmount ||"0"))).toFixed(4); 
+
+  const exactOutAmountUSD = useNumberFormatter({ value: session.exactOutAmountUsd, decimalScale: 0 });
   return (
     <ListItem label="Transaction Action">
       <RowFlex $justifyContent="flex-start" $gap={5}>
-        <span>Swap {amountInUI}</span>
+        <span>Swap {amountInUI!!}</span>
+        <span>(${amountInUIUsd}) </span>
         <AddressLink
           address={session.tokenInAddress}
           text={session.tokenInSymbol}
         />
-        <span>{`for ${amountOutUI}`} </span>
-        <span>{`($${amountOutUSD})`}</span>
+        
+        
+        <AmountOut amount={amountOutF} amountOutUSD={amountOutUSD}  />
         <AddressLink
           address={session.tokenOutAddress}
           text={session.tokenOutSymbol}
         />
+        Exact:
+        <span>{`${exactAmountOutF}`} </span>
+        <span>{`($${exactOutAmountUSD})`}</span>
+        Gas:
+        <span>{`${session.gasPriceGwei} Gwei`}</span>
+        <span>{`${session.gasUsed ?? 'N/A'}`}</span>
       </RowFlex>
     </ListItem>
   );
@@ -345,7 +395,7 @@ const ExactAmountOut = () => {
   const session = useSession().data;
   return (
     <ListItem label="Exact amount out">
-      <WithUSD address={session?.tokenOutAddress} amount={tx?.exactAmountOut} />
+      <WithUSD address={session?.tokenOutAddress} amount={tx?.exactAmountOut || session?.exactAmountOut} />
     </ListItem>
   );
 };
@@ -359,6 +409,8 @@ const DucthPrice = () => {
     </ListItem>
   );
 };
+
+
 
 const FeePercentFromExactAmountOut = () => {
   const tx = useSessionTx()?.data;
@@ -455,10 +507,7 @@ const StyledTransfers = styled(ColumnFlex)`
   width: 100%;
 `;
 
-const StyledRowColumn = styled(ColumnFlex)`
-  align-items: flex-start;
-  gap: 5px;
-`;
+
 
 const StyledSessionDisplay = styled(ColumnFlex)`
   width: 100%;
@@ -529,3 +578,43 @@ const Container = styled(Card)`
   gap: 20px;
   padding: 20px;
 `;
+
+const networkNames = {
+  1: "Mainnet",
+  56: "BSC",
+  137: "Polygon",
+  8453: "Base",
+  84532: "Base Sepolia",
+  59144: "Linea",
+  59145: "Linea Sepolia",
+  10: "Optimism",
+  42161: "Arbitrum",
+  43114: "Avalanche",
+  1101: "ZkSync",
+  11010: "ZkSync Testnet",
+  10000: "Gnosis",
+  10001: "Gnosis Testnet",
+  250: "Fantom",
+  
+}
+
+function useChainName(chainId: number | undefined) {
+  const n = networkNames[chainId as keyof typeof networkNames];
+  return n; 
+}
+
+const chainLogos = {
+  
+  56: bscLogo,
+  137: polygonLogo,
+  59144: lineaLogo,
+  250: fantomLogo,
+}
+
+export function useChainLogo(chainId: number | undefined) {
+  const logo = chainLogos[chainId as keyof typeof chainLogos];
+  return logo; 
+}
+
+
+

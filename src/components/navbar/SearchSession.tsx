@@ -32,15 +32,15 @@ export function SearchSession() {
       <InputGroup size="md">
         <StyledInput
           color="black"
-          style={{ fontSize:'16px', fontWeight: 400 }}
-          placeholder="Search by Address / Session ID / Tx Hash"
+          style={{ fontSize:'16px', fontWeight: 500 }}
+          placeholder="Search Session ID / Tx Hash"
           value={value}
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}
         />
         <InputRightElement width="4.5rem">
           <Button onClick={searchSession} disabled={true} h="1.75rem" size="sm">
-            Go
+            🔍
           </Button>
         </InputRightElement>
       </InputGroup>
@@ -49,7 +49,7 @@ export function SearchSession() {
 }
 
 const StyledInputContainer = styled(RowFlex)`
-  max-width: 600px;
+  max-width: 400px;
   flex: 1;
 `;
 

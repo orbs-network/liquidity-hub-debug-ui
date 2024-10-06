@@ -149,7 +149,11 @@ export const useTxDetailsQuery = (session?: ClobSession | null) => {
   });
 };
 
+  
+
 export const useUSDPriceQuery = (address?: string, chainId?: number) => {
+
+  address = address === "0x0000000000000000000000000000000000000000" ? "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" : address;
   return useQuery({
     queryFn: async () => {
       if (!chainId || !address) return 0;
