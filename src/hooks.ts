@@ -2,7 +2,7 @@ import { useUSDPriceQuery } from "query";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
+import { DEFAULT_SESSIONS_TIME_RANGE, TX_TRACE_SERVER } from "./config";
 import { getChainConfig, getTokenDetails } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
@@ -13,7 +13,7 @@ import { useSession } from "pages/clob/public/hooks";
 import { zeroAddress } from "@defi.org/web3-candies";
 
 
-const TX_TRACE_SERVER = "https://lh-tools.orbs.network"
+
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
     {
@@ -43,6 +43,7 @@ export const useLogTrace = () => {
     queryKey: ["useLogTrace", session?.id],
     queryFn: async ({ signal }) => {
       if (!session) return;
+      debugger;
       const result = await axios.post(
         TX_TRACE_SERVER,
         {

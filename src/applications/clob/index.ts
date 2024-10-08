@@ -49,6 +49,8 @@ class Clob {
       const amountOutRaw = fromQuote("amountOut") || fromClient("amountOut");
       const amountOutF = fromQuote("amountOutF");
       const exactOutAmount = fromSwap("exactOutAmount");
+      const txData = fromSwap("txData");
+
 
       // const tx = useSessionTx();
       // const chainConfig = useSessionChainConfig();
@@ -126,6 +128,8 @@ class Clob {
         exactOutAmount: exactOutAmount,
         exactOutAmountUsd: fromSwap("exactOutAmountUsd"),
         savings: savings,
+        txData,
+        blockNumber: fromSwap("blockNumber") || fromClient("blockNumber"),
         logs: {
           client: session.client,
           swap: session.swap,

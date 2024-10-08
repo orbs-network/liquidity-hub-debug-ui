@@ -50,6 +50,8 @@ export interface ClobSession {
   exactOutAmount?: string;
   exactOutAmountUsd?: string;
   savings?: string;
+  txData?: string;
+  blockNumber?: string;
 }
 
 export type SessionsFilterTerms = {
