@@ -43,8 +43,7 @@ class Clob {
         fromQuote("timestamp") ||
         fromClient("timestamp");
         
-      debugger;
-      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");      
+      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");
       const timestampMillis = moment(timestamp).valueOf();
       const savings = fromSwap("exactOutAmountSavings");
       const amountOutRaw = fromQuote("amountOut") || fromClient("amountOut");
