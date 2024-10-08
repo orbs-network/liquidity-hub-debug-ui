@@ -7,7 +7,13 @@ import { getChainConfig, getTokenDetails } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
 import Web3 from "web3";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "pages/clob/public/hooks";
+import { zeroAddress } from "@defi.org/web3-candies";
 
+
+const TX_TRACE_SERVER = "https://lh-tools.orbs.network"
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
     {
@@ -29,6 +35,31 @@ export const useAppParams = () => {
     setQuery,
   };
 };
+
+export const useLogTrace = () => {
+  const session = useSession().data;
+
+  return useQuery({
+    queryKey: ["useLogTrace", session?.id],
+    queryFn: async ({ signal }) => {
+      if (!session) return;
+      const result = await axios.post(
+        TX_TRACE_SERVER,
+        {
+          chainId: session.chainId,
+          blockNumber: session.blockNumber,
+          txData: session.txData,
+        },
+        {
+          signal,
+        }
+      );        
+      return result.data;
+    },
+  });
+};
+
+
 export const useTokenDecimals = (tokenAddress?: string, chainId?: number) => {
   return useMemo(() => {
     if (!tokenAddress || !chainId) return 18; // Default to 18 decimals
@@ -74,11 +105,24 @@ export const useNumberFormatter = ({
   }).value;
 };
 
+const wrappedTokenAddress = {
+  137: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  8453: "0x82af49447d645de28ae773d3d4f76cbe7c52b7df",
+  10: "0x4200000000000000000000000000000000000006",
+  56: "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+  250: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
+  59144: "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f",
+  1: "0x4200000000000000000000000000000000000006",
+}
+
 export const useTokenAmountUsd = (
   tokenAddress?: string,
   amount?: string | number,
   chainId?: number
 ) => {
+  chainId = chainId || 137;
+  tokenAddress = tokenAddress === zeroAddress ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress] : tokenAddress;
+
   const { data: price } = useUSDPriceQuery(tokenAddress, chainId);
 
   return useMemo(() => {

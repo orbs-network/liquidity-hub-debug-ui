@@ -2,7 +2,7 @@ import { network } from "@defi.org/web3-candies";
 
 export const ROUTES = {
   main: "/",
-  public: "/public/:identifier",
+  public: "/tx/:identifier",
   clobSessions: "/clob",
   clobSessionsByAddress: "/clob/address/:address",
   clobSession: "/clob/session/:identifier",
@@ -10,7 +10,7 @@ export const ROUTES = {
   navigate: {
     clobSession: (sessionId: string) => `/clob/session/${sessionId}`,
     clobUserAddressSessions: (address: string) => `/clob/address/${address}`,
-    public: (address: string) => `/public/${address}`,
+    tx: (address: string) => `/tx/${address}`,
   },
 };
 
@@ -21,6 +21,8 @@ export const RPC_API_KEY = "7ef8e170641c4d459e296af0336ccec4";
 export const POLYGON_INFURA_RPC = `https://polygon-mainnet.infura.io/v3/${RPC_API_KEY}`;
 export const BSC_RPC = "https://bsc.publicnode.com";
 export const REACTOR_ADDRESS = "0x21Da9737764527e75C17F1AB26Cb668b66dEE0a0";
+export const TX_TRACE_SERVER = "https://lh-tools.orbs.network"
+
 
 export const CHAIN_CONFIG = {
   137: {

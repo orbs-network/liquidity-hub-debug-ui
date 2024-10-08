@@ -21,6 +21,7 @@ import fantomLogo from "../../../assets/networks/fantom.png"
 import bscLogo from "../../../assets/networks/bsc.png"
 import polygonLogo from "../../../assets/networks/polygon.png"
 import lineaLogo from "../../../assets/networks/linea.png"
+import { useUSDPriceQuery } from "query";
 
 
 
@@ -50,11 +51,14 @@ const Content = () => {
 const Savings = () => {
   const session = useSession().data;
   const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
+  debugger;
+  if(Number(session?.savings) <= 1) return <div>-</div>;
 
   const amountWithDecimals = amountUi(outToken?.data?.decimals, bn(session?.savings||"0")); 
-  const usdValue = useNumberFormatter({value: useTokenAmountUsd(session?.tokenOutAddress, amountWithDecimals, session?.chainId), decimalScale:3});
+  const usdValue = useNumberFormatter({value: useTokenAmountUsd(session?.tokenOutAddress, 18, session?.chainId), decimalScale:3});
   //@ts-ignore
   return  (<ListItem label="Savings">
+    <span>{session?.savings}</span>
     <WithSmall value={useNumberFormatter({ value:amountWithDecimals, decimalScale:3})} smallValue={`$${usdValue}`} />
   </ListItem>)
   
@@ -83,7 +87,7 @@ const SessionDisplay = () => {
   const amountInUI = useNumberFormatter({ value: session.amountInUI });
   const amountInUSD = useNumberFormatter({ value: session.amountInUSD, decimalScale: 0 });
   
-  const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut });
+  const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
   
   
   return (
@@ -130,10 +134,10 @@ const SessionDisplay = () => {
           <span> (${amountInUSD})</span>
         </ListItem>
         <ListItem label="Amount out">
-          <AmountOut amount={session.amountOutF!!} amountOutUSD={session.amountOutUSD}  />
+          <AmountOut amount={parseFloat(session.amountOutF!!).toFixed(2)} amountOutUSD={session.amountOutUSD}  />
         </ListItem>
         <ListItem label="Dex amount out">
-          <span>{dexAmountOut}</span>
+          <span>{Number(session.dexAmountOut).toFixed(2)}</span>
         </ListItem>
         <ListItem label="Amount out diff">
           <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
@@ -228,14 +232,19 @@ const GasPrice = () => {
   const tx = useSessionTx().data;
   const chainConfig = useSessionChainConfig();
   const native = useNumberFormatter({ value: tx?.gasPrice });
+  
+  const gasUsedNative = useNumberFormatter({ value: tx?.gasUsedNativeToken })
+  const nativePrice = useUSDPriceQuery(chainConfig?.native.address, session?.chainId);
+  //const gasUsedNativeUSD = gasUsedNative!! * nativePrice!!;
   return (
     <ListItem label="Gas price">
       <WithSmall
         value={`${session?.gasPriceGwei} Gwei`}
-        smallValue={` ${native} ${chainConfig?.native.symbol}`}
+       
       />
       
       <span>{`Gas Units:${session?.gasUsed}`}</span>
+      <span>{`Transaction Fee: ${gasUsedNative} ${chainConfig?.native.symbol}`} $${useNumberFormatter({ value: tx?.gasUsedNativeTokenUsd })}</span>
     </ListItem>
   );
 };
@@ -252,19 +261,18 @@ const AmountOut = ({amount, amountOutUSD}: {amount?: string, amountOutUSD?: numb
 
 
 const TxComparison = ({ session }: { session: ClobSession }) => {
-  const lhAmountOutF = useNumberFormatter({ value: session.amountOutF });
+  const lhAmountOutF = useNumberFormatter({ value: session.amountOutF, decimalScale: 2 });
   const lhAmountOutUSD = useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 });
 
-  const dexAmount = useNumberFormatter({ value: session.dexAmountOut });
+  const dexAmount = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
   const dexAmountUSD = useNumberFormatter({ value: session.dexAmountOutUSD, decimalScale: 0 });
 
   return (
     <ListItem label="Transaction Comparison">
       <RowFlex $justifyContent="flex-start" $gap={5}>
         <span>LH Price {lhAmountOutF}</span>
-        <span>(${lhAmountOutUSD}) </span>
         <span>Vs Dex: {dexAmount}</span>
-        <span>(${dexAmountUSD}) </span>
+        <span> Diff: <b>({session.amountOutDiff}%)</b></span>
       </RowFlex>
     </ListItem>
   )
@@ -273,16 +281,16 @@ const TxComparison = ({ session }: { session: ClobSession }) => {
 
 const TxActionRow = ({ session }: { session: ClobSession }) => {
 
-  const amountInUI = useNumberFormatter({ value: session.amountInUI });
-  const amountInUIUsd = useNumberFormatter({ value: session.amountInUSD, decimalScale: 0 });
+  const amountInUI = useNumberFormatter({ value: session.amountInUI, decimalScale: 2 });
+  const amountInUIUsd = useNumberFormatter({ value: session.amountInUSD, decimalScale: 2 });
 
-  const amountOutF = useNumberFormatter({ value: session.amountOutF }) as string;
+  const amountOutF = useNumberFormatter({ value: session.amountOutF, decimalScale: 2 }) as string;
   const amountOutUSD = Number(useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 }));
   
 
   const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
   
-  const exactAmountOutF = parseFloat(amountUi(outToken?.data?.decimals || 18, bn(session?.exactOutAmount ||"0"))).toFixed(4); 
+  const exactAmountOutF = parseFloat(amountUi(outToken?.data?.decimals || 18, bn(session?.exactOutAmount ||"0"))).toFixed(2); 
 
   const exactOutAmountUSD = useNumberFormatter({ value: session.exactOutAmountUsd, decimalScale: 0 });
   return (

@@ -94,7 +94,7 @@ export const ListSession = ({ index, style, data }: any) => {
   const navigate = useNavigate();
 
   const onNavigate = () => {
-    navigate(ROUTES.navigate.clobSession(session.id));
+    navigate(ROUTES.navigate.tx(session.txHash || session.id));
   };
 
   return (

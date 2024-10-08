@@ -6,7 +6,8 @@ import lh from '../../assets/lh-round-trans.png';
 export const Navbar = () => {
   return (
     <Container>
-      <div style={{ height: '80px', display: 'flex', alignItems: 'center' }}>
+      
+        <Link to='/' style={{ height: '80px', display: 'flex', alignItems: 'center' }}>
         <img src={lh} alt="LH Logo" style={{ height: '64px' }} />
         <span style={{ 
           fontSize: '2.5rem', 
@@ -20,9 +21,8 @@ export const Navbar = () => {
         }}>
           Liquidity Hub
         </span>
-        </div>
-        <Link to='/' style={{ height: '80px', display: 'flex', alignItems: 'center' }}>🏠</Link>
-        <Link to='/public' style={{ height: '80px', display: 'flex', alignItems: 'center' }}>👥</Link>
+        </Link>
+        
         <SearchSession />
     </Container>
   );

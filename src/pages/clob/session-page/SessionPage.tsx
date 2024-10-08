@@ -11,10 +11,14 @@ import styled from "styled-components";
 import _ from "lodash";
 import { useSession, useSessionChainConfig, useSessionTx } from "./hooks";
 import { ReactNode } from "react";
-import { useNumberFormatter, useTokenAmountUsd } from "hooks";
+import { useNumberFormatter, useTokenAmountUsd, useLogTrace } from "hooks";
 import { swapStatusText } from "helpers";
 import { ClobSession, TransferLog } from "types";
 import { zeroAddress } from "@defi.org/web3-candies";
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-sh';
+import 'ace-builds/src-noconflict/theme-terminal';
+
 
 export function ClobSessionPage() {
   return (
@@ -139,10 +143,30 @@ const SessionDisplay = () => {
         <TxDetails />
         <Logs />
         <Transfers />
+        <LogTrace />
+
       </StyledList>
     </StyledSessionDisplay>
   );
 };
+
+const LogTrace = () => {
+  const {data, isLoading, error} = useLogTrace();
+
+  return (
+   <ListItem label="Log trace">
+     <AceEditor
+         mode="sh" // Set mode to shell script
+         theme="terminal" // Set theme to a terminal-like theme
+         value={isLoading ? 'Loading...' : error ? `Error: ${error}` :  data}
+         readOnly={true} // Make it read-only to resemble a terminal output
+         width="100%" // Adjust width as needed
+         fontSize={18} // Set the font size here
+     />
+    </ListItem>
+  );
+};
+
 
 const Logs = () => {
   const session = useSession().data;

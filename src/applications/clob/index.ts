@@ -9,7 +9,10 @@ import {
 import { ClobSession, SessionsFilter } from "types";
 import { elastic } from "services/elastic";
 import moment from "moment";
-import { bn } from "@defi.org/web3-candies";
+import { bn, chainId } from "@defi.org/web3-candies";
+import { useUSDPriceQuery } from "query";
+import { useNumberFormatter } from "hooks";
+import { useSessionChainConfig, useSessionTx } from "pages/clob/public/hooks";
 
 interface FetchSessionArgs {
   url: string;
@@ -41,17 +44,20 @@ class Clob {
         fromClient("timestamp");
         
       debugger;
-      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");
-
-      
+      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");      
       const timestampMillis = moment(timestamp).valueOf();
-      
       const savings = fromSwap("exactOutAmountSavings");
-    
       const amountOutRaw = fromQuote("amountOut") || fromClient("amountOut");
       const amountOutF = fromQuote("amountOutF");
-
       const exactOutAmount = fromSwap("exactOutAmount");
+
+      // const tx = useSessionTx();
+      // const chainConfig = useSessionChainConfig();
+      // //@ts-ignore
+      // const gasUsedNative = Number(useNumberFormatter({ value: tx?.gasUsedNativeToken }))
+      // const nativePrice = useUSDPriceQuery(chainConfig?.native.address, chainId);
+      // const gasUsedNativeUSD = gasUsedNative!! * nativePrice!!;
+
       return {
         id: key,
         amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
