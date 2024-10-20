@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   amountUi,
@@ -52,50 +52,52 @@ export const useSessionTx = () => {
 };
 
 export const useGetToken = (tokenAddress?: string, chainId?: number) => {
-  const getTokenDetails = useGetTokenDetails(chainId!!);
+  const w3 = useWeb3(chainId);
+
   return useQuery({
     queryKey: ["useGetToken", tokenAddress, chainId],
     queryFn: async () => {
-      return getTokenDetails(tokenAddress!!);
+      return getTokenDetails(tokenAddress!, w3!, chainId!);
     },
-    enabled: !!tokenAddress && !!chainId,
+    enabled: !!tokenAddress && !!chainId && !!w3,
     staleTime: Infinity,
   });
-}
-
-const useGetTokenDetails = (chainId: number) => {
-  const w3 = useWeb3(chainId);
-  
-  return useCallback((tokenAddress: string) => {
-    return getTokenDetails(tokenAddress, w3, chainId);
-  }, [w3, chainId]);
-}
+};
 
 export const handleSession = async (
   sessions: ClobSession[]
 ): Promise<ClobSession | null> => {
   const session = _.first(sessions);
-  
+
   if (!session) return null;
-  
+
   return {
     ...session,
-    dexAmountOut: await fromatTokenDecimals(session.tokenOutAddress!!, session.amountOutRaw?.toString() ?? "0", Number(session.chainId)),
-    dexAmountIn: await fromatTokenDecimals(session.tokenInAddress!!, session.amountInRaw?.toString() ?? "0", Number(session.chainId)),
+    dexAmountOut: await fromatTokenDecimals(
+      session.tokenOutAddress!!,
+      session.amountOutRaw?.toString() ?? "0",
+      Number(session.chainId)
+    ),
+    dexAmountIn: await fromatTokenDecimals(
+      session.tokenInAddress!!,
+      session.amountInRaw?.toString() ?? "0",
+      Number(session.chainId)
+    ),
   };
 };
 
-
-
-const fromatTokenDecimals = async (tokenAddress: string, amount: string, chainId: number) => {
+const fromatTokenDecimals = async (
+  tokenAddress: string,
+  amount: string,
+  chainId: number
+) => {
   if (!tokenAddress) return undefined;
 
   const web3 = getWeb3(chainId);
   if (!web3) return undefined;
   const contract = getContract(web3, tokenAddress);
-  
 
-  if (!contract ) return undefined;
+  if (!contract) return undefined;
   let decimals;
 
   try {
@@ -103,7 +105,7 @@ const fromatTokenDecimals = async (tokenAddress: string, amount: string, chainId
       decimals = 18;
     } else {
       decimals =
-      contract && ((await contract.methods.decimals().call()) as number);
+        contract && ((await contract.methods.decimals().call()) as number);
     }
   } catch (error) {
     console.log(error);
@@ -121,4 +123,4 @@ const fromatTokenDecimals = async (tokenAddress: string, amount: string, chainId
 export const useSessionChainConfig = () => {
   const chainId = useSession().data?.chainId;
   return useChainConfig(chainId);
-}
+};

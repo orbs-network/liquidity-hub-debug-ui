@@ -2,7 +2,7 @@ export interface ClobSession {
   id: string;
   amountInRaw: string | number;
   amountInUI: string | number;
-  amountOutRaw?: string | number;
+  amountOutRaw?: string;
   amountOutUI?: string | number;
   chainId?: number;
   timestampMillis?: number;
@@ -36,7 +36,6 @@ export interface ClobSession {
   dexAmountOut?: string;
   dexAmountOutWS?: string;
   dexAmountOutUSD?: string;
-  exactAmountOut?: string;
   logs: {
     client: any;
     swap: any[];
@@ -46,7 +45,6 @@ export interface ClobSession {
   gasUsed?: string;
   gasPrice?: string;
   amountOut?: string;
-  amountOutF?: string;
   exactOutAmount?: string;
   exactOutAmountUsd?: string;
   savings?: string;

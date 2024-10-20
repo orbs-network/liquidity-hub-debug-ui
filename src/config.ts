@@ -1,4 +1,4 @@
-import { network } from "@defi.org/web3-candies";
+import { networks } from "@defi.org/web3-candies";
 
 export const ROUTES = {
   main: "/",
@@ -11,6 +11,7 @@ export const ROUTES = {
     clobSession: (sessionId: string) => `/clob/session/${sessionId}`,
     clobUserAddressSessions: (address: string) => `/clob/address/${address}`,
     tx: (address: string) => `/tx/${address}`,
+    public: (address: string) => `/public/${address}`,
   },
 };
 
@@ -22,21 +23,9 @@ export const REACTOR_ADDRESS = "0x21Da9737764527e75C17F1AB26Cb668b66dEE0a0";
 
 export const TX_TRACE_SERVER = "https://lh-tools.orbs.network/tx-trace"
 
-export const CHAIN_CONFIG = {
-  137: {
-    native: network(137).native,
-    wToken: network(137).wToken,
-  },
-  56: {
-    native: network(56).native,
-    wToken: network(56).wToken,
-  },
-  250: {
-    native: network(250).native,
-    wToken: network(250).wToken,
-  }
-};
 
 export const GAS_ADDRESS = "0x7ae466596C57241459eBaE32D2E64F51Da68F3B8";
 export const FEES_ADDRESS = "0xbd098dB9AD3dbaF2bDAF581340B2662d9A3CA8D2";
+
+
 

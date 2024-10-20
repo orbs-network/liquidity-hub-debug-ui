@@ -1,29 +1,22 @@
 import { Tag, Text } from "@chakra-ui/react";
-import {
-  AddressLink,
-  Card,
-  FormattedAmount,
-  PageLoader,
-} from "components";
+import { AddressLink, Card, FormattedAmount, PageLoader } from "components";
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
-import { useSession, useSessionChainConfig, useSessionTx } from "./hooks";
-import { ReactNode } from "react";
-import { useNumberFormatter, useTokenAmountUsd } from "hooks";
-import { amountUi } from "helpers";
+import { useAmountUI, useSession, useSessionTx, useToken } from "./hooks";
+import { ReactNode, useMemo } from "react";
+import { useChainConfig, useNumberFormatter, useTokenAmountUsd } from "hooks";
+import { amountUi, makeElipsisAddress } from "helpers";
 import { ClobSession, TransferLog } from "types";
 import { zeroAddress } from "@defi.org/web3-candies";
-import { useGetToken } from "../session-page/hooks";
-import bn from "bignumber.js";
+import BN from "bignumber.js";
 
-import fantomLogo from "../../../assets/networks/fantom.png"
-import bscLogo from "../../../assets/networks/bsc.png"
-import polygonLogo from "../../../assets/networks/polygon.png"
-import lineaLogo from "../../../assets/networks/linea.png"
+import fantomLogo from "../../../assets/networks/fantom.png";
+import bscLogo from "../../../assets/networks/bsc.png";
+import polygonLogo from "../../../assets/networks/polygon.png";
+import lineaLogo from "../../../assets/networks/linea.png";
 import { useUSDPriceQuery } from "query";
-
-
+import { BigNumber } from "@ethersproject/bignumber";
 
 export function PublicPage() {
   return (
@@ -47,68 +40,89 @@ const Content = () => {
   return <SessionDisplay />;
 };
 
-
 const Savings = () => {
   const session = useSession().data;
-  const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
-  debugger;
-  if(Number(session?.savings) <= 1) return <div>-</div>;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  if (Number(session?.savings) <= 1) return <div>-</div>;
 
-  const amountWithDecimals = amountUi(outToken?.data?.decimals, bn(session?.savings||"0")); 
-  const usdValue = useNumberFormatter({value: useTokenAmountUsd(session?.tokenOutAddress, 18, session?.chainId), decimalScale:3});
+  const amountWithDecimals = amountUi(
+    outToken?.data?.decimals,
+    BN(session?.savings || "0")
+  );
+  const usdValue = useNumberFormatter({
+    value: useTokenAmountUsd(session?.tokenOutAddress, 18, session?.chainId),
+    decimalScale: 3,
+  });
   //@ts-ignore
-  return  (<ListItem label="Savings">
-    <span>{session?.savings}</span>
-    <WithSmall value={useNumberFormatter({ value:amountWithDecimals, decimalScale:3})} smallValue={`$${usdValue}`} />
-  </ListItem>)
-  
-}
+  return (
+    <ListItem label="Savings">
+      <span>{session?.savings}</span>
+      <WithSmall
+        value={useNumberFormatter({
+          value: amountWithDecimals,
+          decimalScale: 3,
+        })}
+        smallValue={`$${usdValue}`}
+      />
+    </ListItem>
+  );
+};
 
 const Network = () => {
   const session = useSession().data;
   const networkName = useChainName(session?.chainId);
   const logo = useChainLogo(session?.chainId);
-  return <ListItem label="Network">
-    <StyledRowText>
-      <span style={{display: "flex", alignItems: "center", gap: "5px"}}>
-      <img style={{width: "20px", height: "20px"}} src={logo} alt={networkName} />
-      {networkName}
-      </span >
+  return (
+    <ListItem label="Network">
+      <StyledRowText>
+        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <img
+            style={{ width: "20px", height: "20px" }}
+            src={logo}
+            alt={networkName}
+          />
+          {networkName}
+        </span>
       </StyledRowText>
-  </ListItem>
-}
+    </ListItem>
+  );
+};
 
 const SessionDisplay = () => {
   const session = useSession().data;
-  
+
   if (!session) return null;
 
-
   const amountInUI = useNumberFormatter({ value: session.amountInUI });
-  const amountInUSD = useNumberFormatter({ value: session.amountInUSD, decimalScale: 0 });
-  
-  const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
-  
-  
+  const amountInUSD = useNumberFormatter({
+    value: session.amountInUSD,
+    decimalScale: 0,
+  });
+
+  // const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
+
   return (
     <StyledSessionDisplay>
       <StyledList>
-      <Network />
-      <ListItem label="Timestamp">
+        <Network />
+        <ListItem label="Timestamp">
           <WithSmall
             value={session.timestamp}
             smallValue={session.timeFromNow}
           />
         </ListItem>
         <ListItem label="Transaction hash">
-        <AddressLink
-          address={session.txHash}
-          path="tx"
-          chainId={session.chainId}
-        />
-      </ListItem>
+          <AddressLink
+            address={session.txHash}
+            text={makeElipsisAddress(session.txHash, 10)}
+            path="tx"
+            chainId={session.chainId}
+          />
+        </ListItem>
         <ListItem label="Dex">
-          <StyledRowText>{session.dex} Chain ID: {session.chainId}</StyledRowText>
+          <StyledRowText>
+            {session.dex} Chain ID: {session.chainId}
+          </StyledRowText>
         </ListItem>
         <ListItem label="User's address">
           <AddressLink address={session.userAddress} />
@@ -119,22 +133,23 @@ const SessionDisplay = () => {
         {session.swapStatus && (
           <ListItem label="Swap status">
             <Tag>
-              <StyledRowText>
-                {session.txStatus}
-              </StyledRowText>
+              <StyledRowText>{session.txStatus}</StyledRowText>
             </Tag>
           </ListItem>
         )}
-        <TxComparison session={session} />
-        <TxActionRow session={session} />
-        
+        <TxComparison />
+        <TxSummary />
+
         <StyledDivider />
         <ListItem label="Amount in">
           <span>{amountInUI}</span>
           <span> (${amountInUSD})</span>
         </ListItem>
         <ListItem label="Amount out">
-          <AmountOut amount={parseFloat(session.amountOutF!!).toFixed(2)} amountOutUSD={session.amountOutUSD}  />
+          <AmountOut
+            amount={parseFloat(session.amountOutRaw!!).toFixed(2)}
+            amountOutUSD={session.amountOutUSD}
+          />
         </ListItem>
         <ListItem label="Dex amount out">
           <span>{Number(session.dexAmountOut).toFixed(2)}</span>
@@ -142,11 +157,10 @@ const SessionDisplay = () => {
         <ListItem label="Amount out diff">
           <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
         </ListItem>
-          <Savings />
-        
+        <Savings />
+
         <StyledDivider />
 
-        
         <TxDetails />
         {/* <Logs /> */}
         <Transfers />
@@ -207,7 +221,6 @@ const TxDetails = () => {
   if (!session) return null;
   return (
     <>
-      
       <ListItem label="Status">
         {session.txStatus ? (
           <Tag>
@@ -230,92 +243,192 @@ const TxDetails = () => {
 const GasPrice = () => {
   const session = useSession().data;
   const tx = useSessionTx().data;
-  const chainConfig = useSessionChainConfig();
+  const chainConfig = useChainConfig(session?.chainId);
   const native = useNumberFormatter({ value: tx?.gasPrice });
-  
-  const gasUsedNative = useNumberFormatter({ value: tx?.gasUsedNativeToken })
-  const nativePrice = useUSDPriceQuery(chainConfig?.native.address, session?.chainId);
+
+  const gasUsedNative = useNumberFormatter({ value: tx?.gasUsedNativeToken });
+  const nativePrice = useUSDPriceQuery(
+    chainConfig?.native.address,
+    session?.chainId
+  );
   //const gasUsedNativeUSD = gasUsedNative!! * nativePrice!!;
   return (
     <ListItem label="Gas price">
-      <WithSmall
-        value={`${session?.gasPriceGwei} Gwei`}
-       
-      />
-      
+      <WithSmall value={`${session?.gasPriceGwei} Gwei`} />
+
       <span>{`Gas Units:${session?.gasUsed}`}</span>
-      <span>{`Transaction Fee: ${gasUsedNative} ${chainConfig?.native.symbol}`} $${useNumberFormatter({ value: tx?.gasUsedNativeTokenUsd })}</span>
+      <span>
+        {`Transaction Fee: ${gasUsedNative} ${chainConfig?.native.symbol}`} $$
+        {useNumberFormatter({ value: tx?.gasUsedNativeToken })}
+      </span>
     </ListItem>
   );
 };
 
+const AmountOut = ({
+  amount,
+  amountOutUSD,
+}: {
+  amount?: string;
+  amountOutUSD?: number;
+}) => {
+  return (
+    <>
+      <span>{`${amount}`}</span>
+      <span>{`($${amountOutUSD})`}</span>
+    </>
+  );
+};
 
+const useLHAndDexAmountDiff = () => {
+  const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
 
-const AmountOut = ({amount, amountOutUSD}: {amount?: string, amountOutUSD?: number }) => {
-  return (<>
-    <span>{`${amount}`}</span>
-    <span>{`($${amountOutUSD})`}</span>
-  </>)
-}
+  const lhAmount = useAmountUI(outToken?.decimals, session?.amountOutRaw);
+  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
 
+  const amountOutDiff = useMemo(() => {
+    if (!lhAmount || !dexAmount) return "0";
+    const res = BN(lhAmount)
+      .minus(dexAmount)
+      .div(lhAmount)
+      .times(100)
+      .toFixed(2);
+    return res;
+  }, [dexAmount, lhAmount]);
 
+  return amountOutDiff;
+};
 
-const TxComparison = ({ session }: { session: ClobSession }) => {
-  const lhAmountOutF = useNumberFormatter({ value: session.amountOutF, decimalScale: 2 });
-  const lhAmountOutUSD = useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 });
+const TxComparison = () => {
+  const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
+  const lhAmount = useAmountUI(outToken?.decimals, session?.amountOutRaw);
+  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
+  console.log({ dexAmount });
 
-  const dexAmount = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
-  const dexAmountUSD = useNumberFormatter({ value: session.dexAmountOutUSD, decimalScale: 0 });
+  const amountOutDiff = useLHAndDexAmountDiff();
 
   return (
     <ListItem label="Transaction Comparison">
       <RowFlex $justifyContent="flex-start" $gap={5}>
-        <span>LH Price {lhAmountOutF}</span>
-        <span>Vs Dex: {dexAmount}</span>
-        <span> Diff: <b>({session.amountOutDiff}%)</b></span>
+        <span>
+          <TokenAmount
+            prefix="LH Price:"
+            amount={lhAmount}
+            address={session?.tokenOutAddress}
+            symbol={outToken?.symbol}
+            usd={session?.amountOutUSD}
+          />
+        </span>
+        <span>
+          <TokenAmount
+            prefix="Vs Dex price:"
+            amount={dexAmount}
+            usd={session?.dexAmountOutUSD}
+            symbol={outToken?.symbol}
+            address={session?.tokenOutAddress}
+          />
+        </span>
+        <span>
+          {" "}
+          Diff: <b>{amountOutDiff}%</b>
+        </span>
       </RowFlex>
     </ListItem>
-  )
+  );
+};
 
-}
+const TokenAmount = ({
+  prefix,
+  symbol,
+  address,
+  amount,
+  usd,
+}: {
+  symbol?: string;
+  address?: string;
+  amount?: string | number;
+  usd?: string | number;
+  prefix?: string;
+}) => {
+  const session = useSession().data;
+  const formattedAmount = useNumberFormatter({
+    value: amount,
+    decimalScale: 3,
+  });
+  const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });
+  return (
+    <RowFlex $gap={5}>
+      {prefix} {formattedAmount || "-"}{" "}
+      <small style={{ fontSize: 13, opacity: 0.8 }}>
+        {`($${formattedUsd || "-"})`}
+      </small>
+      <AddressLink
+        path="address"
+        address={address}
+        text={symbol}
+        chainId={session?.chainId}
+      />
+    </RowFlex>
+  );
+};
 
-const TxActionRow = ({ session }: { session: ClobSession }) => {
+const TxSummary = () => {
+  const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
 
-  const amountInUI = useNumberFormatter({ value: session.amountInUI, decimalScale: 2 });
-  const amountInUIUsd = useNumberFormatter({ value: session.amountInUSD, decimalScale: 2 });
+  const amountOut = useAmountUI(outToken?.decimals, session?.amountOutRaw);
 
-  const amountOutF = useNumberFormatter({ value: session.amountOutF, decimalScale: 2 }) as string;
-  const amountOutUSD = Number(useNumberFormatter({ value: session.amountOutUSD, decimalScale: 0 }));
-  
+  const exactAmountOutF = parseFloat(
+    amountUi(outToken?.decimals || 18, BN(session?.exactOutAmount || "0"))
+  ).toFixed(2);
 
-  const outToken = useGetToken(session?.tokenOutAddress, session?.chainId);
-  
-  const exactAmountOutF = parseFloat(amountUi(outToken?.data?.decimals || 18, bn(session?.exactOutAmount ||"0"))).toFixed(2); 
-
-  const exactOutAmountUSD = useNumberFormatter({ value: session.exactOutAmountUsd, decimalScale: 0 });
+  const exactOutAmountUSD = useNumberFormatter({
+    value: session?.exactOutAmountUsd,
+    decimalScale: 0,
+  });
   return (
     <ListItem label="Transaction Action">
       <RowFlex $justifyContent="flex-start" $gap={5}>
-        <span>Swap {amountInUI!!}</span>
-        <span>(${amountInUIUsd}) </span>
-        <AddressLink
-          address={session.tokenInAddress}
-          text={session.tokenInSymbol}
+        <TokenAmount
+          address={session?.tokenInAddress}
+          prefix="Swap"
+          usd={session?.amountInUSD}
+          amount={session?.amountInUI}
+          symbol={session?.tokenInSymbol}
         />
-        
-        
-        <AmountOut amount={amountOutF} amountOutUSD={amountOutUSD}  />
-        <AddressLink
-          address={session.tokenOutAddress}
-          text={session.tokenOutSymbol}
+        for
+        <TokenAmount
+          prefix="For"
+          amount={amountOut}
+          usd={session?.amountOutUSD}
+          address={session?.tokenOutAddress}
+          symbol={outToken?.symbol}
         />
         Exact:
         <span>{`${exactAmountOutF}`} </span>
         <span>{`($${exactOutAmountUSD})`}</span>
         Gas:
-        <span>{`${session.gasPriceGwei} Gwei`}</span>
-        <span>{`${session.gasUsed ?? 'N/A'}`}</span>
+        <span>{`${session?.gasPriceGwei} Gwei`}</span>
+        <span>{`${session?.gasUsed ?? "N/A"}`}</span>
       </RowFlex>
+    </ListItem>
+  );
+};
+
+const ExactAmountReceived = () => {
+  const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
+  const amountOut = useAmountUI(outToken?.decimals, session?.exactOutAmount);
+  const amountOutUSD = useNumberFormatter({
+    value: session?.amountOutUSD,
+    decimalScale: 0,
+  });
+
+  return (
+    <ListItem label="Exact Amount Received">
+      <StyledRowText></StyledRowText>
     </ListItem>
   );
 };
@@ -330,7 +443,7 @@ const GasUsed = () => {
   );
   const gas = useNumberFormatter({ value: tx?.gasUsedNativeToken });
   const _usd = useNumberFormatter({ value: usd });
-  const chainConfig = useSessionChainConfig();
+  const chainConfig = useChainConfig(session?.chainId);
 
   return (
     <ListItem label="Gas used">
@@ -345,7 +458,7 @@ const GasUsed = () => {
 const Fees = () => {
   const tx = useSessionTx().data;
   const session = useSession().data;
-  const chainConfig = useSessionChainConfig();
+  const chainConfig = useChainConfig(session?.chainId);
   const usd = useTokenAmountUsd(zeroAddress, tx?.fees, session?.chainId);
   const fee = useNumberFormatter({ value: tx?.fees });
   const _usd = useNumberFormatter({ value: usd });
@@ -372,8 +485,6 @@ const WithUSD = ({
   const _value = useNumberFormatter({ value: amount, decimalScale });
   const usd = useTokenAmountUsd(address, amount, chainId);
   const _usd = useNumberFormatter({ value: usd });
-
-  console.log({_value, _usd})
 
   if (!_value) {
     return <StyledRowText>-</StyledRowText>;
@@ -403,7 +514,10 @@ const ExactAmountOut = () => {
   const session = useSession().data;
   return (
     <ListItem label="Exact amount out">
-      <WithUSD address={session?.tokenOutAddress} amount={tx?.exactAmountOut || session?.exactAmountOut} />
+      <WithUSD
+        address={session?.tokenOutAddress}
+        amount={tx?.exactAmountOut || session?.exactOutAmount}
+      />
     </ListItem>
   );
 };
@@ -417,8 +531,6 @@ const DucthPrice = () => {
     </ListItem>
   );
 };
-
-
 
 const FeePercentFromExactAmountOut = () => {
   const tx = useSessionTx()?.data;
@@ -515,8 +627,6 @@ const StyledTransfers = styled(ColumnFlex)`
   width: 100%;
 `;
 
-
-
 const StyledSessionDisplay = styled(ColumnFlex)`
   width: 100%;
   align-items: flex-start;
@@ -603,26 +713,21 @@ const networkNames = {
   10000: "Gnosis",
   10001: "Gnosis Testnet",
   250: "Fantom",
-  
-}
+};
 
 function useChainName(chainId: number | undefined) {
   const n = networkNames[chainId as keyof typeof networkNames];
-  return n; 
+  return n;
 }
 
 const chainLogos = {
-  
   56: bscLogo,
   137: polygonLogo,
   59144: lineaLogo,
   250: fantomLogo,
-}
+};
 
 export function useChainLogo(chainId: number | undefined) {
   const logo = chainLogos[chainId as keyof typeof chainLogos];
-  return logo; 
+  return logo;
 }
-
-
-

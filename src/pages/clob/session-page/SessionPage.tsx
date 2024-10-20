@@ -339,8 +339,6 @@ const WithUSD = ({
   const usd = useTokenAmountUsd(address, amount, chainId);
   const _usd = useNumberFormatter({ value: usd });
 
-  console.log({_value, _usd})
-
   if (!_value) {
     return <StyledRowText>-</StyledRowText>;
   }

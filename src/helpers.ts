@@ -2,10 +2,10 @@ import { erc20abi,  isNativeAddress, parsebn, zero } from "@defi.org/web3-candie
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
-import { CHAIN_CONFIG } from "./config";
 import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
+import { CHAINS } from "chains";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -66,7 +66,7 @@ export const getLogo = (chainId?: number) => {
 
 export const getRpcUrl = (chainId?: number) => {
   if (!chainId) return undefined;
-  return `https://rpcman.orbs.network/rpc?chainId=${chainId}`;
+  return `https://rpcman.orbs.network/rpc?chainId=${chainId}&appId=liquidity-hub-debug-tool`;
 };
 
 export const getWeb3 = (chainId?: number) => {
@@ -144,7 +144,7 @@ export const isTxHash = (value?: string) => value?.startsWith("0x");
 
 export const getChainConfig = (chainId?: number) => {
   if (!chainId) return undefined;
-  return CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG];
+  return CHAINS.find((chain) => chain.id === chainId);
 };
 
 export const datesDiff = (date: Moment) => {
@@ -261,4 +261,13 @@ export const amountUi = (decimals?: number, amount?: BN) => {
     amount.times(percision).idiv(percision).div(percision).toString(),
     decimals
   );
+};
+
+export const amountUiV2 = (decimals?: number, amount?: string | BN) => {
+  amount = amount?.toString()
+  
+    
+  if (!decimals || !amount) return "";
+  const percision = new BN(10).pow(decimals || 0);
+  return BN(amount).times(percision).idiv(percision).div(percision).toFixed();
 };

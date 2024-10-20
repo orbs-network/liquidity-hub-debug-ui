@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE, TX_TRACE_SERVER } from "./config";
-import { getChainConfig, getTokenDetails } from "./helpers";
+import { getChainConfig, getRpcUrl } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
 import Web3 from "web3";
@@ -11,8 +11,6 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "pages/clob/public/hooks";
 import { zeroAddress } from "@defi.org/web3-candies";
-
-
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -43,7 +41,6 @@ export const useLogTrace = () => {
     queryKey: ["useLogTrace", session?.id],
     queryFn: async ({ signal }) => {
       if (!session) return;
-      debugger;
       const result = await axios.post(
         TX_TRACE_SERVER,
         {
@@ -54,22 +51,20 @@ export const useLogTrace = () => {
         {
           signal,
         }
-      );        
+      );
       return result.data;
     },
   });
 };
 
 
-export const useTokenDecimals = (tokenAddress?: string, chainId?: number) => {
-  return useMemo(() => {
-    if (!tokenAddress || !chainId) return 18; // Default to 18 decimals
-    return getTokenDetails(tokenAddress, useWeb3(chainId!!) , chainId!!);
-  }, [tokenAddress, chainId]);
-};
-
 export const useWeb3 = (chainId?: number) => {
-  return useMemo(() => new Web3(new Web3.providers.HttpProvider(`https://rpcman.orbs.network/rpc?chainId=${chainId}`)), [chainId]);
+  const rpc = getRpcUrl(chainId);
+  return useMemo(() => {
+    if (!rpc) return;
+
+    return new Web3(new Web3.providers.HttpProvider(rpc));
+  }, [chainId]);
 };
 
 export const useNumberFormatter = ({
@@ -114,7 +109,7 @@ const wrappedTokenAddress = {
   250: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
   59144: "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f",
   1: "0x4200000000000000000000000000000000000006",
-}
+};
 
 export const useTokenAmountUsd = (
   tokenAddress?: string,
@@ -122,7 +117,10 @@ export const useTokenAmountUsd = (
   chainId?: number
 ) => {
   chainId = chainId || 137;
-  tokenAddress = tokenAddress === zeroAddress ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress] : tokenAddress;
+  tokenAddress =
+    tokenAddress === zeroAddress
+      ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress]
+      : tokenAddress;
 
   const { data: price } = useUSDPriceQuery(tokenAddress, chainId);
 

@@ -30,39 +30,37 @@ const StyledContent = styled(Card)`
 
 const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
   const params = useParams();
-  const { query } = useAppParams();
-
+  const {
+    query: { chainId, sessionType, timeRange },
+  } = useAppParams();
 
   const filter = useMemo((): SessionsFilter | undefined => {
-    const sessionType = query.sessionType;
-
-    let result: SessionsFilter = {
+    let query: SessionsFilter = {
       should: [],
       must: [],
     };
 
     if (sessionType === "swap") {
-      result.must?.push({ keyword: "type", value: "swap" });
+      query.must?.push({ keyword: "type", value: "swap" });
     } else if (sessionType) {
-      result.must?.push({ keyword: "swapStatus", value: sessionType });
+      query.must?.push({ keyword: "swapStatus", value: sessionType });
     }
 
-    if (query.chainId) {
-      result.must?.push({ keyword: "chainId", value: query.chainId });
+    if (chainId) {
+      query.must?.push({ keyword: "chainId", value: chainId });
     }
     if (searchBy === "address" && params.address) {
-      result.should?.push({ keyword: "user", value: params.address });
-      result.should?.push({ keyword: "userAddress", value: params.address });
+      query.should?.push({ keyword: "user", value: params.address });
+      query.should?.push({ keyword: "userAddress", value: params.address });
     }
-    return result;
-  }, [searchBy, params, query]);
+    return query;
+  }, [searchBy, params, chainId, sessionType, timeRange]);
 
   const { data: sessions, isLoading } = useGetClobSessionsQuery(
     filter,
-    query.timeRange
+    timeRange
   );
 
-  
   return <Sessions sessions={sessions} isLoading={isLoading} />;
 };
 

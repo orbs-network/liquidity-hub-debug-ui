@@ -13,10 +13,6 @@ export const router = createBrowserRouter([
         index: true,
       },
       {
-        element: <ClobSessionsPage searchBy="all" />,
-        path: ROUTES.clobSessions,
-      },
-      {
         path: ROUTES.clobSessionsByAddress,
         element: <ClobSessionsPage searchBy="address" />,
       },

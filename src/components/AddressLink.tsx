@@ -4,12 +4,12 @@ import { makeElipsisAddress } from '../helpers';
 import styled from 'styled-components';
 import TextOverflow from 'react-text-overflow';
 import {CopyIcon} from '@chakra-ui/icons'
-import { useCopyToClipboard } from 'hooks';
+import { useChainConfig, useCopyToClipboard } from 'hooks';
 export function AddressLink({
   address,
   chainId,
   text,
-  path = "address",
+  path = "tx",
   short = false,
   hideCopy = false,
 }: {
@@ -25,14 +25,13 @@ export function AddressLink({
     e.preventDefault();
     copy(address!);
   };
-  // const url = useMemo(() => {
-  //   const explorer = getExplorer(chainId);
-  //   return `${explorer}/${path}/${address}`;
-  // }, [chainId, path]);
 
-  const url = useMemo(() => {
-    return `/public/${address}`;
-  }, [chainId, path]);
+  const explorerUrl = useChainConfig(chainId)?.explorer;
+
+
+  const url = `${explorerUrl}/${path}/${address}`;
+
+
 
   const _address = useMemo(() => {
     if (text) return text;
@@ -44,7 +43,7 @@ export function AddressLink({
 
   return (
     <Container>
-      <StyledLink href={url}>
+      <StyledLink href={url} target='_blank'>
         <TextOverflow text={_address || ""} />
       </StyledLink>
      {!hideCopy &&  <StyledIcon onClick={onCopy} />}

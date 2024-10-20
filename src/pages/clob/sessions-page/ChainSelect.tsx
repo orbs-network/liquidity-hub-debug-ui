@@ -14,25 +14,9 @@ import { ColumnFlex } from "../../../styles";
 import styled from "styled-components";
 import { ReactNode } from "react";
 import { getChainName } from "../../../helpers";
+import { CHAINS } from "chains";
 
-const chains = [
-  {
-    title: "All",
-    value: undefined,
-  },
-  {
-    title: "Polygon",
-    value: 137,
-  },
-  {
-    title: "BSC",
-    value: 56,
-  },
-  {
-    title: "FTM",
-    value: 250,
-  },
-];
+const list = [{ title: "All chains", id: undefined }, ...CHAINS];
 
 export function ChainSelect() {
   const { onOpen, onClose, isOpen } = useDisclosure();
@@ -44,7 +28,7 @@ export function ChainSelect() {
     setQuery({
       chainId: value,
     });
-  };
+  };  
 
   const name = query.chainId ? getChainName(query.chainId) : "All chains";
 
@@ -63,12 +47,12 @@ export function ChainSelect() {
           <PopoverCloseButton />
           <PopoverBody>
             <Section title="Chain">
-              {chains.map((chain, index) => (
+              {list.map((chain, index) => (
                 <StyledButton
                   justifyContent="flex-start"
-                  onClick={() => onSave(chain.value as number)}
+                  onClick={() => onSave(chain.id as number)}
                   key={index}
-                  variant={chain.value === query.chainId ? "solid" : "ghost"}
+                  variant={chain.id === query.chainId ? "solid" : "ghost"}
                 >
                   {chain.title}
                 </StyledButton>
