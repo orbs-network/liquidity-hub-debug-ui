@@ -5,7 +5,7 @@ import Web3 from "web3";
 import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
-import { CHAINS } from "chains";
+import { networks } from "networks";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -76,8 +76,8 @@ export const getWeb3 = (chainId?: number) => {
 };
 
 export const getIdsFromSessions = (sessions: any[]) => {
-  return _.map(sessions, (session) => session.sessionId).filter(
-    (id) => id !== undefined
+  return _.uniq(_.map(sessions, (session) => session.sessionId).filter(
+    (id) => id !== undefined)
   ) as string[];
 };
 
@@ -144,7 +144,7 @@ export const isTxHash = (value?: string) => value?.startsWith("0x");
 
 export const getChainConfig = (chainId?: number) => {
   if (!chainId) return undefined;
-  return CHAINS.find((chain) => chain.id === chainId);
+  return networks[chainId as keyof typeof networks];
 };
 
 export const datesDiff = (date: Moment) => {

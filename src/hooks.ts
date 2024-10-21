@@ -34,28 +34,6 @@ export const useAppParams = () => {
   };
 };
 
-export const useLogTrace = () => {
-  const session = useSession().data;
-
-  return useQuery({
-    queryKey: ["useLogTrace", session?.id],
-    queryFn: async ({ signal }) => {
-      if (!session) return;
-      const result = await axios.post(
-        TX_TRACE_SERVER,
-        {
-          chainId: session.chainId,
-          blockNumber: session.blockNumber,
-          txData: session.txData,
-        },
-        {
-          signal,
-        }
-      );
-      return result.data;
-    },
-  });
-};
 
 
 export const useWeb3 = (chainId?: number) => {

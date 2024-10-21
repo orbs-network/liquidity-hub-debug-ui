@@ -3,8 +3,8 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { RowFlex } from "../../styles";
-import { isAddress } from "web3-validator";
 import { ROUTES } from "../../config";
+import { identifyAddressOrTxHash } from "utils";
 
 export function SearchSession() {
   const [value, setVale] = useState("");
@@ -12,12 +12,10 @@ export function SearchSession() {
 
   const searchSession = () => {
     if (!value) return;
-    
-    if (isAddress(value)) {
-      navigate(ROUTES.navigate.clobUserAddressSessions(value));
-      return;
+    if(identifyAddressOrTxHash(value) === "address") {
+    navigate(ROUTES.navigate.address(value));
     } else {
-      navigate(ROUTES.navigate.clobSession(value));
+      navigate(ROUTES.navigate.tx(value));
     }
   };
 
@@ -32,7 +30,7 @@ export function SearchSession() {
       <InputGroup size="md">
         <StyledInput
           color="black"
-          style={{ fontSize:'16px', fontWeight: 500 }}
+          style={{ fontSize: "16px", fontWeight: 500 }}
           placeholder="Search Session ID / Tx Hash"
           value={value}
           onKeyDown={onKeyDown}
@@ -56,5 +54,5 @@ const StyledInputContainer = styled(RowFlex)`
 const StyledInput = styled(Input)`
   flex: 1;
   border: ${({ theme }) => `1px solid ${theme.colors.border}`}!important;
-  background-color: rgb(248, 249, 250)!important;
+  background-color: rgb(248, 249, 250) !important;
 `;

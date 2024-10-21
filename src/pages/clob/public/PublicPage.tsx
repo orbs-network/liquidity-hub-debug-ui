@@ -1,4 +1,4 @@
-import { Tag, Text } from "@chakra-ui/react";
+import { Tag } from "@chakra-ui/react";
 import { AddressLink, Card, FormattedAmount, PageLoader } from "components";
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
@@ -11,67 +11,39 @@ import { ClobSession, TransferLog } from "types";
 import { zeroAddress } from "@defi.org/web3-candies";
 import BN from "bignumber.js";
 
-import fantomLogo from "../../../assets/networks/fantom.png";
-import bscLogo from "../../../assets/networks/bsc.png";
-import polygonLogo from "../../../assets/networks/polygon.png";
-import lineaLogo from "../../../assets/networks/linea.png";
-import { useUSDPriceQuery } from "query";
-import { BigNumber } from "@ethersproject/bignumber";
+import {
+  ListItem,
+  StyledDivider,
+  StyledRowText,
+  WithSmall,
+  WithUSD,
+} from "./components/shared";
+import { SessionLogs } from "./Logs";
+import { LogTrace } from "./LogTrace";
+import { DebugComponent } from "./components/DebugComponent";
+import { Savings } from "./Savings";
 
 export function PublicPage() {
+  const { data: session, isLoading } = useSession();
+
   return (
     <Container>
-      <Content />
+      {isLoading ? (
+        <PageLoader />
+      ) : !session ? (
+        <div>Session not found</div>
+      ) : (
+        <SessionDisplay />
+      )}
     </Container>
   );
 }
 
-const Content = () => {
-  const { data: session, isLoading } = useSession();
-
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  if (!session) {
-    return <div>Session not found</div>;
-  }
-
-  return <SessionDisplay />;
-};
-
-const Savings = () => {
-  const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  if (Number(session?.savings) <= 1) return <div>-</div>;
-
-  const amountWithDecimals = amountUi(
-    outToken?.data?.decimals,
-    BN(session?.savings || "0")
-  );
-  const usdValue = useNumberFormatter({
-    value: useTokenAmountUsd(session?.tokenOutAddress, 18, session?.chainId),
-    decimalScale: 3,
-  });
-  //@ts-ignore
-  return (
-    <ListItem label="Savings">
-      <span>{session?.savings}</span>
-      <WithSmall
-        value={useNumberFormatter({
-          value: amountWithDecimals,
-          decimalScale: 3,
-        })}
-        smallValue={`$${usdValue}`}
-      />
-    </ListItem>
-  );
-};
-
 const Network = () => {
   const session = useSession().data;
-  const networkName = useChainName(session?.chainId);
-  const logo = useChainLogo(session?.chainId);
+  const config = useChainConfig(session?.chainId);
+  const networkName = config?.name;
+  const logo = config?.logoUrl;
   return (
     <ListItem label="Network">
       <StyledRowText>
@@ -93,125 +65,100 @@ const SessionDisplay = () => {
 
   if (!session) return null;
 
-  const amountInUI = useNumberFormatter({ value: session.amountInUI });
-  const amountInUSD = useNumberFormatter({
-    value: session.amountInUSD,
-    decimalScale: 0,
-  });
-
   // const dexAmountOut = useNumberFormatter({ value: session.dexAmountOut, decimalScale: 2 });
 
   return (
     <StyledSessionDisplay>
-      <StyledList>
+      <Section>
         <Network />
+        <ListItem label="Dex">
+          <StyledRowText>
+            {session.dex} Chain ID: {session.chainId}
+          </StyledRowText>
+        </ListItem>
         <ListItem label="Timestamp">
           <WithSmall
             value={session.timestamp}
             smallValue={session.timeFromNow}
           />
         </ListItem>
-        <ListItem label="Transaction hash">
-          <AddressLink
-            address={session.txHash}
-            text={makeElipsisAddress(session.txHash, 10)}
-            path="tx"
-            chainId={session.chainId}
-          />
-        </ListItem>
-        <ListItem label="Dex">
-          <StyledRowText>
-            {session.dex} Chain ID: {session.chainId}
-          </StyledRowText>
-        </ListItem>
         <ListItem label="User's address">
           <AddressLink address={session.userAddress} />
         </ListItem>
+      </Section>
+      <Section>
+        <TxHash />
         <ListItem label="Slippage">
           <StyledRowText>{session.slippage?.toFixed(2)}%</StyledRowText>
         </ListItem>
-        {session.swapStatus && (
-          <ListItem label="Swap status">
-            <Tag>
-              <StyledRowText>{session.txStatus}</StyledRowText>
-            </Tag>
-          </ListItem>
-        )}
-        <TxComparison />
-        <TxSummary />
+        <InTokenAmount />
+        <AmountOut />
+        <ExactAmountReceived />
+        <GasUsed />
+        <Status />
+        <Fees />
+      </Section>
 
-        <StyledDivider />
-        <ListItem label="Amount in">
-          <span>{amountInUI}</span>
-          <span> (${amountInUSD})</span>
-        </ListItem>
-        <ListItem label="Amount out">
-          <AmountOut
-            amount={parseFloat(session.amountOutRaw!!).toFixed(2)}
-            amountOutUSD={session.amountOutUSD}
-          />
-        </ListItem>
-        <ListItem label="Dex amount out">
-          <span>{Number(session.dexAmountOut).toFixed(2)}</span>
-        </ListItem>
-        <ListItem label="Amount out diff">
-          <StyledRowText>{`${session.amountOutDiff}%`}</StyledRowText>
-        </ListItem>
-        <Savings />
+      <StyledDivider />
 
-        <StyledDivider />
+      <Savings />
 
-        <TxDetails />
-        {/* <Logs /> */}
+      <StyledDivider />
+      <TxDetails />
+      <DebugComponent>
+        <SessionLogs />
+      </DebugComponent>
+      <DebugComponent>
         <Transfers />
-      </StyledList>
+      </DebugComponent>
+
+      <DebugComponent>
+        <LogTrace />
+      </DebugComponent>
     </StyledSessionDisplay>
   );
 };
 
-// const Logs = () => {
-//   const session = useSession().data;
-//   if (!session || !session.logs) return null;
-//   return (
-//     <>
-//       <StyledDivider />
-//       {session.logs.client && (
-//         <ListItem label="Client logs">
-//           <StyledLogContent>
-//             {session.logs.client.map((it: any, index: number) => {
-//               return (
-//                 <LogModal title={`Client ${index + 1}`} key={index} log={it} />
-//               );
-//             })}
-//           </StyledLogContent>
-//         </ListItem>
-//       )}
-//       {session.logs.quote && (
-//         <ListItem label="Quote logs">
-//           <StyledLogContent>
-//             {session.logs.quote.map((it: any, index: number) => {
-//               return (
-//                 <LogModal title={`Quote ${index + 1}`} key={index} log={it} />
-//               );
-//             })}
-//           </StyledLogContent>
-//         </ListItem>
-//       )}
-//       {session.logs.swap && (
-//         <ListItem label="Swap logs">
-//           <StyledLogContent>
-//             {session.logs.swap.map((it: any, index: number) => {
-//               return (
-//                 <LogModal title={`Swap ${index + 1}`} key={index} log={it} />
-//               );
-//             })}
-//           </StyledLogContent>
-//         </ListItem>
-//       )}
-//     </>
-//   );
-// };
+const InTokenAmount = () => {
+  const session = useSession().data;
+  const token = useToken(session?.tokenInAddress, session?.chainId);
+  return (
+    <ListItem label="Amount in">
+      <TokenAmount
+        amount={session?.amountInUI}
+        address={session?.tokenInAddress}
+        symbol={token?.symbol}
+        usd={session?.amountInUSD}
+      />
+    </ListItem>
+  );
+};
 
+const Status = () => {
+  const session = useSession().data;
+
+  return <ListItem label="Swap status">
+    <Tag>
+      <StyledRowText>
+        {" "}
+        {!session?.txStatus ? '-' : session?.txStatus === "Mined" ? "Success" : "Failure"}
+      </StyledRowText>
+    </Tag>
+  </ListItem>;
+};
+const TxHash = () => {
+  const session = useSession().data;
+  return (
+    <ListItem label="Transaction hash">
+      <AddressLink
+        address={session?.txHash}
+        text={makeElipsisAddress(session?.txHash, 10)}
+        path="tx"
+        chainId={session?.chainId}
+      />
+    </ListItem>
+  );
+};
 // const StyledLogContent = styled(RowFlex)`
 //   justify-content: flex-start;
 //   flex-wrap: wrap;
@@ -235,54 +182,13 @@ const TxDetails = () => {
       {/* <ListItem label="Block number">
         {tx ? <StyledRowText>{tx.blockNumber}</StyledRowText> : "-"}
       </ListItem> */}
-      <GasPrice />
-    </>
-  );
-};
-
-const GasPrice = () => {
-  const session = useSession().data;
-  const tx = useSessionTx().data;
-  const chainConfig = useChainConfig(session?.chainId);
-  const native = useNumberFormatter({ value: tx?.gasPrice });
-
-  const gasUsedNative = useNumberFormatter({ value: tx?.gasUsedNativeToken });
-  const nativePrice = useUSDPriceQuery(
-    chainConfig?.native.address,
-    session?.chainId
-  );
-  //const gasUsedNativeUSD = gasUsedNative!! * nativePrice!!;
-  return (
-    <ListItem label="Gas price">
-      <WithSmall value={`${session?.gasPriceGwei} Gwei`} />
-
-      <span>{`Gas Units:${session?.gasUsed}`}</span>
-      <span>
-        {`Transaction Fee: ${gasUsedNative} ${chainConfig?.native.symbol}`} $$
-        {useNumberFormatter({ value: tx?.gasUsedNativeToken })}
-      </span>
-    </ListItem>
-  );
-};
-
-const AmountOut = ({
-  amount,
-  amountOutUSD,
-}: {
-  amount?: string;
-  amountOutUSD?: number;
-}) => {
-  return (
-    <>
-      <span>{`${amount}`}</span>
-      <span>{`($${amountOutUSD})`}</span>
     </>
   );
 };
 
 const useLHAndDexAmountDiff = () => {
   const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
   const lhAmount = useAmountUI(outToken?.decimals, session?.amountOutRaw);
   const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
@@ -300,21 +206,19 @@ const useLHAndDexAmountDiff = () => {
   return amountOutDiff;
 };
 
-const TxComparison = () => {
+const AmountOut = () => {
   const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const lhAmount = useAmountUI(outToken?.decimals, session?.amountOutRaw);
   const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
-  console.log({ dexAmount });
-
   const amountOutDiff = useLHAndDexAmountDiff();
 
   return (
-    <ListItem label="Transaction Comparison">
+    <ListItem label="Expected to receive">
       <RowFlex $justifyContent="flex-start" $gap={5}>
         <span>
           <TokenAmount
-            prefix="LH Price:"
+            prefix="Orbs:"
             amount={lhAmount}
             address={session?.tokenOutAddress}
             symbol={outToken?.symbol}
@@ -323,7 +227,7 @@ const TxComparison = () => {
         </span>
         <span>
           <TokenAmount
-            prefix="Vs Dex price:"
+            prefix="Vs Dex:"
             amount={dexAmount}
             usd={session?.dexAmountOutUSD}
             symbol={outToken?.symbol}
@@ -360,10 +264,12 @@ const TokenAmount = ({
   const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });
   return (
     <RowFlex $gap={5}>
-      {prefix} {formattedAmount || "-"}{" "}
-      <small style={{ fontSize: 13, opacity: 0.8 }}>
-        {`($${formattedUsd || "-"})`}
-      </small>
+      <p>
+        {prefix} {formattedAmount || "-"}
+        <small style={{ fontSize: 13, opacity: 0.8 }}>
+          {` ($${formattedUsd || "-"})`}
+        </small>
+      </p>
       <AddressLink
         path="address"
         address={address}
@@ -371,87 +277,6 @@ const TokenAmount = ({
         chainId={session?.chainId}
       />
     </RowFlex>
-  );
-};
-
-const TxSummary = () => {
-  const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
-
-  const amountOut = useAmountUI(outToken?.decimals, session?.amountOutRaw);
-
-  const exactAmountOutF = parseFloat(
-    amountUi(outToken?.decimals || 18, BN(session?.exactOutAmount || "0"))
-  ).toFixed(2);
-
-  const exactOutAmountUSD = useNumberFormatter({
-    value: session?.exactOutAmountUsd,
-    decimalScale: 0,
-  });
-  return (
-    <ListItem label="Transaction Action">
-      <RowFlex $justifyContent="flex-start" $gap={5}>
-        <TokenAmount
-          address={session?.tokenInAddress}
-          prefix="Swap"
-          usd={session?.amountInUSD}
-          amount={session?.amountInUI}
-          symbol={session?.tokenInSymbol}
-        />
-        for
-        <TokenAmount
-          prefix="For"
-          amount={amountOut}
-          usd={session?.amountOutUSD}
-          address={session?.tokenOutAddress}
-          symbol={outToken?.symbol}
-        />
-        Exact:
-        <span>{`${exactAmountOutF}`} </span>
-        <span>{`($${exactOutAmountUSD})`}</span>
-        Gas:
-        <span>{`${session?.gasPriceGwei} Gwei`}</span>
-        <span>{`${session?.gasUsed ?? "N/A"}`}</span>
-      </RowFlex>
-    </ListItem>
-  );
-};
-
-const ExactAmountReceived = () => {
-  const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
-  const amountOut = useAmountUI(outToken?.decimals, session?.exactOutAmount);
-  const amountOutUSD = useNumberFormatter({
-    value: session?.amountOutUSD,
-    decimalScale: 0,
-  });
-
-  return (
-    <ListItem label="Exact Amount Received">
-      <StyledRowText></StyledRowText>
-    </ListItem>
-  );
-};
-
-const GasUsed = () => {
-  const tx = useSessionTx().data;
-  const session = useSession().data;
-  const usd = useTokenAmountUsd(
-    zeroAddress,
-    tx?.gasUsedNativeToken,
-    session?.chainId
-  );
-  const gas = useNumberFormatter({ value: tx?.gasUsedNativeToken });
-  const _usd = useNumberFormatter({ value: usd });
-  const chainConfig = useChainConfig(session?.chainId);
-
-  return (
-    <ListItem label="Gas used">
-      <WithSmall
-        value={`${gas} ${chainConfig?.native.symbol}`}
-        smallValue={`$${_usd}`}
-      />
-    </ListItem>
   );
 };
 
@@ -472,42 +297,56 @@ const Fees = () => {
   );
 };
 
-const WithUSD = ({
-  decimalScale,
-  address,
-  amount,
-}: {
-  address?: string;
-  decimalScale?: number;
-  amount?: string | number;
-}) => {
-  const chainId = useSession().data?.chainId;
-  const _value = useNumberFormatter({ value: amount, decimalScale });
-  const usd = useTokenAmountUsd(address, amount, chainId);
-  const _usd = useNumberFormatter({ value: usd });
+const ExactAmountReceived = () => {
+  const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const amount = useNumberFormatter({
+    value: useAmountUI(outToken?.decimals, session?.exactOutAmount),
+  });
 
-  if (!_value) {
-    return <StyledRowText>-</StyledRowText>;
-  }
+  const usd = useNumberFormatter({
+    value: session?.amountOutUSD,
+    decimalScale: 0,
+  });
 
-  return <WithSmall value={_value} smallValue={`$${_usd}`} />;
-};
-
-const WithSmall = ({
-  value,
-  smallValue,
-}: {
-  value?: any;
-  smallValue?: string;
-}) => {
-  if (!value) return null;
   return (
-    <StyledRowText>
-      {value}
-      {smallValue && <small>{` (${smallValue})`}</small>}
-    </StyledRowText>
+    <ListItem label="Exact Amount Received">
+      <TokenAmount
+        address={session?.tokenOutAddress}
+        amount={amount as string}
+        usd={usd as string}
+        symbol={outToken?.symbol}
+      />
+    </ListItem>
   );
 };
+
+const GasUsed = () => {
+  const tx = useSessionTx().data;
+  const session = useSession().data;
+  const usd = useTokenAmountUsd(
+    zeroAddress,
+    tx?.gasUsedNativeToken,
+    session?.chainId
+  );
+  const gas = useNumberFormatter({ value: tx?.gasUsedNativeToken });
+  const _usd = useNumberFormatter({ value: usd });
+  const chainConfig = useChainConfig(session?.chainId);
+
+  return (
+    <ListItem label="Gas used">
+      <RowFlex $gap={2}>
+        <span>{`${session?.gasUsed ?? "N/A"} Gwei, `}</span>
+        <WithSmall
+          value={`${gas} ${chainConfig?.native.symbol}`}
+          smallValue={`$${_usd}`}
+        />
+      </RowFlex>
+    </ListItem>
+  );
+};
+
+
 
 const ExactAmountOut = () => {
   const tx = useSessionTx()?.data;
@@ -630,104 +469,27 @@ const StyledTransfers = styled(ColumnFlex)`
 const StyledSessionDisplay = styled(ColumnFlex)`
   width: 100%;
   align-items: flex-start;
-  gap: 20px;
+  gap: 10px;
 `;
 
-const ListItem = ({
-  label,
+const Container = styled.div``;
+
+const Section = ({
+  title,
   children,
 }: {
-  label: string;
-  children?: ReactNode;
+  title?: string;
+  children: ReactNode;
 }) => {
   return (
-    <StyledListItem>
-      <RowLabel label={label} />
-      <StyledRowChildren>{children}</StyledRowChildren>
-    </StyledListItem>
+    <StyledSection>
+      {title && <h3>{title}</h3>}
+      {children}
+    </StyledSection>
   );
 };
 
-const StyledRowChildren = styled.div`
-  flex: 1;
-`;
-
-const RowLabel = ({ label }: { label: string }) => {
-  return <StyledRowLabel>{label}:</StyledRowLabel>;
-};
-
-const StyledRowLabel = styled(Text)`
-  width: 240px;
-  padding-right: 20px;
-  color: ${({ theme }) => theme.colors.secondaryText};
-  font-weight: 500;
-  font-size: 14px;
-`;
-
-const StyledRowText = styled(Text)`
-  white-space: wrap;
-  line-break: anywhere;
-  font-size: 14px;
-  small {
-    opacity: 0.7;
-    font-size: 13px;
-  }
-`;
-
-const StyledList = styled(ColumnFlex)`
-  width: 100%;
-  gap: 10px;
-`;
-
-const StyledListItem = styled(RowFlex)`
-  gap: 10px;
-  width: 100%;
-  font-size: 14px;
-  align-items: flex-start;
-`;
-
-const StyledDivider = styled.div`
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  width: 100%;
-  margin: 8px 0;
-`;
-
-const Container = styled(Card)`
-  gap: 20px;
+const StyledSection = styled(Card)`
+  gap: 15px;
   padding: 20px;
 `;
-
-const networkNames = {
-  1: "Mainnet",
-  56: "BSC",
-  137: "Polygon",
-  8453: "Base",
-  84532: "Base Sepolia",
-  59144: "Linea",
-  59145: "Linea Sepolia",
-  10: "Optimism",
-  42161: "Arbitrum",
-  43114: "Avalanche",
-  1101: "ZkSync",
-  11010: "ZkSync Testnet",
-  10000: "Gnosis",
-  10001: "Gnosis Testnet",
-  250: "Fantom",
-};
-
-function useChainName(chainId: number | undefined) {
-  const n = networkNames[chainId as keyof typeof networkNames];
-  return n;
-}
-
-const chainLogos = {
-  56: bscLogo,
-  137: polygonLogo,
-  59144: lineaLogo,
-  250: fantomLogo,
-};
-
-export function useChainLogo(chainId: number | undefined) {
-  const logo = chainLogos[chainId as keyof typeof chainLogos];
-  return logo;
-}

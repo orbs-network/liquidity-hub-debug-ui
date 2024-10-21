@@ -7,13 +7,12 @@ import { IconButton, Text } from "@chakra-ui/react";
 import { ROUTES } from "../config";
 import { useNavigate } from "react-router-dom";
 import _ from "lodash";
-import { useNumberFormatter } from "../hooks";
+import { useChainConfig, useNumberFormatter } from "../hooks";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { PageLoader } from "./PageLoader";
 import { ClobSession } from "types";
 import { AddressLink } from "./AddressLink";
-import { useChainLogo } from "pages";
 const titles = [
   
   "Session id",
@@ -76,9 +75,9 @@ const Loader = styled(PageLoader)`
   padding: 20px;
 `;
 
-const Network = ({chainId}: {chainId?: string}) => {
+const Network = ({chainId}: {chainId?: number}) => {
   const networkName = '';
-  const logo = useChainLogo(Number(chainId));
+  const logo = useChainConfig(chainId)?.logoUrl;
   return (
     <StyledRow style={{width: "32px"}}>
       <span style={{display: "flex", alignItems: "center", gap: "5px"}}>
@@ -100,7 +99,7 @@ export const ListSession = ({ index, style, data }: any) => {
   return (
     <div style={style}>
       <ListSessionContainer>
-        <Network chainId={session.chainId?.toString()} />
+        <Network chainId={session.chainId} />
         <SessionId id={session.id} />
         <TxHash session={session} />
         <Tokens session={session} />

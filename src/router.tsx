@@ -1,7 +1,8 @@
+import { WalletTransactionsPage } from "pages/clob/address/WalletTransactionsPage";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import { ROUTES } from "./config";
-import { ClobSessionPage, ClobSessionsPage, PublicPage } from "./pages";
+import { ClobSessionsPage, PublicPage } from "./pages";
 
 export const router = createBrowserRouter([
   {
@@ -9,20 +10,16 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        element: <ClobSessionsPage searchBy="all" />,
+        element: <ClobSessionsPage />,
         index: true,
       },
       {
-        path: ROUTES.clobSessionsByAddress,
-        element: <ClobSessionsPage searchBy="address" />,
+        path: ROUTES.address,
+        element: <WalletTransactionsPage />,
       },
       {
-        path: ROUTES.clobSession,
-        element: <ClobSessionPage />,
-      },
-      {
-        path: ROUTES.public,
-        element: <PublicPage  />,
+        path: ROUTES.tx,
+        element: <PublicPage />,
       },
 
       {

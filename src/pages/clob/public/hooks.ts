@@ -28,7 +28,7 @@ export const useToken = (tokenAddress?: string, chainId?: number) => {
     },
     enabled: !!tokenAddress && !!chainId && !!w3,
     staleTime: Infinity,
-  });
+  }).data;
 };
 
 

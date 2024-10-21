@@ -45,21 +45,20 @@ const createConditions = (args?: SessionsFilter) => {
 };
 
 const createQuery = (args: Args) => {
-  let bool: any = {}
-    if (args.timeRange) {
-      bool.filter = [
-        {
-          range: {
-            timestamp: {
-              gte: `now-${args.timeRange}`,
-            },
+  let bool: any = {};
+  if (args.timeRange) {
+    bool.filter = [
+      {
+        range: {
+          timestamp: {
+            gte: `now-${args.timeRange}`,
           },
         },
-      ];
-    }
+      },
+    ];
+  }
   const must = createConditions(args.filter);
   bool.must = must;
-
 
   return { bool };
 };
@@ -77,19 +76,23 @@ export const createQueryBody = (args: {
   filter?: SessionsFilter;
   timeRange?: string;
 }) => {
-  
   return {
     fields: [
       {
         field: "*",
-        include_unmapped: "true",
       },
       {
         field: "timestamp",
-        format: "strict_date_optional_time",
       },
     ],
-    size: 500,
+    sort: [
+      {
+        timestamp: {
+          order: "desc",
+        },
+      },
+    ],
+    size: 50,
     version: true,
     script_fields: {},
     stored_fields: ["*"],
@@ -105,8 +108,6 @@ export const createQueryBody = (args: {
     },
   };
 };
-
-
 
 export const elastic = {
   createQueryBody,

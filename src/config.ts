@@ -1,17 +1,13 @@
-import { networks } from "@defi.org/web3-candies";
 
 export const ROUTES = {
   main: "/",
-  public: "/tx/:identifier",
-  clobSessions: "/clob",
-  clobSessionsByAddress: "/clob/address/:address",
-  clobSession: "/clob/session/:identifier",
+  tx: "/tx/:identifier",
+  address: "/address/:address",
 
   navigate: {
-    clobSession: (sessionId: string) => `/clob/session/${sessionId}`,
-    clobUserAddressSessions: (address: string) => `/clob/address/${address}`,
     tx: (address: string) => `/tx/${address}`,
-    public: (address: string) => `/public/${address}`,
+    address: (address: string) => `/address/${address}`,
+    main: () => "/",
   },
 };
 

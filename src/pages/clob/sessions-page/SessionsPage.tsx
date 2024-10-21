@@ -4,13 +4,14 @@ import { FilterMenu } from "./FilterMenu";
 import { ChainSelect } from "./ChainSelect";
 import { Card, Sessions } from "../../../components";
 import { RowFlex, ColumnFlex } from "../../../styles";
-import { SessionsFilter, SessionsSearchBy } from "../../../types";
+import { SessionsFilter } from "../../../types";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAppParams } from "../../../hooks";
 import { useGetClobSessionsQuery } from "query";
+import { identifyAddressOrTxHash } from "utils";
 
-export function ClobSessionsPage({ searchBy }: { searchBy: SessionsSearchBy }) {
+export function ClobSessionsPage() {
   return (
     <Container>
       <RowFlex>
@@ -18,7 +19,7 @@ export function ClobSessionsPage({ searchBy }: { searchBy: SessionsSearchBy }) {
         <ChainSelect />
       </RowFlex>
       <StyledContent>
-        <Content searchBy={searchBy} />
+        <Content  />
       </StyledContent>
     </Container>
   );
@@ -28,7 +29,7 @@ const StyledContent = styled(Card)`
   flex: 1;
 `;
 
-const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
+const Content = () => {
   const params = useParams();
   const {
     query: { chainId, sessionType, timeRange },
@@ -49,12 +50,19 @@ const Content = ({ searchBy }: { searchBy: SessionsSearchBy }) => {
     if (chainId) {
       query.must?.push({ keyword: "chainId", value: chainId });
     }
-    if (searchBy === "address" && params.address) {
+    if (!params.address) {
+      return query;
+    }
+    if (identifyAddressOrTxHash(params.address) === "address") {
       query.should?.push({ keyword: "user", value: params.address });
       query.should?.push({ keyword: "userAddress", value: params.address });
     }
+
+    if (identifyAddressOrTxHash(params.address) === "txHash") {
+      query.should?.push({ keyword: "txHash", value: params.address });
+    }
     return query;
-  }, [searchBy, params, chainId, sessionType, timeRange]);
+  }, [params, chainId, sessionType, timeRange]);
 
   const { data: sessions, isLoading } = useGetClobSessionsQuery(
     filter,
