@@ -2,14 +2,12 @@ import { useUSDPriceQuery } from "query";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE, TX_TRACE_SERVER } from "./config";
-import { getChainConfig, getRpcUrl } from "./helpers";
+import { DEFAULT_SESSIONS_TIME_RANGE, dexConfig } from "./config";
+import { amountUiV2, getChainConfig, getRpcUrl } from "./helpers";
 import BN from "bignumber.js";
 import { useToast } from "@chakra-ui/react";
 import Web3 from "web3";
-import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import { useSession } from "pages/clob/public/hooks";
+
 import { zeroAddress } from "@defi.org/web3-candies";
 
 export const useAppParams = () => {
@@ -33,8 +31,6 @@ export const useAppParams = () => {
     setQuery,
   };
 };
-
-
 
 export const useWeb3 = (chainId?: number) => {
   const rpc = getRpcUrl(chainId);
@@ -144,3 +140,62 @@ export function useCopyToClipboard(): CopyFn {
 
   return copy;
 }
+
+import { useState, useEffect } from "react";
+
+export const useResizeObserver = (elementRef: any) => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = elementRef.current;
+
+    if (!element) return;
+
+    // Create a ResizeObserver instance to observe element's size changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+
+    // Observe the element
+    resizeObserver.observe(element);
+
+    // Cleanup observer on unmount
+    return () => {
+      resizeObserver.unobserve(element);
+    };
+  }, [elementRef]); // Depend on the elementRef to re-run if the element changes
+
+  return dimensions; // Return the current dimensions (width and height)
+};
+
+export const useHeight = () => {
+  const [height, setHeight] = useState(window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => setHeight(window.innerHeight);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return height;
+};
+
+export const useAmountUI = (
+  decimals?: number,
+  value?: string | BN | number
+) => {
+  return useMemo(
+    () => amountUiV2(decimals, value),
+    [decimals, value?.toString()]
+  );
+};
+
+export const useDexConfig = (dex?: string) => {
+  return useMemo(() => {
+    if (!dex) return;
+    return dexConfig[dex.toLowerCase() as keyof typeof dexConfig];
+  }, [dex]);
+};

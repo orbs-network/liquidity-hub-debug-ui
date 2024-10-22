@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { colors } from '../styles';
+
 export function Card({
   children,
   className = "",
@@ -19,6 +19,5 @@ export const StyledCard = styled.div`
   flex-direction: column;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid ${colors.border};
   background-color: white;
 `;

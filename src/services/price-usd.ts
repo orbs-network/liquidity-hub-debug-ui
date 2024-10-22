@@ -1,45 +1,16 @@
-import axios from "axios";
 import _ from "lodash";
 import BN from "bignumber.js";
+import { isNativeAddress } from "@defi.org/web3-candies";
+import { getChainConfig } from "helpers";
 
- async function fetchPriceParaswap(
-  chainId: number,
-  inToken: string,
-  inTokenDecimals: number
-) {
-  const url = `https://apiv5.paraswap.io/prices/?srcToken=${inToken}&destToken=0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c&amount=${BN(
-    `1e${inTokenDecimals}`
-  ).toString()}&srcDecimals=${inTokenDecimals}&destDecimals=18&side=SELL&network=${chainId}`;
-  try {
-    const res = await axios.get(url);
-    return res.data.priceRoute.srcUSD;
-  } catch (e) {
-    console.log(e);
-    return 0;
-  }
-}
+
 
 async function getPrice(
   tokenAddress: string,
   chainId: number
 ): Promise<number> {
-  try {
-    const { data } = await axios.get(
-      `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}/`
-    );
-
-    if (!data.pairs[0]) {
-      const paraPrice = await fetchPriceParaswap(
-        chainId,
-        tokenAddress,
-        data.decimals
-      );
-      return paraPrice.price;
-    }
-    return parseFloat(data.pairs[0].priceUsd);
-  } catch (e) {
-    throw new Error(`fetchPrice: ${tokenAddress} failed`);
-  }
+  const res = await fetchLLMAPrice(tokenAddress, chainId);
+  return res?.priceUsd;
 }
 
 const getTotalTokensPrice = async ({
@@ -65,3 +36,48 @@ export const priceUsdService = {
   getPrice,
   getTotalTokensPrice,
 };
+
+const chainIdToName: { [key: number]: string } = {
+  56: "bsc",
+  137: "polygon",
+  8453: "base", // Assuming this ID is another identifier for Polygon as per the user's mapping
+  250: "fantom",
+  1: "ethereum",
+  1101: "zkevm",
+  81457: "blast",
+  59144: "linea",
+  42161: "arbitrum",
+};
+
+export async function fetchLLMAPrice(token: string, chainId: number) {
+  const nullPrice = {
+    priceUsd: 0,
+    priceNative: 0,
+    timestamp: Date.now(),
+  };
+  try {
+    const chainName = chainIdToName[chainId] || "Unknown Chain";
+
+    if (isNativeAddress(token)) {
+      const wToken = getChainConfig(chainId)?.wToken;
+      if (!wToken) return;
+      token = wToken.address;
+    }
+    const tokenAddressWithChainId = `${chainName}:${token}`;
+    const url = `https://coins.llama.fi/prices/current/${tokenAddressWithChainId}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return nullPrice;
+    }
+    const data = await response.json();
+    const coin = data.coins[tokenAddressWithChainId];
+    return {
+      priceUsd: coin.price,
+      priceNative: coin.price,
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    console.error("Failed to fetch Llama price", error);
+    return nullPrice;
+  }
+}

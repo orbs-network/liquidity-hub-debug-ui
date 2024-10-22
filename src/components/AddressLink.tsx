@@ -11,7 +11,7 @@ export function AddressLink({
   text,
   path = "tx",
   short = false,
-  hideCopy = false,
+  hideCopy = true,
 }: {
   address?: string;
   chainId?: number;

@@ -30,8 +30,8 @@ export function SearchSession() {
       <InputGroup size="md">
         <StyledInput
           color="black"
-          style={{ fontSize: "16px", fontWeight: 500 }}
-          placeholder="Search Session ID / Tx Hash"
+          style={{ fontSize: "16px", fontWeight: 400 }}
+          placeholder="Search Session ID / Tx Hash / Wallet"
           value={value}
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}

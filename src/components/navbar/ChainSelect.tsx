@@ -1,30 +1,34 @@
 import {
+  Avatar,
   Button,
   Popover,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
   PopoverTrigger,
   Portal,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useAppParams } from "../../../hooks";
-import { ColumnFlex } from "../../../styles";
+import { useAppParams } from "../../hooks";
 import styled from "styled-components";
 import { ReactNode } from "react";
-import { getChainName } from "../../../helpers";
-import { networks } from "networks";
+import { networks } from "../../networks";
 import _ from "lodash";
+import { ColumnFlex, RowFlex } from "styles";
+import { useLocation } from "react-router-dom";
 
 const list = _.map(networks, (it) => {
   return {
     id: it.id,
     name: it.name,
+    logoUrl: it.logoUrl,
   };
 });
 
 export function ChainSelect() {
+  const pathname = useLocation().pathname;
+
+  
   const { onOpen, onClose, isOpen } = useDisclosure();
 
   const { query, setQuery } = useAppParams();
@@ -36,39 +40,48 @@ export function ChainSelect() {
     });
   };
 
-  const name = query.chainId ? getChainName(query.chainId) : "All chains";
+  if(pathname.includes('tx')) return null;
+
+  const selected = list.find((it) => it.id === query.chainId);
+
+
 
   return (
     <Popover
       isOpen={isOpen}
-      placement="bottom-start"
+      placement="bottom-end"
       onOpen={onOpen}
       onClose={onClose}
     >
       <PopoverTrigger>
-        <Button>{name}</Button>
+        <Button>
+          {!selected ? 'All chains' : <Avatar size="xs" src={selected.logoUrl} />}
+        </Button>
       </PopoverTrigger>
       <Portal>
-        <PopoverContent>
-          <PopoverCloseButton />
+        <PopoverContent maxWidth={200}>
           <PopoverBody>
-            <Section title="Chain">
-              <StyledButton
+            <Section title="">
+              <Button
                 justifyContent="flex-start"
+                width="100%"
                 onClick={() => onSave(undefined)}
                 variant={"ghost"}
               >
                 All chains
-              </StyledButton>
+              </Button>
               {list.map((chain, index) => (
-                <StyledButton
-                  justifyContent="flex-start"
+                <Button
+                  width="100%"
                   onClick={() => onSave(chain.id as number)}
                   key={index}
                   variant={chain.id === query.chainId ? "solid" : "ghost"}
                 >
-                  {chain.name}
-                </StyledButton>
+                  <ButtonContent>
+                    <p>{chain.name}</p>
+                    <Avatar size="xs" src={chain.logoUrl} />
+                  </ButtonContent>
+                </Button>
               ))}
             </Section>
           </PopoverBody>
@@ -78,9 +91,11 @@ export function ChainSelect() {
   );
 }
 
-const StyledButton = styled(Button)`
-  width: 100%;
-`;
+const ButtonContent = styled(RowFlex)({
+  justifyContent: "space-between",
+  width: "100%",
+});
+
 const Section = ({
   children,
   title,

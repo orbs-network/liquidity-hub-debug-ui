@@ -4,24 +4,10 @@ import styled, { ThemeProvider } from "styled-components";
 import { Navbar } from "./components";
 import { QueryParamProvider } from "use-query-params";
 import { ReactRouter6Adapter } from "use-query-params/adapters/react-router-6";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { theme } from "./theme";
 
-const useHeight = () => {
-  const [height, setHeight] = useState(window.innerHeight);
-
-  useEffect(() => {
-    const handleResize = () => setHeight(window.innerHeight);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return height;
-};
-
 function App() {
-  const height = useHeight();
-
   useEffect(() => {
     document.title = "Liquidity Hub Explorer";
   }, []);
@@ -30,11 +16,7 @@ function App() {
     <QueryParamProvider adapter={ReactRouter6Adapter}>
       <ThemeProvider theme={theme}>
         <ChakraProvider>
-          <Layout
-            style={{
-              minHeight: height,
-            }}
-          >
+          <Layout>
             <Navbar />
             <Outlet />
           </Layout>
@@ -55,4 +37,5 @@ const Layout = styled.div`
   padding: 30px;
   margin: 0 auto;
   gap: 30px;
+  padding-top: 100px;
 `;

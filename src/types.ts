@@ -1,70 +1,44 @@
-export interface ClobSession {
+export interface SwapLog {
+  chainId: number;
+  dex: string;
+  txHash: string;
+  amountIn: number;
+  tokenInAddress: string;
+  tokenInName: string;
+  tokenOutAddress: string;
+  tokenOutName: string;
   id: string;
-  amountInRaw: string | number;
-  amountInUI: string | number;
-  amountOutRaw?: string;
-  amountOutUI?: string | number;
-  chainId?: number;
-  timestampMillis?: number;
-  timestamp?: string;
-  gasUnits?: number;
-  amountOutUSD?: number;
-  amountInUSD?: number;
-  isAction?: boolean;
-  slippage?: number;
-  tokenInSymbol?: string;
-  tokenInAddress?: string;
-  txHash?: string;
-  tokenOutAddress?: string;
-  tokenOutSymbol?: string;
-  uaServer?: string;
-  serializedOrder?: string;
-  txStatus?: string;
-  signature?: string;
-  swapStatus?: string;
-  dex?: string;
-  userAddress?: string;
-  ip?: string;
-  amountOutDiff?: number;
-  dexAmountIn?: string;
-  timeFromNow?: string;
-  isClobTrade?: boolean;
-  dexSwapTxHash?: string;
-  dutchPrice?: string;
-  tokenInDecimals?: number;
-  tokenOutDecimals?: number;  
-  dexAmountOut?: string;
-  dexAmountOutWS?: string;
-  dexAmountOutUSD?: string;
+  timestamp: number;
+  dollarValue: number;
+  swapStatus: string;
+  userAddress: string;
+  savings: string;
+  exactOutAmount: string;
+  exactOutAmountUsd: string;
+  txData: any;
+  dutchPrice: string;
+  slippage: number;
+  ip: string;
+  serializedOrder: string;
+  signature: string;
+  gasPriceGwei: string;
+  gasUsed: number;
+  blockNumber: number;
+  feeOutAmount: string;
+  dexAmountOut?: number;
+  lhAmountOut: number;
+  amountInUsd: number;
+  lhAmountOutUsd: number;
+  feeOutAmountUsd: number;
+}
+
+export interface LHSession extends SwapLog {
   logs: {
-    client: any;
-    swap: any[];
+    swap: any;
     quote: any[];
+    client: any[];
   };
-  gasPriceGwei?: string;
-  gasUsed?: string;
-  gasPrice?: string;
-  amountOut?: string;
-  exactOutAmount?: string;
-  exactOutAmountUsd?: string;
-  savings?: string;
-  txData?: string;
-  blockNumber?: string;
 }
-
-export type SessionsFilterTerms = {
-  keyword: string;
-  value: string | string[] | number;
-}[];
-
-export interface SessionsFilter {
-  must?: SessionsFilterTerms;
-  should?: SessionsFilterTerms;
-}
-
-export type SessionType = "swap" | "success" | "failed" | "all";
-
-export type SessionsSearchBy = "address" | "all";
 
 export type Token = {
   name: string;
@@ -80,3 +54,4 @@ export interface TransferLog {
   token: Token;
   rawValue: string;
 }
+

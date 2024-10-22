@@ -19,6 +19,6 @@ export function identifyAddressOrTxHash(input?: string) {
   }
   // If none match
   else {
-    return "invalid";
+    return "sessionId";
   }
 }

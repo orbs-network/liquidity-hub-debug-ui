@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { TX_TRACE_SERVER } from "config";
 import { ListItem } from "./components/shared";
-import { isDebug } from "utils";
 
 export const useLogTrace = () => {
   const session = useSession().data;

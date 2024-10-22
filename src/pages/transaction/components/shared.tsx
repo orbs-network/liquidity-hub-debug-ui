@@ -1,4 +1,5 @@
 import { Text } from "@chakra-ui/layout";
+import { AddressLink } from "components";
 import { useNumberFormatter, useTokenAmountUsd } from "hooks";
 import { ReactNode } from "react";
 import styled from "styled-components";
@@ -97,5 +98,43 @@ export const WithSmall = ({
     }
   
     return <WithSmall value={_value} smallValue={`$${_usd}`} />;
+  };
+  
+
+  export const TokenAmount = ({
+    prefix,
+    symbol,
+    address,
+    amount,
+    usd,
+  }: {
+    symbol?: string;
+    address?: string;
+    amount?: string | number;
+    usd?: string | number;
+    prefix?: string;
+  }) => {
+    const session = useSession().data;
+    const formattedAmount = useNumberFormatter({
+      value: amount,
+      decimalScale: 3,
+    });
+    const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });
+    return (
+      <RowFlex $gap={5}>
+        <p>
+          {prefix} {formattedAmount || "-"}
+        </p>
+        <AddressLink
+          path="address"
+          address={address}
+          text={symbol}
+          chainId={session?.chainId}
+        />
+         {formattedUsd &&   <small style={{ fontSize: 13, opacity: 0.8 }}>
+            {` ($${formattedUsd || "-"})`}
+          </small>}
+      </RowFlex>
+    );
   };
   

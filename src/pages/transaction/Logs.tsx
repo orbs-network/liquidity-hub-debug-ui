@@ -32,17 +32,11 @@ export const SessionLogs = () => {
           </StyledLogContent>
         </ListItem>
       )}
-      {session.logs.swap && (
-        <ListItem label="Swap logs">
-          <StyledLogContent>
-            {session.logs.swap.map((it: any, index: number) => {
-              return (
-                <LogModal title={`Swap ${index + 1}`} key={index} log={it} />
-              );
-            })}
-          </StyledLogContent>
-        </ListItem>
-      )}
+      <ListItem label="Swap logs">
+        <StyledLogContent>
+        <LogModal title={`Swap`} log={session.logs.swap} />
+        </StyledLogContent>
+      </ListItem>
     </>
   );
 };

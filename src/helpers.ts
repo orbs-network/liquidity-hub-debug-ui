@@ -104,9 +104,9 @@ export const swapStatusText = (status?: string) => {
   if (!status) return "-";
   switch (status) {
     case "success":
-      return "✅ Success";
+      return "Success";
     case "failed":
-      return "❌ Failed";
+      return "Failed";
     default:
       return "-";
   }
@@ -263,7 +263,7 @@ export const amountUi = (decimals?: number, amount?: BN) => {
   );
 };
 
-export const amountUiV2 = (decimals?: number, amount?: string | BN) => {
+export const amountUiV2 = (decimals?: number, amount?: string | BN | number) => {
   amount = amount?.toString()
   
     

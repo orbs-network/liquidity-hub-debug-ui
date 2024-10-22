@@ -1,134 +1,121 @@
 import axios from "axios";
 import _ from "lodash";
-import { getIdsFromSessions, normalizeSessions } from "helpers";
-import { elastic } from "services/elastic";
-import { SessionsFilter } from "types";
-import { FetchSessionArgs } from "./types";
-import { parseSessions } from "./helpers";
+import { normalizeSessions } from "helpers";
+import { parseFullSessionLogs, parseSwapLogs } from "./helpers";
+import { ELASTIC_ENDPOINT } from "config";
+import { queries } from "./elastic";
+import { identifyAddressOrTxHash, isDebug } from "utils";
+import { LHSession } from "types";
 
-class Clob {
-  SERVER_SESSIONS = "orbs-clob-poc10.*";
-  CLIENT_SESSIONS = "orbs-liquidity-hub-ui*";
+const SERVER_URL = `${ELASTIC_ENDPOINT}/orbs-clob-poc10.*`;
+const CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-liquidity-hub-ui*`;
 
-  getSessions = async ({
-    signal,
-    timeRange,
-    filter,
-  }: {
-    signal?: AbortSignal;
-    timeRange?: string;
-    filter?: SessionsFilter;
-  }) => {
-    let args: Partial<FetchSessionArgs> = {
-      signal,
-      timeRange,
-      filter,
-    };
-    const swapFirst =
-      _.size(
-        filter?.must?.find(
-          (f) =>
-            f.keyword === "type" ||
-            f.keyword === "swapStatus" ||
-            f.keyword === "txHash"
-        )
-      ) > 0;
+const getClientLogs = async (
+  ids: string[],
+  page: number,
+  signal?: AbortSignal
+) => {
+  const data = queries.clientTrasactions(ids, page, 100);
 
-    if (!swapFirst) {
-      const serverSessions = await this.fetchServerSessions(args);
-      const ids = getIdsFromSessions(serverSessions);
+  return fetchElastic(CLIENT_URL, data, signal);
+};
 
-      const clientSessions = await this.fetchClientSessions({
-        timeRange: args.timeRange,
-        signal: args.signal,
-        filter: {
-          must: [
-            {
-              keyword: "sessionId",
-              value: ids,
-            },
-          ],
-          should: undefined,
-        },
-      });
+const fetchSwaps = async ({
+  page = 0,
+  chainId,
+  signal,
+  walletAddress,
+}: {
+  page: number;
+  chainId?: number;
+  signal?: AbortSignal;
+  walletAddress?: string;
+}) => {
+  const data = queries.swaps({ page, chainId, limit: 100, walletAddress });
 
-      return parseSessions(_.flatten([clientSessions, serverSessions]));
+  const logs = await fetchElastic(SERVER_URL, data, signal);
+  return parseSwapLogs(logs);
+};
+
+const fetchQuoteLogs = async (sessionIds: string[], signal?: AbortSignal) => {
+  let allLogs: any[] = [];
+  let page = 0;
+  let hasMoreData = true;
+
+  // Loop to fetch pages until no more data is returned
+  while (hasMoreData) {
+    const data = queries.quote(sessionIds, page, 100);
+    const logs = await fetchElastic(SERVER_URL, data, signal);
+
+    // Check if logs were returned; if empty, stop the loop
+    if (logs.length === 0) {
+      hasMoreData = false; // Stop loop
+    } else {
+      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
+      page++; // Fetch next page
     }
-
-    const swapSessions = await this.fetchServerSessions(args);
-
-    const ids = getIdsFromSessions(swapSessions);
-
-    const quoteSessions = this.fetchServerSessions({
-      ...args,
-      filter: {
-        must: [
-          {
-            keyword: "sessionId",
-            value: ids,
-          },
-          {
-            keyword: "type",
-            value: "quote",
-          },
-        ],
-        should: undefined,
-      },
-    });
-
-    const clientSessions = this.fetchClientSessions({
-      ...args,
-      filter: {
-        must: [
-          {
-            keyword: "sessionId",
-            value: ids,
-          },
-        ],
-        should: undefined,
-      },
-    });
-
-    const [quoteRes, clientRes] = await Promise.all([
-      quoteSessions,
-      clientSessions,
-    ]);
-
-    return parseSessions(_.flatten([clientRes, swapSessions, quoteRes]));
-  };
-
-  async fetchSessions({ url, filter, timeRange, signal }: FetchSessionArgs) {
-    const data = elastic.createQueryBody({
-      filter: filter && _.size(filter) ? filter : undefined,
-      timeRange,
-    });
-
-    const response = await axios.post(
-      `${elastic.endpoint}/${url}/_search`,
-      { ...data },
-      { signal }
-    );
-
-    return normalizeSessions(
-      response.data.hits?.hits.map((hit: any) => hit.fields)
-    );
-  }
-  async fetchServerSessions(args: Partial<FetchSessionArgs>) {
-    return this.fetchSessions({ url: this.SERVER_SESSIONS, ...args });
   }
 
-  async fetchClientSessions(args: Partial<FetchSessionArgs>) {
-    const sessions = await this.fetchSessions({
-      url: this.CLIENT_SESSIONS,
-      ...args,
-    });
-    return sessions.map((session) => {
-      return {
-        ...session,
-        type: "client",
-      };
-    });
-  }
-}
+  return allLogs;
+};
 
-export const clob = new Clob();
+const fetchClientLogs = async (sessionIds: string[], signal?: AbortSignal) => {
+  let allLogs: any[] = [];
+  let page = 0;
+  let hasMoreData = true;
+
+  // Loop to fetch pages until no more data is returned
+  while (hasMoreData) {
+    const data = queries.client(sessionIds, page, 100);
+    const logs = await fetchElastic(CLIENT_URL, data, signal);
+
+    // Check if logs were returned; if empty, stop the loop
+    if (logs.length === 0) {
+      hasMoreData = false; // Stop loop
+    } else {
+      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
+      page++; // Fetch next page
+    }
+  }
+
+  return allLogs;
+};
+
+const getSession = async (
+  txHashOrSessionId: string,
+  signal?: AbortSignal
+): Promise<LHSession> => {
+  let data;
+
+  if (identifyAddressOrTxHash(txHashOrSessionId) === "txHash") {
+    data = queries.transactionHash(txHashOrSessionId);
+  } else {
+    data = queries.sessionId(txHashOrSessionId);
+  }
+
+  const result = await fetchElastic(SERVER_URL, data, signal);
+  const swapLog = result[0];
+
+  if (!isDebug) {
+    return parseFullSessionLogs(swapLog, [], []);
+  }
+
+  const quoteLogs = await fetchQuoteLogs([swapLog.sessionId], signal);
+  const clientLogs = await fetchClientLogs([swapLog.sessionId], signal);
+
+  return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
+};
+
+const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {
+  const response = await axios.post(`${url}/_search`, { ...data }, { signal });
+
+  return normalizeSessions(
+    response.data.hits?.hits.map((hit: any) => hit.fields)
+  );
+};
+
+export const clob = {
+  fetchSwaps,
+  getClientLogs,
+  getSession,
+};
