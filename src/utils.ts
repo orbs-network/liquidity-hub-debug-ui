@@ -1,3 +1,5 @@
+import BN from "bignumber.js";
+
 export const isDebug = !!localStorage.getItem("debug");
 
 export function identifyAddressOrTxHash(input?: string) {
@@ -22,3 +24,12 @@ export function identifyAddressOrTxHash(input?: string) {
     return "sessionId";
   }
 }
+
+export const addSlippage = (amount?: string, slippage?: number) => {
+  if (!amount || !slippage) return amount;
+
+  const slippageBN = BN(amount).times(slippage).div(100);
+
+  return BN(amount).plus(slippageBN).toString();
+};
+

@@ -1,8 +1,8 @@
 import { LogModal } from "components";
 import { styled } from "styled-components";
 import { RowFlex } from "styles";
-import { useSession } from "./hooks";
-import { ListItem, StyledDivider } from "./components/shared";
+import { useSession } from "../hooks";
+import { ListItem, StyledDivider } from "./shared";
 
 export const SessionLogs = () => {
   const session = useSession().data;

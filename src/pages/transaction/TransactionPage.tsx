@@ -3,18 +3,22 @@ import { AddressLink, Card, FormattedAmount, PageLoader } from "components";
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
-import { useSession, useToken, useTransfers } from "./hooks";
+import {
+  useExactAmountOutPreDeduction,
+  useOutTokenUsd,
+  useSession,
+  useToken,
+  useTransfers,
+} from "./hooks";
 import { ReactNode, useMemo } from "react";
 import {
   useAmountUI,
   useChainConfig,
   useDexConfig,
   useNumberFormatter,
-  useTokenAmountUsd,
 } from "hooks";
-import { makeElipsisAddress } from "helpers";
+import { amountUiV2, makeElipsisAddress } from "helpers";
 import { TransferLog } from "types";
-import { zeroAddress } from "@defi.org/web3-candies";
 import BN from "bignumber.js";
 
 import {
@@ -22,14 +26,15 @@ import {
   StyledDivider,
   StyledRowText,
   TokenAmount,
-  WithUSD,
 } from "./components/shared";
-import { SessionLogs } from "./Logs";
-import { LogTrace } from "./LogTrace";
+import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
-import { Savings } from "./Savings";
 import moment from "moment";
 import { StatusBadge } from "components/StatusBadge";
+import { addSlippage } from "utils";
+import { GasUsed } from "./components/GasUsed";
+import { LogTrace } from "./components/LogTrace";
+import { Savings } from "./components/Savings";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useSession();
@@ -83,14 +88,15 @@ const Content = () => {
       </Section>
       <Section>
         <Status />
-        <BlockNumber />
         <TxHash />
         <Slippage />
         <InTokenAmount />
-        <AmountOut />
-        <ExactAmountReceived />
+        <DexAmountOut />
+        <ExpectedToReceiveLH />
+        <ExactAmountReceivedPreDeductions />
         <GasUsed />
         <Fees />
+        <ExactAmountReceivedPostDeductions />
         <Savings />
       </Section>
       <DebugComponent>
@@ -107,7 +113,7 @@ const Content = () => {
 const Slippage = () => {
   const session = useSession().data;
   return (
-    <ListItem label="Slippage">
+    <ListItem label="User Slippage" tooltip="The slippage user sets in the UI">
       <StyledRowText>{session?.slippage}%</StyledRowText>
     </ListItem>
   );
@@ -118,11 +124,11 @@ const Dex = () => {
   const dexConfig = useDexConfig(session?.dex);
 
   return (
-    <ListItem label="Dex" >
-    <RowFlex $gap={8}>
-    <Avatar src={dexConfig?.logoUrl} style={{ width: 20, height: 20 }} />
-      <StyledRowText>{session?.dex}</StyledRowText>
-    </RowFlex>
+    <ListItem label="Dex">
+      <RowFlex $gap={8}>
+        <Avatar src={dexConfig?.logoUrl} style={{ width: 20, height: 20 }} />
+        <StyledRowText>{session?.dex}</StyledRowText>
+      </RowFlex>
     </ListItem>
   );
 };
@@ -131,7 +137,7 @@ const User = () => {
 
   return (
     <ListItem label="User's address">
-      <AddressLink address={session?.userAddress} short={true} />
+      <AddressLink underline address={session?.userAddress} short={true} />
     </ListItem>
   );
 };
@@ -139,7 +145,17 @@ const Timestamp = () => {
   const session = useSession().data;
   return (
     <ListItem label="Timestamp">
-      <StyledRowText>{moment(session?.timestamp).format("lll")}</StyledRowText>
+      <RowFlex>
+        <StyledRowText>
+          {moment(session?.timestamp).format("lll")}
+        </StyledRowText>
+        <AddressLink
+          chainId={session?.chainId}
+          address={session?.blockNumber?.toString()}
+          path="block"
+          text={`(${session?.blockNumber})`}
+        />
+      </RowFlex>
     </ListItem>
   );
 };
@@ -174,6 +190,7 @@ const TxHash = () => {
   return (
     <ListItem label="Transaction hash">
       <AddressLink
+        underline
         address={session?.txHash}
         text={makeElipsisAddress(session?.txHash, 10)}
         path="tx"
@@ -183,72 +200,42 @@ const TxHash = () => {
   );
 };
 
-const BlockNumber = () => {
+const ExpectedToReceiveLH = () => {
   const session = useSession().data;
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const lhAmountWSF = useAmountUI(
+    outToken?.decimals,
+    session?.lhAmountOutWS
+  );
+  const usd = useOutTokenUsd(lhAmountWSF)
+
   return (
-    <ListItem label="Block number">
-      <AddressLink
-        chainId={session?.chainId}
-        address={session?.blockNumber?.toString()}
-        path="block"
+    <ListItem label="LH amount out (estimate)">
+      <TokenAmount
+        amount={lhAmountWSF}
+        address={session?.tokenOutAddress}
+        symbol={outToken?.symbol}
+        usd={usd as string}
       />
     </ListItem>
   );
 };
 
-const useLHAndDexAmountDiff = () => {
+const DexAmountOut = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-
-  const lhAmount = useAmountUI(outToken?.decimals, session?.lhAmountOut);
-  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
-
-  const amountOutDiff = useMemo(() => {
-    if (!lhAmount || !dexAmount) return 0;
-    const res = BN(lhAmount)
-      .minus(dexAmount)
-      .div(lhAmount)
-      .times(100)
-      .toNumber();
-    return res;
-  }, [dexAmount, lhAmount]);
-
-  return amountOutDiff;
-};
-
-const AmountOut = () => {
-  const session = useSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const lhAmount = useAmountUI(outToken?.decimals, session?.lhAmountOut);
-  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOut);
-  const amountOutDiff = useLHAndDexAmountDiff();
+  const dexAmount = useAmountUI(
+    outToken?.decimals,
+    session?.dexEstimateAmountOut
+  );
 
   return (
-    <ListItem label="Expected to receive">
-      <RowFlex $justifyContent="flex-start" $gap={5}>
-        <span>
-          <TokenAmount
-            prefix="LH:"
-            amount={lhAmount}
-            address={session?.tokenOutAddress}
-            symbol={outToken?.symbol}
-          />
-        </span>
-        <span>
-          <TokenAmount
-            prefix="Vs Dex:"
-            amount={dexAmount || "0"}
-            symbol={outToken?.symbol}
-            address={session?.tokenOutAddress}
-          />
-        </span>
-        {amountOutDiff !== 0 && (
-          <span>
-            {" "}
-            Diff: <b>{parseFloat(amountOutDiff.toFixed(2))}%</b>
-          </span>
-        )}
-      </RowFlex>
+    <ListItem label="Dex amount out">
+      <TokenAmount
+        amount={dexAmount || "0"}
+        symbol={outToken?.symbol}
+        address={session?.tokenOutAddress}
+      />
     </ListItem>
   );
 };
@@ -260,10 +247,9 @@ const Fees = () => {
   const fee = useNumberFormatter({
     value: amount,
   });
-  console.log(session);
-  
-
-  const usd = useNumberFormatter({ value: session?.feeOutAmountUsd });
+  const usdFallback = useOutTokenUsd(amount);
+  const usdValue = session?.feeOutAmountUsd || usdFallback;
+  const usd = useNumberFormatter({ value: usdValue });
   return (
     <ListItem label="Fees">
       <TokenAmount
@@ -276,51 +262,45 @@ const Fees = () => {
   );
 };
 
-const ExactAmountReceived = () => {
+const ExactAmountReceivedPreDeductions = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const amount = useNumberFormatter({
-    value: useAmountUI(outToken?.decimals, session?.exactOutAmount),
-  });
 
-  const usd = useNumberFormatter({
-    value: session?.exactOutAmountUsd,
-  });
+  const exactOutAmountPreDeduction = useExactAmountOutPreDeduction()
+  const amount = useAmountUI(outToken?.decimals, exactOutAmountPreDeduction);
+  const usd = useOutTokenUsd(amount);
+
 
   return (
-    <ListItem label="Exact Amount Received">
+    <ListItem label="LH amount out (actual pre deductions)">
       <TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
-        usd={usd as string}
         symbol={outToken?.symbol}
+        usd={usd as string}
       />
     </ListItem>
   );
 };
 
-const GasUsed = () => {
+const ExactAmountReceivedPostDeductions = () => {
   const session = useSession().data;
-  const amount = session?.gasUsed ? session?.gasUsed / 1e9 : 0;
-  const usd = useTokenAmountUsd(zeroAddress, amount, session?.chainId);
-  const gas = useNumberFormatter({
-    value: amount,
-  });
-  const _usd = useNumberFormatter({ value: usd });
-  const chainConfig = useChainConfig(session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const amount = useAmountUI(outToken?.decimals, session?.exactOutAmount)
+  const usd = session?.exactOutAmountUsd
 
   return (
-    <ListItem label="Gas used">
+    <ListItem label="LH amount out (actual post deductions)">
       <TokenAmount
-        amount={gas as string}
-        usd={_usd as string}
-        symbol={chainConfig?.native.symbol}
-        address={chainConfig?.native.address}
+        address={session?.tokenOutAddress}
+        amount={amount as string}
+        symbol={outToken?.symbol}
+        usd={usd as string}
       />
-      <span>{`, ${session?.gasUsed ?? "N/A"} Gwei `}</span>
     </ListItem>
   );
 };
+
 
 const ExactAmountOut = () => {
   const session = useSession().data;
@@ -328,7 +308,7 @@ const ExactAmountOut = () => {
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
     <ListItem label="Exact amount out">
-      <WithUSD address={session?.tokenOutAddress} amount={amount} />
+      <TokenAmount symbol={token?.symbol} address={session?.tokenOutAddress} amount={amount} />
     </ListItem>
   );
 };
@@ -339,7 +319,7 @@ const DucthPrice = () => {
   const amount = useAmountUI(token?.decimals, session?.dutchPrice);
   return (
     <ListItem label="Dutch price">
-      <WithUSD address={session?.tokenOutAddress} amount={amount} />
+      <TokenAmount symbol={token?.symbol} address={session?.tokenOutAddress} amount={amount} />
     </ListItem>
   );
 };

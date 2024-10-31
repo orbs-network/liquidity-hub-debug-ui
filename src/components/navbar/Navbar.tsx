@@ -58,7 +58,7 @@ const Container = styled(RowFlex)`
   display: flex;
   justify-content: center;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   z-index: 1;
   padding:0px 30px;
   background:#F8F9fb;

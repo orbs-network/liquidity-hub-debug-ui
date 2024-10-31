@@ -248,7 +248,7 @@ export const getERC20Transfers = async (
 };
 
 
-export const amountBN = (decimals?: number, amount?: string) => {
+export const amountBN = (decimals?: number, amount?: string | number) => {
   if (!decimals || !amount) return zero;
 
   return parsebn(amount).times(new BN(10).pow(decimals || 0));
@@ -270,4 +270,11 @@ export const amountUiV2 = (decimals?: number, amount?: string | BN | number) => 
   if (!decimals || !amount) return "";
   const percision = new BN(10).pow(decimals || 0);
   return BN(amount).times(percision).idiv(percision).div(percision).toFixed();
+};
+
+
+export const amountBNV2 = (decimals?: number, amount?: string | number) => {
+  if (!decimals || !amount) return '0';
+
+  return parsebn(amount).times(new BN(10).pow(decimals || 0)).decimalPlaces(0).toFixed();
 };

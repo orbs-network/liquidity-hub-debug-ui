@@ -1,12 +1,19 @@
 import _ from "lodash";
 import moment from "moment";
 import { LHSession, SwapLog } from "types";
+import { addSlippage } from "utils";
+import BN from "bignumber.js";
 
 const parseSwapLog = (log: any): SwapLog => {
+  const slippage = log.slippage;
   return {
     feeOutAmount: log.feeOutAmount,
-    dexAmountOut: Number(log.amountOutUI || '0') < 0 ? undefined : log.amountOutUI,
-    lhAmountOut: log.amountOut,
+    dexEstimateAmountOut:
+      Number(log.amountOutUI || "0") < 0
+        ? undefined
+        : addSlippage(log.amountOutUI, slippage),
+    lhAmountOutWS: addSlippage(log.amountOut, slippage),
+    lhAmountOut:log.amountOut,
     amountIn: log.amountIn,
     chainId: log.chainId,
     dex: log.chainId === 1101 ? `${log.dex}-zkevm` : log.dex,
@@ -25,19 +32,19 @@ const parseSwapLog = (log: any): SwapLog => {
     exactOutAmountUsd: log.exactOutAmountUsd,
     txData: log.txData,
     dutchPrice: log.dutchPrice,
-    slippage: log.slippage,
+    slippage,
     ip: log.ip,
     serializedOrder: log.serializedOrder,
     signature: log.signature,
     gasPriceGwei: log.gasPriceGwei,
     gasUsed: log.gasUsed,
+    gasUsedNativeToken: BN(log.gasUsed || 0).times(log.gasPriceGwei || 0).toFixed(),
     blockNumber: log.blockNumber,
     amountInUsd: log.amountInUSD,
     lhAmountOutUsd: log.dollarValue,
-    feeOutAmountUsd: log.feeOutAmountUsd,
+    feeOutAmountUsd: log.feeOutAmountUsd
   };
 };
-
 
 export const parseSwapLogs = (logs: any[]) => {
   return logs.map((log) => {
@@ -50,7 +57,7 @@ export const parseFullSessionLogs = (
   quoteLogs: any[],
   clientLogs: any[]
 ): LHSession => {
-  console.log({swapLog, quoteLogs});
+  console.log({ swapLog, quoteLogs });
 
   const parsedSwapLog = parseSwapLog(swapLog);
 

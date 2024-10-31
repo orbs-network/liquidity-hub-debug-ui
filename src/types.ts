@@ -25,11 +25,13 @@ export interface SwapLog {
   gasUsed: number;
   blockNumber: number;
   feeOutAmount: string;
-  dexAmountOut?: number;
-  lhAmountOut: number;
+  dexEstimateAmountOut?: number | string;
+  lhAmountOutWS?: number | string;
   amountInUsd: number;
   lhAmountOutUsd: number;
   feeOutAmountUsd: number;
+  gasUsedNativeToken: string;
+  lhAmountOut: string;
 }
 
 export interface LHSession extends SwapLog {
@@ -54,4 +56,3 @@ export interface TransferLog {
   token: Token;
   rawValue: string;
 }
-

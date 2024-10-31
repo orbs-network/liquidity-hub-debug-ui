@@ -33,7 +33,7 @@ const Layout = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  max-width: 1400px;
+  max-width: 1200px;
   padding: 30px;
   margin: 0 auto;
   gap: 30px;

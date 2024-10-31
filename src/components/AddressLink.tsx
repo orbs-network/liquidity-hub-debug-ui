@@ -12,6 +12,7 @@ export function AddressLink({
   path = "tx",
   short = false,
   hideCopy = true,
+  underline = false,
 }: {
   address?: string;
   chainId?: number;
@@ -19,6 +20,7 @@ export function AddressLink({
   path?: string;
   short?: boolean;
   hideCopy?: boolean;
+  underline?: boolean;
 }) {
   const copy = useCopyToClipboard();
   const onCopy = (e: any) => {
@@ -43,7 +45,7 @@ export function AddressLink({
 
   return (
     <Container>
-      <StyledLink href={url} target='_blank'>
+      <StyledLink href={url} target='_blank' textDecoration={underline ? 'underline' : 'none'}>
         <TextOverflow text={_address || ""} />
       </StyledLink>
      {!hideCopy &&  <StyledIcon onClick={onCopy} />}
@@ -63,7 +65,6 @@ const Container = styled.span`
 `;
 
 const StyledLink = styled(Link)`
-  color: rgb(115, 66, 220) !important;
   font-weight: 500;
   display: flex;
 `;
