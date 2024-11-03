@@ -2,17 +2,13 @@ import { useUSDPriceQuery } from "query";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE, TX_TRACE_SERVER } from "./config";
-import { getChainConfig, getTokenDetails } from "./helpers";
+import { DEFAULT_SESSIONS_TIME_RANGE, dexConfig } from "./config";
+import { amountUiV2, getChainConfig, getRpcUrl } from "./helpers";
 import BN from "bignumber.js";
-import { useToast } from "@chakra-ui/react";
 import Web3 from "web3";
-import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import { useSession } from "pages/clob/public/hooks";
+import {notification} from "antd";
+
 import { zeroAddress } from "@defi.org/web3-candies";
-
-
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -36,40 +32,13 @@ export const useAppParams = () => {
   };
 };
 
-export const useLogTrace = () => {
-  const session = useSession().data;
-
-  return useQuery({
-    queryKey: ["useLogTrace", session?.id],
-    queryFn: async ({ signal }) => {
-      if (!session) return;
-      debugger;
-      const result = await axios.post(
-        TX_TRACE_SERVER,
-        {
-          chainId: session.chainId,
-          blockNumber: session.blockNumber,
-          txData: session.txData,
-        },
-        {
-          signal,
-        }
-      );        
-      return result.data;
-    },
-  });
-};
-
-
-export const useTokenDecimals = (tokenAddress?: string, chainId?: number) => {
-  return useMemo(() => {
-    if (!tokenAddress || !chainId) return 18; // Default to 18 decimals
-    return getTokenDetails(tokenAddress, useWeb3(chainId!!) , chainId!!);
-  }, [tokenAddress, chainId]);
-};
-
 export const useWeb3 = (chainId?: number) => {
-  return useMemo(() => new Web3(new Web3.providers.HttpProvider(`https://rpcman.orbs.network/rpc?chainId=${chainId}`)), [chainId]);
+  const rpc = getRpcUrl(chainId);
+  return useMemo(() => {
+    if (!rpc) return;
+
+    return new Web3(new Web3.providers.HttpProvider(rpc));
+  }, [chainId]);
 };
 
 export const useNumberFormatter = ({
@@ -114,7 +83,7 @@ const wrappedTokenAddress = {
   250: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
   59144: "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f",
   1: "0x4200000000000000000000000000000000000006",
-}
+};
 
 export const useTokenAmountUsd = (
   tokenAddress?: string,
@@ -122,7 +91,10 @@ export const useTokenAmountUsd = (
   chainId?: number
 ) => {
   chainId = chainId || 137;
-  tokenAddress = tokenAddress === zeroAddress ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress] : tokenAddress;
+  tokenAddress =
+    tokenAddress === zeroAddress
+      ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress]
+      : tokenAddress;
 
   const { data: price } = useUSDPriceQuery(tokenAddress, chainId);
 
@@ -141,7 +113,7 @@ export const useChainConfig = (chainId?: number) => {
 type CopyFn = (text: string) => Promise<boolean>; // Return success
 
 export function useCopyToClipboard(): CopyFn {
-  const toast = useToast();
+  const [api] = notification.useNotification();
 
   const copy: CopyFn = async (text) => {
     if (!navigator?.clipboard) {
@@ -152,11 +124,9 @@ export function useCopyToClipboard(): CopyFn {
     // Try to save to clipboard then save it in the state if worked
     try {
       await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied to clipboard",
-        status: "success",
+      api.open({
+        message: "Copied to clipboard",
         duration: 4000,
-        isClosable: true,
       });
       return true;
     } catch (error) {
@@ -168,3 +138,62 @@ export function useCopyToClipboard(): CopyFn {
 
   return copy;
 }
+
+import { useState, useEffect } from "react";
+
+export const useResizeObserver = (elementRef: any) => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = elementRef.current;
+
+    if (!element) return;
+
+    // Create a ResizeObserver instance to observe element's size changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+
+    // Observe the element
+    resizeObserver.observe(element);
+
+    // Cleanup observer on unmount
+    return () => {
+      resizeObserver.unobserve(element);
+    };
+  }, [elementRef]); // Depend on the elementRef to re-run if the element changes
+
+  return dimensions; // Return the current dimensions (width and height)
+};
+
+export const useHeight = () => {
+  const [height, setHeight] = useState(window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => setHeight(window.innerHeight);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return height;
+};
+
+export const useAmountUI = (
+  decimals?: number,
+  value?: string | BN | number
+) => {
+  return useMemo(
+    () => amountUiV2(decimals, value),
+    [decimals, value?.toString()]
+  );
+};
+
+export const useDexConfig = (dex?: string) => {
+  return useMemo(() => {
+    if (!dex) return;
+    return dexConfig[dex.toLowerCase() as keyof typeof dexConfig];
+  }, [dex]);
+};

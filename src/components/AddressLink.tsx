@@ -1,17 +1,19 @@
-import { Link } from '@chakra-ui/react';
-import  { useMemo } from 'react'
-import { makeElipsisAddress } from '../helpers';
-import styled from 'styled-components';
-import TextOverflow from 'react-text-overflow';
-import {CopyIcon} from '@chakra-ui/icons'
-import { useCopyToClipboard } from 'hooks';
+import { useMemo } from "react";
+import { makeElipsisAddress } from "../helpers";
+import styled from "styled-components";
+import TextOverflow from "react-text-overflow";
+import { useChainConfig, useCopyToClipboard } from "hooks";
+import { Copy } from "react-feather";
+import { Typography } from "antd";
+
 export function AddressLink({
   address,
   chainId,
   text,
-  path = "address",
+  path = "tx",
   short = false,
-  hideCopy = false,
+  hideCopy = true,
+  underline = false,
 }: {
   address?: string;
   chainId?: number;
@@ -19,20 +21,17 @@ export function AddressLink({
   path?: string;
   short?: boolean;
   hideCopy?: boolean;
+  underline?: boolean;
 }) {
   const copy = useCopyToClipboard();
   const onCopy = (e: any) => {
     e.preventDefault();
     copy(address!);
   };
-  // const url = useMemo(() => {
-  //   const explorer = getExplorer(chainId);
-  //   return `${explorer}/${path}/${address}`;
-  // }, [chainId, path]);
 
-  const url = useMemo(() => {
-    return `/public/${address}`;
-  }, [chainId, path]);
+  const explorerUrl = useChainConfig(chainId)?.explorer;
+
+  const url = `${explorerUrl}/${path}/${address}`;
 
   const _address = useMemo(() => {
     if (text) return text;
@@ -44,15 +43,17 @@ export function AddressLink({
 
   return (
     <Container>
-      <StyledLink href={url}>
-        <TextOverflow text={_address || ""} />
-      </StyledLink>
-     {!hideCopy &&  <StyledIcon onClick={onCopy} />}
+      <Typography>
+        <StyledLink href={url} target="_blank" $underline={underline}>
+          <TextOverflow text={_address || ""} />
+        </StyledLink>
+      </Typography>
+      {!hideCopy && <StyledIcon onClick={onCopy} />}
     </Container>
   );
 }
 
-const StyledIcon = styled(CopyIcon)`
+const StyledIcon = styled(Copy)`
   color: rgb(115, 66, 220) !important;
   cursor: pointer;
 `;
@@ -63,9 +64,13 @@ const Container = styled.span`
   gap: 5px;
 `;
 
-const StyledLink = styled(Link)`
-  color: rgb(115, 66, 220) !important;
+const StyledLink = styled("a")<{ $underline: boolean }>`
   font-weight: 500;
   display: flex;
+  font-size: 14px;
+  text-decoration: ${({ $underline }) => ($underline ? "underline" : "none")};
+  color: black!important;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
-

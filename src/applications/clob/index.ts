@@ -1,271 +1,120 @@
 import axios from "axios";
 import _ from "lodash";
-import {
-  datesDiff,
-  getIdsFromSessions,
-  getValueFromSessionLogs,
-  normalizeSessions,
-} from "helpers";
-import { ClobSession, SessionsFilter } from "types";
-import { elastic } from "services/elastic";
-import moment from "moment";
-import { bn, chainId } from "@defi.org/web3-candies";
-import { useUSDPriceQuery } from "query";
-import { useNumberFormatter } from "hooks";
-import { useSessionChainConfig, useSessionTx } from "pages/clob/public/hooks";
+import { normalizeSessions } from "helpers";
+import { parseFullSessionLogs, parseSwapLogs } from "./helpers";
+import { ELASTIC_ENDPOINT } from "config";
+import { queries } from "./elastic";
+import { isValidSessionId, isValidTxHash } from "utils";
+import { LHSession } from "types";
 
-interface FetchSessionArgs {
-  url: string;
-  filter?: SessionsFilter;
-  timeRange?: string;
+const SERVER_URL = `${ELASTIC_ENDPOINT}/orbs-clob-poc10.*`;
+const CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-liquidity-hub-ui*`;
+
+const getClientLogs = async (
+  ids: string[],
+  page: number,
+  signal?: AbortSignal
+) => {
+  const data = queries.clientTrasactions(ids, page, 100);
+
+  return fetchElastic(CLIENT_URL, data, signal);
+};
+
+const fetchSwaps = async ({
+  page = 0,
+  chainId,
+  signal,
+  walletAddress,
+}: {
+  page: number;
+  chainId?: number;
   signal?: AbortSignal;
-}
+  walletAddress?: string;
+}) => {
+  const data = queries.swaps({ page, chainId, limit: 100, walletAddress });
 
-class Clob {
-  SERVER_SESSIONS = "orbs-clob-poc10.*";
-  CLIENT_SESSIONS = "orbs-liquidity-hub-ui*";
+  const logs = await fetchElastic(SERVER_URL, data, signal);
+  return parseSwapLogs(logs);
+};
 
-  parseSessions = (sessions: any[]) => {
-    const grouped = _.mapValues(_.groupBy(sessions, "sessionId"), (value) => {
-      return _.groupBy(value, "type");
-    });
-    
-    const sessionValues = _.mapValues(grouped, (session, key): ClobSession => {
-      console.log({"session.quote": session})
-      const fromSwap = (key: string) =>
-        getValueFromSessionLogs(session.swap, key);
-      const fromQuote = (key: string) =>
-        getValueFromSessionLogs(session.quote, key) || fromSwap(key);
-      const fromClient = (key: string) =>
-        getValueFromSessionLogs(session.client, key);
-      let timestamp =
-        fromSwap("timestamp") ||
-        fromQuote("timestamp") ||
-        fromClient("timestamp");
-        
-      let dexAmountOut =   bn(fromClient("dexOutAmountWS")).toString() || fromQuote("amountOutUI");
-      const timestampMillis = moment(timestamp).valueOf();
-      const savings = fromSwap("exactOutAmountSavings");
-      const amountOutRaw = fromQuote("amountOut") || fromClient("amountOut");
-      const amountOutF = fromQuote("amountOutF");
-      const exactOutAmount = fromSwap("exactOutAmount");
-      const txData = fromSwap("txData");
+const fetchQuoteLogs = async (sessionIds: string[], signal?: AbortSignal) => {
+  let allLogs: any[] = [];
+  let page = 0;
+  let hasMoreData = true;
 
+  // Loop to fetch pages until no more data is returned
+  while (hasMoreData) {
+    const data = queries.quote(sessionIds, page, 100);
+    const logs = await fetchElastic(SERVER_URL, data, signal);
 
-      // const tx = useSessionTx();
-      // const chainConfig = useSessionChainConfig();
-      // //@ts-ignore
-      // const gasUsedNative = Number(useNumberFormatter({ value: tx?.gasUsedNativeToken }))
-      // const nativePrice = useUSDPriceQuery(chainConfig?.native.address, chainId);
-      // const gasUsedNativeUSD = gasUsedNative!! * nativePrice!!;
-
-      return {
-        id: key,
-        amountInRaw: fromQuote("amountIn") || fromClient("amountIn"),
-        amountInUI: fromQuote("amountInF") || fromClient("srcAmountUI"),
-        amountOutRaw: amountOutRaw,
-
-        //@ts-ignore
-        amountOutF: amountOutF,
-        timestampMillis,
-        timestamp: moment(timestamp).format("DD/MM/YY HH:mm:ss"),
-        timeFromNow: datesDiff(moment(timestampMillis)),
-        dexSwapTxHash: fromClient("dexSwapTxHash"),
-        dutchPrice: fromSwap("dutchPrice"),
-        amountOut: fromQuote("amountOut"),
-        dexAmountOut: dexAmountOut,
-        amountOutDiff:
-          dexAmountOut === -1
-            ? ""
-            : fromSwap("amountOutDiff") ||
-              fromQuote("amountOutDiff") ||
-              (fromClient("clobDexPriceDiffPercent") &&
-                fromClient("clobDexPriceDiffPercent") / 10),
-        amountOutUSD:
-          fromSwap("dollarValue") ||
-          fromQuote("dollarValue") ||
-          fromClient("dstTokenUsdValue"),
-        amountInUSD: fromSwap("amountInUSD") || fromClient("amountInUSD"),
-        isAction: fromSwap("isAction") || fromClient("isAction"),
-        isClobTrade: fromClient("isClobTrade"),
-        slippage:
-          fromSwap("slippage") ||
-          fromQuote("slippage") ||
-          fromClient("slippage"),
-        tokenOutAddress:
-          fromSwap("tokenOutAddress") ||
-          fromQuote("tokenOutAddress") ||
-          fromClient("dstTokenAddress"),
-        tokenInAddress:
-          fromSwap("tokenInAddress") ||
-          fromQuote("tokenInAddress") ||
-          fromClient("srcTokenAddress"),
-        tokenOutSymbol:
-          fromSwap("tokenOutSymbol") ||
-          fromQuote("tokenOutSymbol") ||
-          fromClient("dstTokenSymbol"),
-        txStatus: fromSwap("txStatus"),
-        tokenInSymbol:
-          fromSwap("tokenInSymbol") ||
-          fromQuote("tokenInSymbol") ||
-          fromClient("srcTokenSymbol"),
-        uaServer: fromSwap("uaServer") || fromClient("uaServer"),
-        chainId:
-          fromSwap("chainId") || fromQuote("chainId") || fromClient("chainId"),
-        dex: fromSwap("dex") || fromQuote("dex") || fromClient("partner"),
-        userAddress:
-          fromSwap("user") ||
-          fromQuote("userAddress") ||
-          fromClient("walletAddress"),
-        ip: fromSwap("ip") || fromClient("ip"),
-        serializedOrder:
-          fromSwap("serializedOrder") || fromClient("serializedOrder"),
-        signature: fromSwap("signature") || fromClient("signature"),
-        swapStatus: fromSwap("swapStatus") || fromClient("swapStatus"),
-        txHash: fromSwap("txHash") || fromClient("txHash"),
-        gasPriceGwei: fromSwap("gasPriceGwei") || fromClient("gasPriceGwei"),
-        gasUsed: fromSwap("gasUsed") || fromClient("gasUsed"),
-        exactOutAmount: exactOutAmount,
-        exactOutAmountUsd: fromSwap("exactOutAmountUsd"),
-        savings: savings,
-        txData,
-        blockNumber: fromSwap("blockNumber") || fromClient("blockNumber"),
-        logs: {
-          client: session.client,
-          swap: session.swap,
-          quote: session.quote,
-        },
-      };
-    });
-
-    const _sessions = _.values(sessionValues);
-    return _.sortBy(_sessions, "timestampMillis").reverse();
-  };
-
-  getSessions = async ({
-    signal,
-    timeRange,
-    filter,
-  }: {
-    signal?: AbortSignal;
-    timeRange?: string;
-    filter?: SessionsFilter;
-  }) => {
-    let args: Partial<FetchSessionArgs> = {
-      signal,
-      timeRange,
-      filter,
-    };
-    const swapFirst = () => {
-      return (
-        _.size(
-          filter?.must?.find(
-            (f) =>
-              f.keyword === "type" ||
-              f.keyword === "swapStatus" ||
-              f.keyword === "txHash"
-          )
-        ) > 0
-      );
-    };
-
-    if (!swapFirst()) {
-      const serverSessions = await this.fetchServerSessions(args);
-
-      const ids = getIdsFromSessions(serverSessions);
-
-      const clientSessions = await this.fetchClientSessions({
-        timeRange: args.timeRange,
-        signal: args.signal,
-        filter: {
-          must: [
-            {
-              keyword: "sessionId",
-              value: ids,
-            },
-          ],
-          should: undefined,
-        },
-      });
-
-      return this.parseSessions(_.flatten([clientSessions, serverSessions]));
+    // Check if logs were returned; if empty, stop the loop
+    if (logs.length === 0) {
+      hasMoreData = false; // Stop loop
+    } else {
+      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
+      page++; // Fetch next page
     }
-
-    const swapSessions = await this.fetchServerSessions(args);
-
-    const ids = getIdsFromSessions(swapSessions);
-
-    const quoteSessions = this.fetchServerSessions({
-      ...args,
-      filter: {
-        must: [
-          {
-            keyword: "sessionId",
-            value: ids,
-          },
-          {
-            keyword: "type",
-            value: "quote",
-          },
-        ],
-        should: undefined,
-      },
-    });
-
-    const clientSessions = this.fetchClientSessions({
-      ...args,
-      filter: {
-        must: [
-          {
-            keyword: "sessionId",
-            value: ids,
-          },
-        ],
-        should: undefined,
-      },
-    });
-
-    const [quoteRes, clientRes] = await Promise.all([
-      quoteSessions,
-      clientSessions,
-    ]);
-
-    return this.parseSessions(_.flatten([clientRes, swapSessions, quoteRes]));
-  };
-
-  async fetchSessions({ url, filter, timeRange, signal }: FetchSessionArgs) {
-    const data = elastic.createQueryBody({
-      filter: filter && _.size(filter) ? filter : undefined,
-      timeRange,
-    });
-    
-
-    const response = await axios.post(
-      `${elastic.endpoint}/${url}/_search`,
-      { ...data },
-      { signal: signal }
-    );
-
-    return normalizeSessions(
-      response.data.hits?.hits.map((hit: any) => hit.fields)
-    );
-  }
-  async fetchServerSessions(args: Partial<FetchSessionArgs>) {
-    return this.fetchSessions({ url: this.SERVER_SESSIONS, ...args });
   }
 
-  async fetchClientSessions(args: Partial<FetchSessionArgs>) {
-    const sessions = await this.fetchSessions({
-      url: this.CLIENT_SESSIONS,
-      ...args,
-    });
-    return sessions.map((session) => {
-      return {
-        ...session,
-        type: "client",
-      };
-    });
-  }
-}
+  return allLogs;
+};
 
-export const clob = new Clob();
+const fetchClientLogs = async (sessionIds: string[], signal?: AbortSignal) => {
+  let allLogs: any[] = [];
+  let page = 0;
+  let hasMoreData = true;
+
+  // Loop to fetch pages until no more data is returned
+  while (hasMoreData) {
+    const data = queries.client(sessionIds, page, 100);
+    const logs = await fetchElastic(CLIENT_URL, data, signal);
+
+    // Check if logs were returned; if empty, stop the loop
+    if (logs.length === 0) {
+      hasMoreData = false; // Stop loop
+    } else {
+      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
+      page++; // Fetch next page
+    }
+  }
+
+  return allLogs;
+};
+
+const getSession = async (
+  txHashOrSessionId: string,
+  signal?: AbortSignal
+): Promise<LHSession> => {
+  let data;
+
+  if (isValidTxHash(txHashOrSessionId)) {
+    data = queries.transactionHash(txHashOrSessionId);
+  } else if(isValidSessionId(txHashOrSessionId)) {
+    data = queries.sessionId(txHashOrSessionId);
+  }
+  else {
+    throw new Error("Invalid transaction hash or session id");
+  }
+
+  const result = await fetchElastic(SERVER_URL, data, signal);
+  const swapLog = result[0];
+
+  const quoteLogs = await fetchQuoteLogs([swapLog.sessionId], signal);
+  const clientLogs = await fetchClientLogs([swapLog.sessionId], signal);
+
+  return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
+};
+
+const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {
+  const response = await axios.post(`${url}/_search`, { ...data }, { signal });
+
+  return normalizeSessions(
+    response.data.hits?.hits.map((hit: any) => hit.fields)
+  );
+};
+
+export const clob = {
+  fetchSwaps,
+  getClientLogs,
+  getSession,
+};

@@ -2,10 +2,10 @@ import { erc20abi,  isNativeAddress, parsebn, zero } from "@defi.org/web3-candie
 import _ from "lodash";
 import moment, { Moment } from "moment";
 import Web3 from "web3";
-import { CHAIN_CONFIG } from "./config";
 import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
+import { networks } from "networks";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -66,7 +66,7 @@ export const getLogo = (chainId?: number) => {
 
 export const getRpcUrl = (chainId?: number) => {
   if (!chainId) return undefined;
-  return `https://rpcman.orbs.network/rpc?chainId=${chainId}`;
+  return `https://rpcman.orbs.network/rpc?chainId=${chainId}&appId=liquidity-hub-debug-tool`;
 };
 
 export const getWeb3 = (chainId?: number) => {
@@ -76,8 +76,8 @@ export const getWeb3 = (chainId?: number) => {
 };
 
 export const getIdsFromSessions = (sessions: any[]) => {
-  return _.map(sessions, (session) => session.sessionId).filter(
-    (id) => id !== undefined
+  return _.uniq(_.map(sessions, (session) => session.sessionId).filter(
+    (id) => id !== undefined)
   ) as string[];
 };
 
@@ -104,9 +104,9 @@ export const swapStatusText = (status?: string) => {
   if (!status) return "-";
   switch (status) {
     case "success":
-      return "✅ Success";
+      return "Success";
     case "failed":
-      return "❌ Failed";
+      return "Failed";
     default:
       return "-";
   }
@@ -144,7 +144,7 @@ export const isTxHash = (value?: string) => value?.startsWith("0x");
 
 export const getChainConfig = (chainId?: number) => {
   if (!chainId) return undefined;
-  return CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG];
+  return networks[chainId as keyof typeof networks];
 };
 
 export const datesDiff = (date: Moment) => {
@@ -248,7 +248,7 @@ export const getERC20Transfers = async (
 };
 
 
-export const amountBN = (decimals?: number, amount?: string) => {
+export const amountBN = (decimals?: number, amount?: string | number) => {
   if (!decimals || !amount) return zero;
 
   return parsebn(amount).times(new BN(10).pow(decimals || 0));
@@ -261,4 +261,20 @@ export const amountUi = (decimals?: number, amount?: BN) => {
     amount.times(percision).idiv(percision).div(percision).toString(),
     decimals
   );
+};
+
+export const amountUiV2 = (decimals?: number, amount?: string | BN | number) => {
+  amount = amount?.toString()
+  
+    
+  if (!decimals || !amount) return "";
+  const percision = new BN(10).pow(decimals || 0);
+  return BN(amount).times(percision).idiv(percision).div(percision).toFixed();
+};
+
+
+export const amountBNV2 = (decimals?: number, amount?: string | number) => {
+  if (!decimals || !amount) return '0';
+
+  return parsebn(amount).times(new BN(10).pow(decimals || 0)).decimalPlaces(0).toFixed();
 };

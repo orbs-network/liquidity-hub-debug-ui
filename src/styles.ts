@@ -1,4 +1,3 @@
-import { Text } from "@chakra-ui/react";
 import styled from "styled-components";
 export const RowFlex = styled.div<{
   $gap?: number;
@@ -25,7 +24,7 @@ export const ColumnFlex = styled.div<{
   gap: ${({ $gap }) => $gap || 10}px;
 `;
 
-export const OverflowText = styled(Text)`
+export const OverflowText = styled('p')`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -36,3 +35,16 @@ export const OverflowText = styled(Text)`
 export const colors = {
   border: "#e9ecef",
 };
+
+
+
+
+export const Card = styled.div`
+  box-shadow: 0 0.5rem 1.2rem rgb(189 197 209 / 20%);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background-color: white;
+`;
+
