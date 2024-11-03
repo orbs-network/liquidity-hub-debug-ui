@@ -1,10 +1,12 @@
 import _ from "lodash";
 import styled from "styled-components";
-import { Card, Sessions } from "../components";
 import { useMemo } from "react";
 import { useSwapsQuery } from "query";
+import { Sessions } from "components";
+import { useParams } from "react-router-dom";
+import { PageLayout } from "components/PageLayout";
 
-export function MainPage() {
+export function UserTransactionsPage() {
   return (
     <Container>
       <Content />
@@ -13,13 +15,14 @@ export function MainPage() {
 }
 
 const Content = () => {
+  const { address } = useParams();
+
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
-    useSwapsQuery();
+    useSwapsQuery(address);
 
   const sessions = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
-  
 
   return (
     <Sessions
@@ -31,11 +34,6 @@ const Content = () => {
   );
 };
 
-const Container = styled(Card)`
-  width: 100%;
-  height: 500px;
-  gap: 10px;
-  align-items: flex-start;
-  justify-content: flex-start;
-  flex: 1;
+const Container = styled(PageLayout)`
+
 `;

@@ -9,13 +9,13 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useAppParams } from "../../hooks";
 import styled from "styled-components";
 import { ReactNode } from "react";
-import { networks } from "../../networks";
 import _ from "lodash";
 import { ColumnFlex, RowFlex } from "styles";
 import { useLocation } from "react-router-dom";
+import { networks } from "networks";
+import { useAppParams } from "hooks";
 
 const list = _.map(networks, (it) => {
   return {

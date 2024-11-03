@@ -9,6 +9,7 @@ import Intentx from 'assets/dex/intentx.png'
 
 export const ROUTES = {
   main: "/",
+  transactions: "/transactions",
   tx: "/tx/:identifier",
   address: "/user/:address",
 
@@ -16,6 +17,7 @@ export const ROUTES = {
     tx: (address: string) => `/tx/${address}`,
     address: (address: string) => `/user/${address}`,
     main: () => "/",
+    transactions: () => ROUTES.transactions,
   },
 };
 export const ELASTIC_ENDPOINT = "https://api.bi.orbs.network";

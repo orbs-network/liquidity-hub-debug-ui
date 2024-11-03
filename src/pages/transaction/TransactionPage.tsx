@@ -1,6 +1,6 @@
 import { Avatar } from "@chakra-ui/react";
-import { AddressLink, Card, FormattedAmount, PageLoader } from "components";
-import { ColumnFlex, RowFlex } from "styles";
+import { AddressLink, FormattedAmount, PageLoader } from "components";
+import { Card, ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
 import {
@@ -10,16 +10,15 @@ import {
   useToken,
   useTransfers,
 } from "./hooks";
-import { ReactNode, useMemo } from "react";
+import { ReactNode } from "react";
 import {
   useAmountUI,
   useChainConfig,
   useDexConfig,
   useNumberFormatter,
 } from "hooks";
-import { amountUiV2, makeElipsisAddress } from "helpers";
+import { makeElipsisAddress } from "helpers";
 import { TransferLog } from "types";
-import BN from "bignumber.js";
 
 import {
   ListItem,
@@ -31,7 +30,6 @@ import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
 import moment from "moment";
 import { StatusBadge } from "components/StatusBadge";
-import { addSlippage } from "utils";
 import { GasUsed } from "./components/GasUsed";
 import { LogTrace } from "./components/LogTrace";
 import { Savings } from "./components/Savings";

@@ -1,7 +1,7 @@
+import { App } from "App";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import App from "./App";
 import { ROUTES } from "./config";
-import { UserTransactionsPage, TransactionPage, MainPage } from "./pages";
+import { UserTransactionsPage, TransactionPage, TransactionsPage, HomePage } from "./pages";
 
 export const router = createBrowserRouter([
   {
@@ -9,8 +9,12 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        element: <MainPage />,
+        element: <HomePage />,
         index: true,
+      },
+      {
+        path: ROUTES.transactions,
+        element: <TransactionsPage />,
       },
       {
         path: ROUTES.address,

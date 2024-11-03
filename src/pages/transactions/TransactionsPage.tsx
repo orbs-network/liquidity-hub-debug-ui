@@ -2,10 +2,10 @@ import _ from "lodash";
 import styled from "styled-components";
 import { useMemo } from "react";
 import { useSwapsQuery } from "query";
-import { Card, Sessions } from "components";
-import { useParams } from "react-router-dom";
+import { Sessions } from "components";
+import { Card } from "styles";
 
-export function UserTransactionsPage() {
+export function TransactionsPage() {
   return (
     <Container>
       <Content />
@@ -14,14 +14,13 @@ export function UserTransactionsPage() {
 }
 
 const Content = () => {
-  const { address } = useParams();
-
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
-    useSwapsQuery(address);
+    useSwapsQuery();
 
   const sessions = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
+  
 
   return (
     <Sessions

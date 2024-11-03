@@ -36,3 +36,17 @@ export const OverflowText = styled(Text)`
 export const colors = {
   border: "#e9ecef",
 };
+
+
+
+
+export const Card = styled.div`
+  box-shadow: 0 0.5rem 1.2rem rgb(189 197 209 / 20%);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: white;
+`;
+
