@@ -14,32 +14,32 @@ export const TransactionsPage = () => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
 
-
   const onSubmit = (password: string) => {
-    if(password !== "lg-debug-1") return;
-    localStorage.setItem("password", '1');
-    setPassword('1');
-  }
+    if (password !== "lh-debug-1") return;
+    localStorage.setItem("password", "1");
+    setPassword("1");
+  };
 
   return (
     <Page navbar={<Page.Navbar />}>
       <Page.Layout>
-       {!password ?  
-        <Password onSubmit={onSubmit} />
-       :  <TransactionsList
-          isFetchingNextPage={isFetchingNextPage}
-          sessions={sessions}
-          loadMore={fetchNextPage}
-          isLoading={isLoading}
-        />}
+        {!password ? (
+          <Password onSubmit={onSubmit} />
+        ) : (
+          <TransactionsList
+            isFetchingNextPage={isFetchingNextPage}
+            sessions={sessions}
+            loadMore={fetchNextPage}
+            isLoading={isLoading}
+          />
+        )}
       </Page.Layout>
     </Page>
   );
 };
 
-
-const Password = ({onSubmit}:{onSubmit: (value: string) => void}) => {
-  const [value, setValue] = useState('')
+const Password = ({ onSubmit }: { onSubmit: (value: string) => void }) => {
+  const [value, setValue] = useState("");
 
   const onKeyDown = useCallback(
     (e: any) => {
@@ -47,14 +47,14 @@ const Password = ({onSubmit}:{onSubmit: (value: string) => void}) => {
         onSubmit(value);
       }
     },
-    [onSubmit, value],
-  )
+    [onSubmit, value]
+  );
 
   return (
     <ColumnFlex>
       <Typography>Insert password</Typography>
-      <Input onKeyDown={onKeyDown} onChange={(e) => setValue(e.target.value) } />
+      <Input onKeyDown={onKeyDown} onChange={(e) => setValue(e.target.value)} />
       <Button onClick={() => onSubmit(value)}>Submit</Button>
     </ColumnFlex>
   );
-}
+};

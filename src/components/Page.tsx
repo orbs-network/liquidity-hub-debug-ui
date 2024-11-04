@@ -76,7 +76,7 @@ const LiquidityHubLogo = () => {
     <StyledLogo to="/">
       <img src={LogoImg} alt="orbs Logo" />
       <Typography.Title>
-        <span>Liquidity hub explorer</span>
+        <span>Liquidity Hub Explorer</span>
       </Typography.Title>
     </StyledLogo>
   );
