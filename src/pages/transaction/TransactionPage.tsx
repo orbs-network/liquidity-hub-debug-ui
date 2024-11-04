@@ -54,16 +54,14 @@ export function TransactionPage() {
   );
 }
 
-
-
-const SessionId  = () => {
+const SessionId = () => {
   const session = useSession().data;
   return (
     <ListItem label="Session ID">
       <StyledRowText>{session?.id}</StyledRowText>
     </ListItem>
   );
-}
+};
 
 const Network = () => {
   const session = useSession().data;
@@ -103,9 +101,9 @@ const Content = () => {
       <Fees />
       <ExactAmountReceivedPostDeductions />
       <Savings />
-      
+
       <DebugComponent>
-      <StyledDivider />
+        <StyledDivider />
         <SessionLogs />
         <Transfers />
         <LogTrace />
@@ -225,10 +223,7 @@ const ExpectedToReceiveLH = () => {
 const DexAmountOut = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const dexAmount = useAmountUI(
-    outToken?.decimals,
-    session?.dexAmountOutWS
-  );
+  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOutWS);
 
   const usd = useOutTokenUsd(dexAmount);
 
@@ -356,21 +351,22 @@ const Transfer = ({ log }: { log: TransferLog }) => {
   const session = useSession().data;
   return (
     <StyledRow>
-      <Typography><strong>From </strong></Typography>
+      <Typography>
+        <strong>From </strong>
+      </Typography>
       <AddressLink
         hideCopy
         chainId={session?.chainId}
         address={log.from}
         short
       />{" "}
-      <Typography><strong> To </strong></Typography>
-      <AddressLink
-        hideCopy
-        chainId={session?.chainId}
-        address={log.to}
-        short
-      />{" "}
-      <Typography><strong>For</strong> <FormattedAmount value={log.value} />{" "}</Typography>
+      <Typography>
+        <strong> To </strong>
+      </Typography>
+      <AddressLink hideCopy chainId={session?.chainId} address={log.to} short />{" "}
+      <Typography>
+        <strong>For</strong> <FormattedAmount value={log.value} />{" "}
+      </Typography>
       <AddressLink
         hideCopy
         chainId={session?.chainId}
@@ -399,5 +395,3 @@ const StyledSessionDisplay = styled(ColumnFlex)`
   align-items: flex-start;
   gap: 10px;
 `;
-
-
