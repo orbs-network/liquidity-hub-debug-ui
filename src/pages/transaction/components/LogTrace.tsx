@@ -9,22 +9,33 @@ import { ListItem } from "./shared";
 
 export const useLogTrace = () => {
   const session = useSession().data;
-  
+
   return useQuery({
     queryKey: ["useLogTrace", session?.id],
     queryFn: async ({ signal }) => {
       if (!session) return;
-      const result = await axios.post(
-        TX_TRACE_SERVER,
-        {
-          chainId: session.chainId,
-          blockNumber: session.blockNumber,
-          txData: session.txData,
-        },
-        {
-          signal,
-        }
-      );
+        const result = session.txHash
+            ? await axios.post(
+                TX_TRACE_SERVER + '/run',
+                {
+                    chainId: session.chainId,
+                    txHash: session.txHash
+                },
+                {
+                    signal,
+                }
+            )
+            :  await axios.post(
+                TX_TRACE_SERVER + '/call',
+                {
+                    chainId: session.chainId,
+                    blockNumber: session.blockNumber,
+                    txData: session.txData,
+                },
+                {
+                    signal,
+                }
+            );
       return result.data;
     },
     enabled: !!session,
