@@ -1,9 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { useAppParams } from "./hooks";
-import {
-  getChainConfig,
-} from "./helpers";
+import { getChainConfig } from "./helpers";
 import { clob } from "applications";
 import { priceUsdService } from "services/price-usd";
 import { isNativeAddress } from "@defi.org/web3-candies";
@@ -47,10 +45,7 @@ export const useSwapsQuery = (walletAddress?: string) => {
 
 
 export const useUSDPriceQuery = (address?: string, chainId?: number) => {
-  address =
-    address === "0x0000000000000000000000000000000000000000"
-      ? "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-      : address;
+
   return useQuery({
     queryFn: async () => {
       if (!chainId || !address) return 0;

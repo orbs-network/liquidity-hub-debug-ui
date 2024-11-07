@@ -1,31 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { useParams } from "react-router-dom";
-import {
-  amountBNV2,
-  amountUiV2,
-  getERC20Transfers,
-  getTokenDetails,
-} from "helpers";
+import { amountUiV2, getERC20Transfers } from "helpers";
 import { queryKey, useUSDPriceQuery } from "query";
 import { clob } from "applications";
-import { useTokenAmountUsd, useWeb3 } from "hooks";
+import { useToken, useTokenAmountUsd, useWeb3 } from "hooks";
 import { useMemo } from "react";
 import BN from "bignumber.js";
 import { zeroAddress } from "@defi.org/web3-candies";
-
-export const useToken = (tokenAddress?: string, chainId?: number) => {
-  const w3 = useWeb3(chainId);
-
-  return useQuery({
-    queryKey: ["useGetToken", tokenAddress, chainId],
-    queryFn: async () => {
-      return getTokenDetails(tokenAddress!, w3!, chainId!);
-    },
-    enabled: !!tokenAddress && !!chainId && !!w3,
-    staleTime: Infinity,
-  }).data;
-};
 
 export const useSession = () => {
   const params = useParams();
@@ -76,12 +58,9 @@ export const useOutTokenUsd = (amount = "1") => {
       return res.gt(0) ? res.toString() : undefined;
     };
 
-    const res1 = getUsdValue(session?.lhAmountOut, session?.lhAmountOutUsd);
-    const res2 = getUsdValue(
-      session?.exactOutAmount,
-      session?.exactOutAmountUsd
-    );
-    const usd = res1 || res2 || currentUsd?.toString() || "0";
+    const res = getUsdValue(session?.lhAmountOut, session?.lhAmountOutUsd);
+
+    const usd = res || currentUsd?.toString() || "0";
     return BN(amount).times(usd).toString();
   }, [session, outToken, amount, currentUsd]);
 };
@@ -101,19 +80,46 @@ export const useGasCostUsd = () => {
 export const useExactAmountOutPreDeduction = () => {
   const session = useSession().data;
 
-  const gasCostUsd = useGasCostUsd();
-  const outTokenUsdPrice = useOutTokenUsd();
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-
   return useMemo(() => {
-    const gas = amountBNV2(
-      outToken?.decimals,
-      BN(gasCostUsd).dividedBy(outTokenUsdPrice).toFixed()
-    );
-
     return BN(session?.exactOutAmount || 0)
-      .plus(gas)
+      .plus(session?.gasCostOutToken || 0)
       .plus(session?.feeOutAmount || 0)
       .toString();
-  }, [session, outToken, gasCostUsd, outTokenUsdPrice]);
+  }, [session]);
+};
+
+export const useDexAmountOutMinusGas = () => {
+  const session = useSession().data;
+
+  return useMemo(() => {
+    return BN(session?.dexAmountOut || 0)
+      .minus(session?.gasCostOutToken || 0)
+      .decimalPlaces(0)
+      .toFixed();
+  }, [session]);
+};
+
+export const useUserSavings = () => {
+  const session = useSession().data;
+
+  const dexAmountMinusGas = useDexAmountOutMinusGas();
+  const exactOutAmount = session?.exactOutAmount;
+
+  return useMemo(() => {
+    return BN(exactOutAmount || 0)
+      .minus(dexAmountMinusGas)
+      .toString();
+  }, [session, dexAmountMinusGas, exactOutAmount]);
+};
+
+export const useExpectedToReceiveLH = () => {
+  const session = useSession().data;
+  return useMemo(
+    () =>
+      BN(session?.lhAmountOut || 0)
+        .minus(session?.gasCostOutToken || 0)
+        .decimalPlaces(0)
+        .toFixed(),
+    [session]
+  );
 };

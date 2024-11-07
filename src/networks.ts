@@ -112,36 +112,114 @@ export const networks = {
     explorer: "https://lineascan.build",
     eip1559: false,
   },
-  // 81457: {
-  //   id: 81457,
-  //   name: "blast",
-  //   shortname: "blast",
-  //   native: {
-  //     address: zeroAddress,
-  //     symbol: "ETH",
-  //     decimals: 18,
-  //     logoUrl: "https://icons.llamao.fi/icons/chains/rsz_blast",
-  //   },
-  //   wToken: erc20sData.blast.WETH,
-  //   publicRpcUrl: "https://rpc.ankr.com/blast",
-  //   logoUrl: "https://icons.llamao.fi/icons/chains/rsz_blast",
-  //   explorer: "https://blastscan.io/",
-  //   eip1559: true,
-  // },
-  // 1101: {
-  //   id: 1101,
-  //   name: "zkevm",
-  //   shortname: "zkevm",
-  //   native: {
-  //     address: zeroAddress,
-  //     symbol: "ETH",
-  //     decimals: 18,
-  //     logoUrl: "https://app.1inch.io/assets/images/network-logos/ethereum.svg",
-  //   },
-  //   wToken: erc20sData.zkevm.WETH,
-  //   publicRpcUrl: "https://zkevm-rpc.com",
-  //   logoUrl: "https://app.1inch.io/assets/images/network-logos/polygon.svg",
-  //   explorer: "https://zkevm.polygonscan.com/",
-  //   eip1559: true,
-  // },
+  1329: {
+    id: 1329,
+    name: "Sei",
+    shortname: "sei",
+    native: {
+      address: zeroAddress,
+      symbol: "SEI",
+      decimals: 18,
+      logoUrl: 'https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE/logo.png',
+    },
+    wToken: {
+      symbol: "WSEI",
+      address: "0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7",
+      decimals: 18,
+      weth: false,
+      logoUrl: "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7/logo.png",
+    },
+    publicRpcUrl: "https://evm-rpc.sei-apis.com",
+    logoUrl: "https://s2.coinmarketcap.com/static/img/coins/128x128/23149.png",
+    explorer: "https://seitrace.com",
+    eip1559: false,
+  },
 };
+
+
+// export const dexConfig = {
+//   quickswap: {
+//     chainId: 137,
+//     website: "https://quickswap.exchange/",
+//     logoUrl: Quickswap,
+//     name:'Quickswap'
+//   },
+//   spookyswap: {
+//     chainId: 250,
+//     website: "https://spooky.fi/",
+//     logoUrl: Spookyswap,
+//     name:'Spookyswap'
+//   },
+//   lynex: {
+//     chainId: 59144,
+//     website: "https://www.lynex.fi/",
+//     logoUrl: Lynex,
+//     name:'Lynex'
+//   },
+//   thena: {
+//     chainId: 56,
+//     website: "https://thena.fi/",
+//     logoUrl: Thena,
+//     name:'Thena'
+//   },
+//   intentx: {
+//     chainId: 8453,
+//     website: "https://intentx.io/",
+//     logoUrl: Intentx,
+//     name:'Intentx'
+//   },
+//   fenix: {
+//     chainId: 81457,
+//     website: "https://blast.io/en",
+//     logoUrl: Blast,
+//     name:'Blast'
+//   },
+//   arbidex: {
+//     chainId: 42161,
+//     website: "https://arbidex.fi/",
+//     logoUrl: Blast,
+//     name:'Arbidex'
+//   },
+//   pangolin: {
+//     chainId: 43114,
+//     website: "https://s2.coinmarketcap.com/static/img/coins/128x128/8422.png",
+//     logoUrl: Blast,
+//     name:'Pangolin'
+//   },
+//   chronos: {
+//     chainId: 42161,
+//     website: "https://chronos.exchange/",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/24158.png',
+//     name:'Chronos'
+//   },
+//   baseswap: {
+//     chainId: 8453,
+//     website: "https://baseswap.fi/",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/27764.png',
+//     name:'Baseswap'
+//   },
+//   pancakeswap: {
+//     chainId: 56,
+//     website: "https://baseswap.fi/",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/7186.png',
+//     name:'PancakeSwap'
+//   },
+//   syncswap: {
+//     chainId: 324,
+//     website: "https://baseswap.fi/",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/6813.png',
+//     name:'SyncSwap'
+//   },
+//   sushiswap: {
+//     chainId: 42161,
+//     website: "https://www.sushi.com",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/6758.png',
+//     name:'SushiSwap'
+//   },
+//   dragonswap: {
+//     chainId: 1329,
+//     website: "https://dragonswap.app",
+//     logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png',
+//     name:'DragonSwap'
+//   },
+// };

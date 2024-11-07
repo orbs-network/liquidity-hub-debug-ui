@@ -20,7 +20,7 @@ export const GasUsed = () => {
   const chainConfig = useChainConfig(session?.chainId);
 
   return (
-    <ListItem label="Gas used">
+    <ListItem label="Gas Used">
       <TokenAmount
         amount={gas as string}
         usd={_usd as string}

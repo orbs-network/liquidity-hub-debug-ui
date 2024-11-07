@@ -28,8 +28,9 @@ const parseSwapLog = (log: any): SwapLog => {
     swapStatus: log.swapStatus,
     userAddress: log.user,
     savings: log.exactOutAmountSavings,
-    exactOutAmount: log.exactOutAmount,
-    exactOutAmountUsd: log.exactOutAmountUsd,
+    exactOutAmount: BN(log.exactOutAmount || 0)
+      .plus(log.exactOutAmountSavings || 0)
+      .toFixed(),
     txData: log.txData,
     dutchPrice: log.dutchPrice,
     slippage,
@@ -52,12 +53,23 @@ const parseQuotesLog = (quotes: any[]): QuoteLog => {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
   const quote = sorted[0];
+
+  const actionWinner = quote.auctionWinner;
+  const exchanges = quote["auctionData.exchange"];
+  const winnerIndex = exchanges.indexOf(actionWinner);
+  let gasCostOutToken = "";
+
+  try {
+    gasCostOutToken = quote["auctionData.gasCost"][winnerIndex];
+  } catch (error) {}
+
   return {
     lhAmountOut: quote.amountOut,
     lhAmountOutUsd: quote.dollarValue,
     dexAmountOut: quote.amountOutUI,
     dexAmountOutWS: addSlippage(quote.amountOutUI, quote.slippage),
     lhAmountOutWS: addSlippage(quote.amountOut, quote.slippage),
+    gasCostOutToken,
   };
 };
 
@@ -72,7 +84,6 @@ export const parseFullSessionLogs = (
   quoteLogs: any[],
   clientLogs: any[]
 ): LHSession => {
-
   const parsedSwapLog = parseSwapLog(swapLog);
   const parsedQuotes = parseQuotesLog(quoteLogs);
 

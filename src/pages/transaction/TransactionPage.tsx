@@ -4,10 +4,11 @@ import styled from "styled-components";
 import _ from "lodash";
 import { Avatar, Typography } from "antd";
 import {
+  useDexAmountOutMinusGas,
   useExactAmountOutPreDeduction,
+  useExpectedToReceiveLH,
   useOutTokenUsd,
   useSession,
-  useToken,
   useTransfers,
 } from "./hooks";
 import {
@@ -15,6 +16,7 @@ import {
   useChainConfig,
   useDexConfig,
   useNumberFormatter,
+  useToken,
 } from "hooks";
 import { makeElipsisAddress } from "helpers";
 import { TransferLog } from "types";
@@ -29,9 +31,8 @@ import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
 import moment from "moment";
 import { StatusBadge } from "components/StatusBadge";
-import { GasUsed } from "./components/GasUsed";
 import { LogTrace } from "./components/LogTrace";
-import { Savings } from "./components/Savings";
+import { UserSavings } from "./components/UserSavings";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useSession();
@@ -40,7 +41,7 @@ export function TransactionPage() {
   const isLoading = sessionLoading || !inToken || !outToken;
 
   return (
-    <Page navbar={<Page.Navbar />}>
+    <Page navbar={<Page.Navbar.LiquidityHub />}>
       <Page.Layout isLoading={isLoading}>
         {!session ? (
           <>
@@ -97,10 +98,10 @@ const Content = () => {
       <DexAmountOut />
       <ExpectedToReceiveLH />
       <ExactAmountReceivedPreDeductions />
-      <GasUsed />
+      {/* <GasUsed /> */}
       <Fees />
       <ExactAmountReceivedPostDeductions />
-      <Savings />
+      <UserSavings />
 
       <DebugComponent>
         <StyledDivider />
@@ -138,7 +139,7 @@ const User = () => {
   const session = useSession().data;
 
   return (
-    <ListItem label="User's address">
+    <ListItem label="User's Address">
       <AddressLink underline address={session?.userAddress} short={true} />
     </ListItem>
   );
@@ -167,7 +168,7 @@ const InTokenAmount = () => {
   const token = useToken(session?.tokenInAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.amountIn);
   return (
-    <ListItem label="Amount in">
+    <ListItem label="Amount In">
       <TokenAmount
         amount={amount}
         address={session?.tokenInAddress}
@@ -190,7 +191,7 @@ const Status = () => {
 const TxHash = () => {
   const session = useSession().data;
   return (
-    <ListItem label="Transaction hash">
+    <ListItem label="Transaction Hash">
       <AddressLink
         underline
         address={session?.txHash}
@@ -205,13 +206,14 @@ const TxHash = () => {
 const ExpectedToReceiveLH = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const lhAmountWSF = useAmountUI(outToken?.decimals, session?.lhAmountOutWS);
-  const usd = useOutTokenUsd(lhAmountWSF);
+  const amount = useExpectedToReceiveLH();
+  const amountF = useAmountUI(outToken?.decimals, amount);
+  const usd = useOutTokenUsd(amountF);
 
   return (
-    <ListItem label="LH amount out (estimate)">
+    <ListItem label="LH Amount Out (estimate)">
       <TokenAmount
-        amount={lhAmountWSF}
+        amount={amountF}
         address={session?.tokenOutAddress}
         symbol={outToken?.symbol}
         usd={usd as string}
@@ -223,14 +225,15 @@ const ExpectedToReceiveLH = () => {
 const DexAmountOut = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const dexAmount = useAmountUI(outToken?.decimals, session?.dexAmountOutWS);
 
-  const usd = useOutTokenUsd(dexAmount);
+  const dexAmountOutMinusGas = useDexAmountOutMinusGas();
+  const amount = useAmountUI(outToken?.decimals, dexAmountOutMinusGas);
+  const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="Dex amount out">
+    <ListItem label="Dex Amount Out (minus gas)" tooltip="The amount user would received via dex">
       <TokenAmount
-        amount={dexAmount || "0"}
+        amount={amount || "0"}
         symbol={outToken?.symbol}
         address={session?.tokenOutAddress}
         usd={usd}
@@ -267,7 +270,7 @@ const ExactAmountReceivedPreDeductions = () => {
   const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="LH amount out (actual pre deductions)">
+    <ListItem label="LH Amount Out (actual pre deductions)">
       <TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
@@ -282,10 +285,10 @@ const ExactAmountReceivedPostDeductions = () => {
   const session = useSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(outToken?.decimals, session?.exactOutAmount);
-  const usd = session?.exactOutAmountUsd;
+  const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="LH amount out (actual post deductions)">
+    <ListItem label="LH Amount Out (actual post deductions)">
       <TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
@@ -301,7 +304,7 @@ const ExactAmountOut = () => {
   const token = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
-    <ListItem label="Exact amount out">
+    <ListItem label="Exact Amount Out">
       <TokenAmount
         symbol={token?.symbol}
         address={session?.tokenOutAddress}

@@ -16,7 +16,7 @@ export const UserTransactionsPage = () => {
   }, [data]);
 
   return (
-    <Page navbar={<Page.Navbar />}>
+    <Page navbar={<Page.Navbar.LiquidityHub />}>
       <Page.Layout>
         <TransactionsList
           isFetchingNextPage={isFetchingNextPage}

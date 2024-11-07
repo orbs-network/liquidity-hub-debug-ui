@@ -3,12 +3,17 @@ import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE, dexConfig } from "./config";
-import { amountUiV2, getChainConfig, getRpcUrl } from "./helpers";
+import {
+  amountUiV2,
+  getChainConfig,
+  getRpcUrl,
+  getTokenDetails,
+} from "./helpers";
 import BN from "bignumber.js";
 import Web3 from "web3";
-import {notification} from "antd";
+import { notification } from "antd";
 
-import { zeroAddress } from "@defi.org/web3-candies";
+import { isNativeAddress, zeroAddress } from "@defi.org/web3-candies";
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -16,6 +21,7 @@ export const useAppParams = () => {
       timeRange: StringParam,
       sessionType: StringParam,
       chainId: NumberParam,
+      exchange: StringParam,
     },
     {
       updateType: "pushIn",
@@ -27,6 +33,7 @@ export const useAppParams = () => {
       timeRange: query.timeRange || DEFAULT_SESSIONS_TIME_RANGE,
       sessionType: query.sessionType,
       chainId: query.chainId,
+      exchange: query.exchange as string | undefined,
     },
     setQuery,
   };
@@ -41,38 +48,40 @@ export const useWeb3 = (chainId?: number) => {
   }, [chainId]);
 };
 
+function formatAmount(amount?: number | string | null) {
+  if (!amount) return "0";
+  const numericAmount =
+    typeof amount === "string" ? parseFloat(amount) : amount;
+
+  if (numericAmount >= 1_000_000_000) {
+    return (
+      (numericAmount / 1_000_000_000).toFixed(2).replace(/\.00$/, "") + "B"
+    );
+  } else if (numericAmount >= 1_000_000) {
+    return (numericAmount / 1_000_000).toFixed(2).replace(/\.00$/, "") + "M";
+  } else if (numericAmount >= 1_000) {
+    return (numericAmount / 1_000).toFixed(2).replace(/\.00$/, "") + "K";
+  }
+
+  return undefined
+}
+
 export const useNumberFormatter = ({
   value,
-  decimalScale = 4,
-  dynamicDecimals = true,
+  decimalScale = 3,
+  format,
 }: {
   value?: string | number;
   decimalScale?: number;
-  dynamicDecimals?: boolean;
+  format?: boolean;
 }) => {
-  const decimals = useMemo(() => {
-    if (!value) return 0;
-    const [, decimal] = value.toString().split(".");
-    if (!decimal) return 0;
-    const arr = decimal.split("");
-    let count = 0;
-
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i] === "0") {
-        count++;
-      } else {
-        break;
-      }
-    }
-
-    return !count ? decimalScale : count + decimalScale;
-  }, [value, decimalScale]);
-
-  return useNumericFormat({
+  const result = useNumericFormat({
     value,
-    decimalScale: dynamicDecimals ? decimals : decimalScale,
+    decimalScale,
     thousandSeparator: ",",
   }).value;
+  const formattedAmount = formatAmount(value);
+  return format && formattedAmount ? formattedAmount : result;
 };
 
 const wrappedTokenAddress = {
@@ -140,6 +149,7 @@ export function useCopyToClipboard(): CopyFn {
 }
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export const useResizeObserver = (elementRef: any) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -179,6 +189,28 @@ export const useHeight = () => {
   }, []);
 
   return height;
+};
+
+export const useToken = (tokenAddress?: string, chainId?: number) => {
+  const w3 = useWeb3(chainId);
+  const chainConfig = useChainConfig(chainId);
+
+  return useQuery({
+    queryKey: ["useGetToken", tokenAddress, chainId],
+    queryFn: async () => {
+      if (isNativeAddress(tokenAddress!)) {
+        return {
+          address: tokenAddress!,
+          name: chainConfig?.native.symbol,
+          symbol: chainConfig?.native?.symbol,
+          decimals: chainConfig?.native?.decimals,
+        };
+      }
+      return getTokenDetails(tokenAddress!, w3!, chainId!);
+    },
+    enabled: !!tokenAddress && !!chainId && !!w3,
+    staleTime: Infinity,
+  }).data;
 };
 
 export const useAmountUI = (

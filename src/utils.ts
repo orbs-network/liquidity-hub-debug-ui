@@ -1,3 +1,4 @@
+import { Configs } from "@orbs-network/twap-sdk";
 import BN from "bignumber.js";
 
 export const isDebug = !!localStorage.getItem("debug");
@@ -31,3 +32,17 @@ export const addSlippage = (amount?: string, slippage?: number) => {
 
   return BN(amount).plus(slippageBN).toString();
 };
+
+console.log({Configs});
+
+
+export const getDexDetailsByExchange = (exchange: string) => {
+  switch (exchange) {
+    case Configs.Arbidex.exchangeAddress:
+
+      break;
+  
+    default:
+      break;
+  }
+}

@@ -1,11 +1,13 @@
 import { styled } from "styled-components";
 import { Card, ColumnFlex, RowFlex } from "styles";
-import LogoImg from "assets/orbs.svg";
 import { Link } from "react-router-dom";
 import { Skeleton, Typography } from "antd";
 
-import { SearchSessionInput } from "components/SearchSessionInput";
+import { ReactNode } from "react";
+import { SearchSessionInput } from "./SearchSessionInput";
 import { ChainSelect } from "./ChainSelect";
+import orbsLogo from "assets/orbs.svg";
+import { ExchangeSelect } from "./ExchangeSelect";
 
 export function Loader({ className = "" }: { className?: string }) {
   return (
@@ -20,36 +22,13 @@ const StyledLoader = styled(ColumnFlex)({
   alignItems: "flex-start",
 });
 
-const Navbar = () => {
+export const Navbar = ({ children }: { children: ReactNode }) => {
   return (
     <StyledNavbar>
-      <StyledNavbarContent>
-        <LiquidityHubLogo />
-        <StyledRight>
-          <StyledSearchSessionInput />
-          <ChainSelect />
-        </StyledRight>
-      </StyledNavbarContent>
+      <StyledNavbarContent>{children}</StyledNavbarContent>
     </StyledNavbar>
   );
 };
-
-const StyledSearchSessionInput = styled(SearchSessionInput)({
-  maxWidth: 400,
-  width: "100%",
-  ".search-input-button": {
-    width: 25,
-    height: 25,
-  },
-  input: {
-    fontSize: 14,
-  },
-});
-
-const StyledRight = styled(RowFlex)({
-  flex: 1,
-  justifyContent: "flex-end",
-});
 
 const StyledNavbar = styled("div")`
   position: sticky;
@@ -71,16 +50,17 @@ const StyledNavbarContent = styled(Card)({
   maxWidth: 1200,
 });
 
-const LiquidityHubLogo = () => {
-  return (
-    <StyledLogo to="/">
-      <img src={LogoImg} alt="orbs Logo" />
-      <Typography.Title>
-        <span>Liquidity Hub Explorer</span>
-      </Typography.Title>
-    </StyledLogo>
-  );
-};
+const StyledSearchSessionInput = styled(SearchSessionInput)({
+  maxWidth: 400,
+  width: "100%",
+  ".search-input-button": {
+    width: 25,
+    height: 25,
+  },
+  input: {
+    fontSize: 14,
+  },
+});
 
 const StyledLogo = styled(Link)({
   marginRight: "auto",
@@ -99,6 +79,57 @@ const StyledLogo = styled(Link)({
     width: "40px",
     height: "40px",
   },
+});
+
+const LiquidityHubLogo = () => {
+  return (
+    <StyledLogo to="/">
+      <img src={orbsLogo} alt="orbs Logo" />
+      <Typography.Title>
+        <span>Liquidity Hub Explorer</span>
+      </Typography.Title>
+    </StyledLogo>
+  );
+};
+
+const TwapLogo = () => {
+  return (
+    <StyledLogo to="/twap">
+      <img src={orbsLogo} alt="orbs Logo" />
+      <Typography.Title>
+        <span>TWAP</span>
+      </Typography.Title>
+    </StyledLogo>
+  );
+};
+
+export const LiquidityHubNavbar = () => {
+  return (
+    <Navbar>
+      <LiquidityHubLogo />
+      <StyledRight>
+        <StyledSearchSessionInput />
+        <ChainSelect />
+      </StyledRight>
+    </Navbar>
+  );
+};
+
+export const TwapNavbar = () => {
+  return (
+    <Navbar>
+      <TwapLogo />
+      <StyledRight>
+        <ChainSelect />
+        <ExchangeSelect />
+      </StyledRight>
+    </Navbar>
+  );
+};
+
+const StyledRight = styled(RowFlex)({
+  flex: 1,
+  justifyContent: "flex-end",
 });
 
 export function Page({
@@ -163,6 +194,12 @@ const Layout = ({
   );
 };
 
+
+
+Navbar.LiquidityHubLogo = LiquidityHubLogo;
+Navbar.LiquidityHub = LiquidityHubNavbar;
+Navbar.TwapLogo = TwapLogo;
+Navbar.Twap = TwapNavbar;
 Page.Navbar = Navbar;
 Page.Layout = Layout;
-Page.Logo = LiquidityHubLogo;
+Page.LiquidityHubLogo = LiquidityHubLogo;

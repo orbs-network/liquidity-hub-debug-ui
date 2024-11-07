@@ -11,7 +11,7 @@ export const HomePage = () => {
     <FullHeightContainer>
       <Page>
         <Page.Layout>
-          <Page.Logo />
+          <Page.Navbar.LiquidityHubLogo />
           <Content>
             <StyledTitle.Title level={2}>Search for transaction</StyledTitle.Title>
             <StyledSearchSessionInput />

@@ -14,7 +14,6 @@ export interface SwapLog {
   userAddress: string;
   savings: string;
   exactOutAmount: string;
-  exactOutAmountUsd: string;
   txData: any;
   dutchPrice: string;
   slippage: number;
@@ -36,6 +35,7 @@ export type QuoteLog = {
   dexAmountOut?: number | string;
   dexAmountOutWS?: number | string;
   lhAmountOutWS?: number | string;
+  gasCostOutToken?: string;
 };
 
 export interface LHSession extends SwapLog, QuoteLog {

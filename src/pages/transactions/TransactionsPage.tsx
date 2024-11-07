@@ -21,7 +21,7 @@ export const TransactionsPage = () => {
   };
 
   return (
-    <Page navbar={<Page.Navbar />}>
+    <Page navbar={<Page.Navbar.LiquidityHub />}>
       <Page.Layout>
         {!password ? (
           <Password onSubmit={onSubmit} />
