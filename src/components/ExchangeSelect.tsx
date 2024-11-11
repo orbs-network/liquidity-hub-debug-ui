@@ -5,6 +5,7 @@ import { Avatar, Popover, Button } from "antd";
 import { styled } from "styled-components";
 import { ColumnFlex, RowFlex } from "styles";
 import { Configs } from "@orbs-network/twap-sdk";
+import { getDexByExchange } from "utils";
 
 type Item = {
   address: string;
@@ -87,13 +88,15 @@ const List = ({
   return (
     <StyledList>
       {list.map((item) => {
+        const dex = getDexByExchange(item.address)
+        
         return (
           <StyledListItem
             $selected={exchange === item.address}
             key={item.label}
             onClick={() => onSelect(item)}
           >
-            <Avatar src={item.image} alt={item.label} size={25} />
+            <Avatar src={dex?.logoUrl} alt={item.label} size={25} />
             <span>{item.label}</span>
           </StyledListItem>
         );

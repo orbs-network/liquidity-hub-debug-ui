@@ -1,10 +1,3 @@
-import Thena from 'assets/dex/thena.png'
-import Lynex from 'assets/dex/lynex.png'
-import Quickswap from 'assets/dex/quickswap.svg'
-import Spookyswap from 'assets/dex/spooky.png'
-import Blast from 'assets/dex/blast.png'
-import Intentx from 'assets/dex/intentx.png'
-
 
 
 export const ROUTES = {
@@ -40,49 +33,49 @@ export const dexConfig = {
   quickswap: {
     chainId: 137,
     website: "https://quickswap.exchange/",
-    logoUrl: Quickswap,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1293.png',
     name:'Quickswap'
   },
   spookyswap: {
     chainId: 250,
     website: "https://spooky.fi/",
-    logoUrl: Spookyswap,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png',
     name:'Spookyswap'
   },
   lynex: {
     chainId: 59144,
     website: "https://www.lynex.fi/",
-    logoUrl: Lynex,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/7957.png',
     name:'Lynex'
   },
   thena: {
     chainId: 56,
     website: "https://thena.fi/",
-    logoUrl: Thena,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/5803.png',
     name:'Thena'
   },
   intentx: {
     chainId: 8453,
     website: "https://intentx.io/",
-    logoUrl: Intentx,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/31709.png',
     name:'Intentx'
   },
   fenix: {
     chainId: 81457,
     website: "https://blast.io/en",
-    logoUrl: Blast,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/28480.png',
     name:'Blast'
   },
   arbidex: {
     chainId: 42161,
     website: "https://arbidex.fi/",
-    logoUrl: Blast,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/6506.png',
     name:'Arbidex'
   },
   pangolin: {
     chainId: 43114,
     website: "https://s2.coinmarketcap.com/static/img/coins/128x128/8422.png",
-    logoUrl: Blast,
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1340.png',
     name:'Pangolin'
   },
   chronos: {
@@ -121,6 +114,11 @@ export const dexConfig = {
     logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png',
     name:'DragonSwap'
   },
+  retro: {
+    chainId: 137,
+    website: "https://retro.finance/",
+    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png',
+    name:'Retro'
+  },
 };
-
 

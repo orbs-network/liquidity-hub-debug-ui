@@ -1,6 +1,5 @@
 import { useTwapOrders } from "applications/twap";
 import { Page } from "components";
-import { ChainSelect } from "components/ChainSelect";
 import { useAppParams } from "hooks";
 import { useEffect, useMemo } from "react";
 import { TwapOrdersList } from "../components/twap-orders-list";
@@ -24,7 +23,6 @@ export function OrdersPage() {
   return (
     <Page navbar={<Page.Navbar.Twap />}>
       <Page.Layout>
-        <ChainSelect />
         <TwapOrdersList
           loadMore={fetchNextPage}
           orders={orders}

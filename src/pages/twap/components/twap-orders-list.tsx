@@ -130,7 +130,7 @@ const TradeAmount = () => {
   const amount = useNumberFormatter({value: useAmountUI(token?.decimals, order.srcAmount), format: true})
   return (
     <StyledItem>
-      <RowText text={` ${amount} ${token?.symbol}`} />
+      <RowText text={` ${amount} ${token?.symbol || ''}`} />
     </StyledItem>
   );
 };
