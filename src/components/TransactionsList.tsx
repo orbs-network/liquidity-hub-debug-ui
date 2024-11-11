@@ -89,9 +89,9 @@ const GoButton = () => {
   const swapLog = useSessionContext();
   const navigate = useNavigate();
 
-  const onNavigate = () => {
+  const onNavigate = useCallback(() => {
     navigate(ROUTES.navigate.tx(swapLog.id));
-  };
+  }, [navigate, swapLog.id]);
 
   return (
     <StyledButtons>
@@ -178,7 +178,8 @@ const TxHash = () => {
     <StyledItem>
       <StyledText>
         <Link to={ROUTES.navigate.tx(txHash)}>
-        <TextOverflow text={makeElipsisAddress(txHash) || ""} /></Link>
+          <TextOverflow text={makeElipsisAddress(txHash) || ""} />
+        </Link>
       </StyledText>
     </StyledItem>
   );
@@ -355,8 +356,7 @@ const items = [
     label: "Session id",
     width: 11,
   },
-  
-  
+
   {
     component: <Timestamp />,
     label: "Date",

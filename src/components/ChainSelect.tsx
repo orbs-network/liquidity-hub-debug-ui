@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import _ from "lodash";
-import { useLocation } from "react-router-dom";
 import { networks } from "networks";
 import { useAppParams } from "hooks";
 import { Avatar, Popover, Button } from "antd";
 import { styled } from "styled-components";
 import { ColumnFlex, RowFlex } from "styles";
+import {XCircle} from "react-feather"
+import { useLocation } from "react-router";
 
 type Item = {
   id: number;
@@ -22,19 +23,16 @@ let list = _.map(networks, (it) => {
 });
 
 export function ChainSelect() {
-  const pathname = useLocation().pathname;
 
   const { query, setQuery } = useAppParams();
   const [isOpen, setIsOpen] = useState(false);
-
-  if (pathname.includes("tx")) return null;
 
   const handleOpenChange = (newOpen: boolean) => {
     setIsOpen(newOpen);
   };
   const onSelect = useCallback(
     (chainId?: number) => {
-      setQuery({ chainId });
+      setQuery({ chainId, exchangeAddress: undefined });
       setIsOpen(false);
     },
     [setQuery]
@@ -88,11 +86,16 @@ const List = ({
   onSelect: (chainId?: number) => void;
   selectedChain?: number;
 }) => {
+  const pathname = useLocation().pathname
+  const hideReset = useMemo(() => pathname.includes('twap'), [pathname])
   return (
     <StyledList>
-    {selectedChain &&   <StyledListItem onClick={() => onSelect(undefined)}>
-        <span>All chains</span>
-      </StyledListItem>}
+      {!hideReset && selectedChain && (
+        <StyledListItem onClick={() => onSelect(undefined)}>
+          <XCircle size={25} />
+          <span>All Chains</span>
+        </StyledListItem>
+      )}
       {list.map((item) => {
         return (
           <StyledListItem

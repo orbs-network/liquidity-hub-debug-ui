@@ -2,7 +2,7 @@ import { useUSDPriceQuery } from "query";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE, dexConfig } from "./config";
+import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
 import {
   amountUiV2,
   getChainConfig,
@@ -13,7 +13,11 @@ import BN from "bignumber.js";
 import Web3 from "web3";
 import { notification } from "antd";
 
-import { isNativeAddress, zeroAddress } from "@defi.org/web3-candies";
+import {
+  eqIgnoreCase,
+  isNativeAddress,
+  zeroAddress,
+} from "@defi.org/web3-candies";
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -21,7 +25,7 @@ export const useAppParams = () => {
       timeRange: StringParam,
       sessionType: StringParam,
       chainId: NumberParam,
-      exchange: StringParam,
+      exchangeAddress: StringParam,
     },
     {
       updateType: "pushIn",
@@ -32,8 +36,8 @@ export const useAppParams = () => {
     query: {
       timeRange: query.timeRange || DEFAULT_SESSIONS_TIME_RANGE,
       sessionType: query.sessionType,
-      chainId: query.chainId,
-      exchange: query.exchange as string | undefined,
+      chainId: query.chainId as number | undefined,
+      exchangeAddress: query.exchangeAddress as string | undefined,
     },
     setQuery,
   };
@@ -63,7 +67,7 @@ function formatAmount(amount?: number | string | null) {
     return (numericAmount / 1_000).toFixed(2).replace(/\.00$/, "") + "K";
   }
 
-  return undefined
+  return undefined;
 }
 
 export const useNumberFormatter = ({
@@ -150,6 +154,9 @@ export function useCopyToClipboard(): CopyFn {
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { partners } from "partners";
+import _ from "lodash";
+import { getPartnerWithExchangeAddress } from "utils";
 
 export const useResizeObserver = (elementRef: any) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -223,9 +230,23 @@ export const useAmountUI = (
   );
 };
 
-export const useDexConfig = (dex?: string) => {
+export const useLiquidityHubPartner = (dex?: string) => {
   return useMemo(() => {
     if (!dex) return;
-    return dexConfig[dex.toLowerCase() as keyof typeof dexConfig];
+    return partners[dex.toLowerCase() as keyof typeof partners];
   }, [dex]);
+};
+
+export const useTwapPartner = (exchangeAddress?: string) => {
+  return useMemo(() => {
+    if (!exchangeAddress) return;
+    return getPartnerWithExchangeAddress(exchangeAddress);
+  }, [exchangeAddress]);
+};
+
+export const useTwapPartnerConfig = (exchangeAddress?: string) => {
+  const partner = useTwapPartner(exchangeAddress);
+  return useMemo(() => {
+    return partner?.getConfig(exchangeAddress);
+  }, [partner, exchangeAddress]);
 };

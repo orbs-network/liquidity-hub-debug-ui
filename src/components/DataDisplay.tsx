@@ -1,17 +1,33 @@
-import { AddressLink, QuestionHelper } from "components";
+import { Typography } from "antd";
+import { AddressLink } from "components/AddressLink";
+import { QuestionHelper } from "components/QuestionHelper";
 import { useNumberFormatter } from "hooks";
 import { ReactNode } from "react";
-import styled from "styled-components";
-import { RowFlex } from "styles";
-import { useSession } from "../hooks";
-import { Typography } from "antd";
+import { styled } from "styled-components";
+import { ColumnFlex, RowFlex } from "styles";
 
-export const StyledDivider = styled.div`
+const MainContainer = styled(ColumnFlex)`
   width: 100%;
-  margin: 8px 0;
-  height: 1px;
-  background-color: #e8e8e8;
+  align-items: flex-start;
+  gap: 10px;
 `;
+
+export const Row = ({
+  label,
+  children,
+  tooltip,
+}: {
+  label: string;
+  children?: ReactNode;
+  tooltip?: string;
+}) => {
+  return (
+    <StyledListItem>
+      <RowLabel tooltip={tooltip} label={label} />
+      <StyledRowChildren>{children}</StyledRowChildren>
+    </StyledListItem>
+  );
+};
 
 const StyledListItem = styled(RowFlex)`
   gap: 40px;
@@ -38,28 +54,24 @@ export const StyledRowText = styled(Typography)`
   }
 `;
 
-export const ListItem = ({
-  label,
-  children,
-  tooltip,
-}: {
-  label: string;
-  children?: ReactNode;
-  tooltip?: string;
-}) => {
-  return (
-    <StyledListItem>
-      <RowLabel tooltip={tooltip} label={label} />
-      <StyledRowChildren>{children}</StyledRowChildren>
-    </StyledListItem>
-  );
-};
-
 const StyledRowChildren = styled.div`
   flex: 1;
   justify-content: flex-start;
   display: flex;
+  gap: 5px;
 `;
+
+
+export const StyledDivider = styled.div`
+  width: 100%;
+  margin: 8px 0;
+  height: 1px;
+  background-color: #e8e8e8;
+`;
+
+
+
+
 
 const RowLabel = ({ label, tooltip }: { label: string; tooltip?: string }) => {
   return (
@@ -69,59 +81,55 @@ const RowLabel = ({ label, tooltip }: { label: string; tooltip?: string }) => {
   );
 };
 
-export const WithSmall = ({
-  value,
-  smallValue,
-}: {
-  value?: any;
-  smallValue?: string | number;
-}) => {
-  if (!value) return null;
-  return (
-    <StyledRowText>
-      {value}
-      {smallValue && <small>{` (${smallValue})`}</small>}
-    </StyledRowText>
-  );
-};
-
 export const TokenAmount = ({
   prefix,
   symbol,
   address,
   amount,
   usd,
+  chainId,
 }: {
   symbol?: string;
   address?: string;
   amount?: string | number;
   usd?: string | number;
   prefix?: string;
+  chainId?: number;
 }) => {
-  const session = useSession().data;
   const formattedAmount = useNumberFormatter({
     value: amount,
     decimalScale: 4,
   });
+  
   const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });
   return (
     <RowFlex $gap={5}>
       <Typography>
-        {prefix} {formattedAmount || "-"}
+        {prefix} {formattedAmount || "0"}
       </Typography>
       <AddressLink
         path="address"
         address={address}
-        text={symbol}
-        chainId={session?.chainId}
+        text={symbol || '-'}
+        chainId={chainId}
       />
-      {formattedUsd && (
+      {usd && (
         <Typography style={{ fontSize: 13, opacity: 0.8 }}>
-          <small>
-          {` ($${formattedUsd || "-"})`}
-          </small>
+          <small>{` ($${formattedUsd || "-"})`}</small>
         </Typography>
       )}
     </RowFlex>
   );
 };
+
+const DataDisplay = ({ children }: { children: ReactNode }) => {
+  return <MainContainer>{children}</MainContainer>;
+};
+
+
+Row.Text = StyledRowText;
+DataDisplay.Row = Row;
+DataDisplay.TokenAmount = TokenAmount;
+DataDisplay.Divider = StyledDivider;
+
+export { DataDisplay };

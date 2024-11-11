@@ -5,3 +5,4 @@ export * from "./LogModal";
 export * from "./QuestionHelper";
 export * from "./FullHeightContainer";
 export * from "./Page";
+export * from "./DataDisplay";

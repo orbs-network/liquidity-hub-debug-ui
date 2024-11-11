@@ -1,4 +1,4 @@
-import { AddressLink, FormattedAmount, Page } from "components";
+import { AddressLink, DataDisplay, FormattedAmount, Page } from "components";
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
@@ -14,19 +14,12 @@ import {
 import {
   useAmountUI,
   useChainConfig,
-  useDexConfig,
   useNumberFormatter,
+  useLiquidityHubPartner,
   useToken,
 } from "hooks";
 import { makeElipsisAddress } from "helpers";
 import { TransferLog } from "types";
-
-import {
-  ListItem,
-  StyledDivider,
-  StyledRowText,
-  TokenAmount,
-} from "./components/shared";
 import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
 import moment from "moment";
@@ -58,9 +51,9 @@ export function TransactionPage() {
 const SessionId = () => {
   const session = useSession().data;
   return (
-    <ListItem label="Session ID">
-      <StyledRowText>{session?.id}</StyledRowText>
-    </ListItem>
+    <DataDisplay.Row label="Session ID">
+      <DataDisplay.Row.Text>{session?.id}</DataDisplay.Row.Text>
+    </DataDisplay.Row>
   );
 };
 
@@ -70,31 +63,31 @@ const Network = () => {
   const networkName = config?.name;
   const logo = config?.logoUrl;
   return (
-    <ListItem label="Network">
-      <StyledRowText>
+    <DataDisplay.Row label="Network">
+      <DataDisplay.Row.Text>
         <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
           <Avatar src={logo} style={{ width: "20px", height: "20px" }} />
           {networkName}
         </span>
-      </StyledRowText>
-    </ListItem>
+      </DataDisplay.Row.Text>
+    </DataDisplay.Row>
   );
 };
 
 const Content = () => {
   return (
-    <StyledSessionDisplay>
+    <DataDisplay>
       <Network />
       <SessionId />
       <Dex />
       <Timestamp />
       <User />
-      <StyledDivider />
+      <DataDisplay.Divider />
       <Status />
       <TxHash />
       <Slippage />
       <InTokenAmount />
-      <StyledDivider />
+      <DataDisplay.Divider />
       <DexAmountOut />
       <ExpectedToReceiveLH />
       <ExactAmountReceivedPreDeductions />
@@ -104,54 +97,57 @@ const Content = () => {
       <UserSavings />
 
       <DebugComponent>
-        <StyledDivider />
+        <DataDisplay.Divider />
         <SessionLogs />
         <Transfers />
         <LogTrace />
       </DebugComponent>
-    </StyledSessionDisplay>
+    </DataDisplay>
   );
 };
 
 const Slippage = () => {
   const session = useSession().data;
   return (
-    <ListItem label="User Slippage" tooltip="The slippage user sets in the UI">
-      <StyledRowText>{session?.slippage}%</StyledRowText>
-    </ListItem>
+    <DataDisplay.Row
+      label="User Slippage"
+      tooltip="The slippage user sets in the UI"
+    >
+      <DataDisplay.Row.Text>{session?.slippage}%</DataDisplay.Row.Text>
+    </DataDisplay.Row>
   );
 };
 
 const Dex = () => {
   const session = useSession().data;
-  const dexConfig = useDexConfig(session?.dex);
+  const partner = useLiquidityHubPartner(session?.dex);
 
   return (
-    <ListItem label="Dex">
+    <DataDisplay.Row label="Dex">
       <RowFlex $gap={8}>
-        <Avatar src={dexConfig?.logoUrl} style={{ width: 20, height: 20 }} />
-        <StyledRowText>{session?.dex}</StyledRowText>
+        <Avatar src={partner?.logoUrl} style={{ width: 20, height: 20 }} />
+        <DataDisplay.Row.Text>{session?.dex}</DataDisplay.Row.Text>
       </RowFlex>
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 const User = () => {
   const session = useSession().data;
 
   return (
-    <ListItem label="User's Address">
+    <DataDisplay.Row label="User's Address">
       <AddressLink underline address={session?.userAddress} short={true} />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 const Timestamp = () => {
   const session = useSession().data;
   return (
-    <ListItem label="Timestamp">
+    <DataDisplay.Row label="Timestamp">
       <RowFlex>
-        <StyledRowText>
+        <DataDisplay.Row.Text>
           {moment(session?.timestamp).format("lll")}
-        </StyledRowText>
+        </DataDisplay.Row.Text>
         <AddressLink
           chainId={session?.chainId}
           address={session?.blockNumber?.toString()}
@@ -159,7 +155,7 @@ const Timestamp = () => {
           text={`(${session?.blockNumber})`}
         />
       </RowFlex>
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -168,14 +164,15 @@ const InTokenAmount = () => {
   const token = useToken(session?.tokenInAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.amountIn);
   return (
-    <ListItem label="Amount In">
-      <TokenAmount
+    <DataDisplay.Row label="Amount In">
+      <DataDisplay.TokenAmount
         amount={amount}
         address={session?.tokenInAddress}
         symbol={token?.symbol}
         usd={session?.amountInUsd}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -183,15 +180,15 @@ const Status = () => {
   const session = useSession().data;
 
   return (
-    <ListItem label="Status">
+    <DataDisplay.Row label="Status">
       <StatusBadge swapStatus={session?.swapStatus} />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 const TxHash = () => {
   const session = useSession().data;
   return (
-    <ListItem label="Transaction Hash">
+    <DataDisplay.Row label="Transaction Hash">
       <AddressLink
         underline
         address={session?.txHash}
@@ -199,7 +196,7 @@ const TxHash = () => {
         path="tx"
         chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -211,14 +208,15 @@ const ExpectedToReceiveLH = () => {
   const usd = useOutTokenUsd(amountF);
 
   return (
-    <ListItem label="LH Amount Out (estimate)">
-      <TokenAmount
+    <DataDisplay.Row label="LH Amount Out (estimate)">
+      <DataDisplay.TokenAmount
         amount={amountF}
         address={session?.tokenOutAddress}
         symbol={outToken?.symbol}
         usd={usd as string}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -231,14 +229,18 @@ const DexAmountOut = () => {
   const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="Dex Amount Out (minus gas)" tooltip="The amount user would received via dex">
-      <TokenAmount
+    <DataDisplay.Row
+      label="Dex Amount Out (minus gas)"
+      tooltip="The amount user would received via dex"
+    >
+      <DataDisplay.TokenAmount
         amount={amount || "0"}
         symbol={outToken?.symbol}
         address={session?.tokenOutAddress}
         usd={usd}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -250,14 +252,15 @@ const Fees = () => {
   const usdValue = useOutTokenUsd(fee);
   const usd = useNumberFormatter({ value: usdValue });
   return (
-    <ListItem label="Fees">
-      <TokenAmount
+    <DataDisplay.Row label="Fees">
+      <DataDisplay.TokenAmount
         address={outToken?.address}
         amount={fee as string}
         usd={usd as string}
         symbol={outToken?.symbol}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -270,14 +273,15 @@ const ExactAmountReceivedPreDeductions = () => {
   const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="LH Amount Out (actual pre deductions)">
-      <TokenAmount
+    <DataDisplay.Row label="LH Amount Out (actual pre deductions)">
+      <DataDisplay.TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
         symbol={outToken?.symbol}
         usd={usd as string}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -288,14 +292,15 @@ const ExactAmountReceivedPostDeductions = () => {
   const usd = useOutTokenUsd(amount);
 
   return (
-    <ListItem label="LH Amount Out (actual post deductions)">
-      <TokenAmount
+    <DataDisplay.Row label="LH Amount Out (actual post deductions)">
+      <DataDisplay.TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
         symbol={outToken?.symbol}
         usd={usd as string}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -304,13 +309,14 @@ const ExactAmountOut = () => {
   const token = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
-    <ListItem label="Exact Amount Out">
-      <TokenAmount
+    <DataDisplay.Row label="Exact Amount Out">
+      <DataDisplay.TokenAmount
         symbol={token?.symbol}
         address={session?.tokenOutAddress}
         amount={amount}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -319,13 +325,14 @@ const DucthPrice = () => {
   const token = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.dutchPrice);
   return (
-    <ListItem label="Dutch price">
-      <TokenAmount
+    <DataDisplay.Row label="Dutch price">
+      <DataDisplay.TokenAmount
         symbol={token?.symbol}
         address={session?.tokenOutAddress}
         amount={amount}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };
 
@@ -336,16 +343,16 @@ const Transfers = () => {
 
   return (
     <>
-      <StyledDivider />
+      <DataDisplay.Divider />
       <ExactAmountOut />
       <DucthPrice />
-      <ListItem label="ERC-20 Tokens Transferred">
+      <DataDisplay.Row label="ERC-20 Tokens Transferred">
         <StyledTransfers>
           {transfers?.map((transfer, index) => {
             return <Transfer key={index} log={transfer} />;
           })}
         </StyledTransfers>
-      </ListItem>
+      </DataDisplay.Row>
     </>
   );
 };
@@ -391,10 +398,4 @@ const StyledRow = styled(RowFlex)`
 
 const StyledTransfers = styled(ColumnFlex)`
   width: 100%;
-`;
-
-const StyledSessionDisplay = styled(ColumnFlex)`
-  width: 100%;
-  align-items: flex-start;
-  gap: 10px;
 `;

@@ -1,8 +1,8 @@
 import { useNumberFormatter, useChainConfig } from "hooks";
 import { useMemo } from "react";
 import { useGasCostUsd, useSession } from "../hooks";
-import { ListItem, TokenAmount } from "./shared";
 import BN from "bignumber.js";
+import { DataDisplay } from "components";
 
 export const GasUsed = () => {
   const session = useSession().data;
@@ -20,13 +20,14 @@ export const GasUsed = () => {
   const chainConfig = useChainConfig(session?.chainId);
 
   return (
-    <ListItem label="Gas Used">
-      <TokenAmount
+    <DataDisplay.Row label="Gas Used">
+      <DataDisplay.TokenAmount
         amount={gas as string}
         usd={_usd as string}
         symbol={chainConfig?.native.symbol}
         address={chainConfig?.native.address}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };

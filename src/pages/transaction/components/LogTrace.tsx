@@ -5,7 +5,7 @@ import { useSession } from "../hooks";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { TX_TRACE_SERVER } from "config";
-import { ListItem } from "./shared";
+import { DataDisplay } from "components";
 
 export const useLogTrace = () => {
   const session = useSession().data;
@@ -46,7 +46,7 @@ export const LogTrace = () => {
   const { data, isLoading, error } = useLogTrace();
 
   return (
-    <ListItem label="Log trace">
+    <DataDisplay.Row label="Log trace">
       <AceEditor
         mode="sh" // Set mode to shell script
         theme="XCode" // Set theme to a terminal-like theme
@@ -55,6 +55,6 @@ export const LogTrace = () => {
         width="100%" // Adjust width as needed
         fontSize={18} // Set the font size here
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };

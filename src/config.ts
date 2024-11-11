@@ -1,4 +1,4 @@
-
+import _ from "lodash";
 
 export const ROUTES = {
   main: "/",
@@ -7,6 +7,7 @@ export const ROUTES = {
   address: "/user/:address",
   twap: {
     root: "/twap",
+    order: "/twap/order/:orderId",
   },
 
   navigate: {
@@ -14,6 +15,12 @@ export const ROUTES = {
     address: (address: string) => `/user/${address}`,
     main: () => "/",
     transactions: () => ROUTES.transactions,
+    twap: {
+      root: () => ROUTES.twap.root,
+      order: (orderId: number, search: string) => {        
+        return `${ROUTES.twap.root}/order/${orderId}${search}`
+      },
+    }
   },
 };
 export const ELASTIC_ENDPOINT = "https://api.bi.orbs.network";
@@ -28,97 +35,3 @@ export const TX_TRACE_SERVER = "https://lh-tools.orbs.network/tx-trace";
 
 export const GAS_ADDRESS = "0x7ae466596C57241459eBaE32D2E64F51Da68F3B8";
 export const FEES_ADDRESS = "0xbd098dB9AD3dbaF2bDAF581340B2662d9A3CA8D2";
-
-export const dexConfig = {
-  quickswap: {
-    chainId: 137,
-    website: "https://quickswap.exchange/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1293.png',
-    name:'Quickswap'
-  },
-  spookyswap: {
-    chainId: 250,
-    website: "https://spooky.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png',
-    name:'Spookyswap'
-  },
-  lynex: {
-    chainId: 59144,
-    website: "https://www.lynex.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/7957.png',
-    name:'Lynex'
-  },
-  thena: {
-    chainId: 56,
-    website: "https://thena.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/5803.png',
-    name:'Thena'
-  },
-  intentx: {
-    chainId: 8453,
-    website: "https://intentx.io/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/31709.png',
-    name:'Intentx'
-  },
-  fenix: {
-    chainId: 81457,
-    website: "https://blast.io/en",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/28480.png',
-    name:'Blast'
-  },
-  arbidex: {
-    chainId: 42161,
-    website: "https://arbidex.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/6506.png',
-    name:'Arbidex'
-  },
-  pangolin: {
-    chainId: 43114,
-    website: "https://s2.coinmarketcap.com/static/img/coins/128x128/8422.png",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/1340.png',
-    name:'Pangolin'
-  },
-  chronos: {
-    chainId: 42161,
-    website: "https://chronos.exchange/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/24158.png',
-    name:'Chronos'
-  },
-  baseswap: {
-    chainId: 8453,
-    website: "https://baseswap.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/27764.png',
-    name:'Baseswap'
-  },
-  pancakeswap: {
-    chainId: 56,
-    website: "https://baseswap.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/7186.png',
-    name:'PancakeSwap'
-  },
-  syncswap: {
-    chainId: 324,
-    website: "https://baseswap.fi/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/6813.png',
-    name:'SyncSwap'
-  },
-  sushiswap: {
-    chainId: 42161,
-    website: "https://www.sushi.com",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/coins/128x128/6758.png',
-    name:'SushiSwap'
-  },
-  dragonswap: {
-    chainId: 1329,
-    website: "https://dragonswap.app",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png',
-    name:'DragonSwap'
-  },
-  retro: {
-    chainId: 137,
-    website: "https://retro.finance/",
-    logoUrl: 'https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png',
-    name:'Retro'
-  },
-};
-

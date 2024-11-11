@@ -14,7 +14,7 @@ export function OrdersPage() {
 
   const { data, isLoading, isFetchingNextPage, fetchNextPage } = useTwapOrders(
     query.chainId,
-    query.exchange
+    query.exchangeAddress
   );
   const orders = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];

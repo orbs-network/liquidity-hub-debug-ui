@@ -1,8 +1,7 @@
-import { LogModal } from "components";
+import { DataDisplay, LogModal } from "components";
 import { styled } from "styled-components";
 import { RowFlex } from "styles";
 import { useSession } from "../hooks";
-import { ListItem } from "./shared";
 
 export const SessionLogs = () => {
   const session = useSession().data;
@@ -10,7 +9,7 @@ export const SessionLogs = () => {
   return (
     <>
       {session.logs.client && (
-        <ListItem label="Client logs">
+        <DataDisplay.Row label="Client logs">
           <StyledLogContent>
             {session.logs.client.map((it: any, index: number) => {
               return (
@@ -18,10 +17,10 @@ export const SessionLogs = () => {
               );
             })}
           </StyledLogContent>
-        </ListItem>
+        </DataDisplay.Row>
       )}
       {session.logs.quote && (
-        <ListItem label="Quote logs">
+        <DataDisplay.Row label="Quote logs">
           <StyledLogContent>
             {session.logs.quote.map((it: any, index: number) => {
               return (
@@ -29,13 +28,13 @@ export const SessionLogs = () => {
               );
             })}
           </StyledLogContent>
-        </ListItem>
+        </DataDisplay.Row>
       )}
-      <ListItem label="Swap logs">
+      <DataDisplay.Row label="Swap logs">
         <StyledLogContent>
         <LogModal title={`Swap`} log={session.logs.swap} />
         </StyledLogContent>
-      </ListItem>
+      </DataDisplay.Row>
     </>
   );
 };

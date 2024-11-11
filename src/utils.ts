@@ -1,6 +1,7 @@
-import { Configs } from "@orbs-network/twap-sdk";
 import BN from "bignumber.js";
-import { dexConfig } from "config";
+import _ from "lodash";
+import moment from "moment";
+import { partners } from "partners";
 
 export const isDebug = !!localStorage.getItem("debug");
 
@@ -29,38 +30,38 @@ export const addSlippage = (amount?: string, slippage?: number) => {
   return BN(amount).plus(slippageBN).toString();
 };
 
-export const getDexByExchange = (exchange: string) => {
-  switch (exchange) {
-    case Configs.Arbidex.exchangeAddress:
-      return dexConfig.arbidex;
-    case Configs.BaseSwap.exchangeAddress:
-      return dexConfig.baseswap;
-    case Configs.Chronos.exchangeAddress:
-      return dexConfig.chronos;
-    case Configs.DragonSwap.exchangeAddress:
-      return dexConfig.dragonswap;
-    case Configs.Lynex.exchangeAddress:
-      return dexConfig.lynex;
-    case Configs.PancakeSwap.exchangeAddress:
-      return dexConfig.pancakeswap;
-    case Configs.Pangolin.exchangeAddress:
-    case Configs.PangolinDaas.exchangeAddress:
-      return dexConfig.pangolin;
-    case Configs.QuickSwap.exchangeAddress:
-      return dexConfig.quickswap;
-    case Configs.SpookySwap.exchangeAddress:
-      return dexConfig.spookyswap;
-      case Configs.Thena.exchangeAddress:
-      return dexConfig.thena;
-      case Configs.SyncSwap.exchangeAddress:
-        return dexConfig.syncswap;
-    case Configs.SushiArb.exchangeAddress:
-    case Configs.SushiBase.exchangeAddress:
-    case Configs.SushiEth.exchangeAddress:
-      return dexConfig.sushiswap;
-      case Configs.Retro.exchangeAddress:
-        return dexConfig.retro;
-    default:
-      break;
+
+
+export const getPartnerWithExchangeAddress = (exchangeAddress?: string) => {
+  return  _.find(partners, (p) => p.isExchangeExists(exchangeAddress))
+}
+
+
+
+export const MillisToDuration = (value?: number) => {
+  if (!value) {
+      return "";
   }
+  const time = moment.duration(value);
+  const days = time.days();
+  const hours = time.hours();
+  const minutes = time.minutes();
+  const seconds = time.seconds();
+
+  const arr: string[] = [];
+
+  if (days) {
+    arr.push(`${days} days `);
+  }
+  if (hours) {
+    arr.push(`${hours} hours `);
+  }
+  if (minutes) {
+    arr.push(`${minutes} minutes`);
+  }
+  if (seconds) {
+    arr.push(`${seconds} seconds`);
+  }
+  return arr.join(" ");
 };
+

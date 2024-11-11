@@ -1,17 +1,24 @@
 import styled from "styled-components";
 import TextOverflow from "react-text-overflow";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import { createContext, useCallback, useContext } from "react";
 import { Virtuoso } from "react-virtuoso";
 import moment from "moment";
-import { Button, Typography, Avatar, Spin, Skeleton } from "antd";
+import { Button, Typography, Spin, Skeleton, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { RowFlex } from "styles";
 import { AddressLink } from "components";
-import { useChainConfig, useToken, useAppParams, useAmountUI, useNumberFormatter } from "hooks";
+import {
+  useToken,
+  useAppParams,
+  useAmountUI,
+  useNumberFormatter,
+  useTwapPartner,
+} from "hooks";
 import { Order, OrderStatus } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
+import { ROUTES } from "config";
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
@@ -85,9 +92,11 @@ const useOrderContext = () => {
 };
 
 const GoButton = () => {
-
-  const onNavigate = () => {
-    // navigate(ROUTES.navigate.tx(order.));
+  const { order } = useOrderContext();
+  const navigate = useNavigate();
+  const location = useLocation()
+  const onNavigate = () => {    
+    navigate(ROUTES.navigate.twap.order(order.id, location.search));
   };
 
   return (
@@ -117,9 +126,11 @@ const Timestamp = () => {
 
 const Dex = () => {
   const { order } = useOrderContext();
+  const partner = useTwapPartner(order.exchange);
   return (
     <StyledItem>
-      <RowText text={order.dex} />
+      <Avatar src={partner?.logoUrl} size={25} />
+      <RowText text={partner?.name} />
     </StyledItem>
   );
 };
@@ -127,10 +138,13 @@ const Dex = () => {
 const TradeAmount = () => {
   const { order, chainId } = useOrderContext();
   const token = useToken(order.srcTokenAddress, chainId);
-  const amount = useNumberFormatter({value: useAmountUI(token?.decimals, order.srcAmount), format: true})
+  const amount = useNumberFormatter({
+    value: useAmountUI(token?.decimals, order.srcAmount),
+    format: true,
+  });
   return (
     <StyledItem>
-      <RowText text={` ${amount} ${token?.symbol || ''}`} />
+      <RowText text={` ${amount} ${token?.symbol || ""}`} />
     </StyledItem>
   );
 };
@@ -248,22 +262,11 @@ const StyledList = styled.div`
   flex-direction: column;
 `;
 
-const Network = () => {
-  const { chainId } = useOrderContext();
-  const chainConfig = useChainConfig(chainId);
-  return (
-    <StyledItem>
-      <Avatar src={chainConfig?.logoUrl} size={23} />
-      <RowText text={chainConfig?.name} />
-    </StyledItem>
-  );
-};
-
 export const StatusBadge = ({ status }: { status?: OrderStatus }) => {
   return (
     <Container style={{ background: "#F0AD4E" }}>
       <Typography>
-        <span>{status}</span>
+        <span style={{ textTransform: "capitalize" }}>{status}</span>
       </Typography>
     </Container>
   );
@@ -289,6 +292,7 @@ const Status = () => {
 
 const OrderType = () => {
   const { order } = useOrderContext();
+
   return (
     <StyledItem>
       <RowText text={parseOrderType(order.orderType)} />
@@ -305,6 +309,7 @@ const ListHeader = () => {
             key={index}
             style={{
               width: `${item.width}%`,
+              textAlign: item.alignCenter ? "center" : "left",
             }}
           >
             {item.label}
@@ -340,7 +345,10 @@ export const ListOrder = ({
           return (
             <StyledListComponent
               key={index}
-              style={{ width: `${item.width}%` }}
+              style={{
+                width: `${item.width}%`,
+                justifyContent: item.alignCenter ? "center" : "flex-start",
+              }}
             >
               {item.component}
             </StyledListComponent>
@@ -371,31 +379,24 @@ const items = [
   {
     component: <Dex />,
     label: "Dex",
-    width: 10,
+    width: 15,
   },
-
- 
 
   {
     component: <OrderType />,
     label: "Type",
     width: 10,
   },
-  {
-    component: <Network />,
-    label: "Network",
-    width: 13,
-  },
 
   {
     component: <Timestamp />,
     label: "Date",
-    width: 16,
+    width: 15,
   },
   {
     component: <Tokens />,
     label: "Tokens",
-    width: 14,
+    width: 20,
   },
   {
     component: <TradeAmount />,
@@ -405,11 +406,13 @@ const items = [
   {
     component: <Status />,
     label: "Status",
-    width: 20,
+    width: 10,
+    alignCenter: true,
   },
   {
     component: <GoButton />,
     label: "Action",
     width: 5,
+    alignCenter: true,
   },
 ];

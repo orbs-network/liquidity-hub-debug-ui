@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 import { SearchSessionInput } from "./SearchSessionInput";
 import { ChainSelect } from "./ChainSelect";
 import orbsLogo from "assets/orbs.svg";
-import { ExchangeSelect } from "./ExchangeSelect";
+import { PartnerSelect } from "./PartnerSelect";
 
 export function Loader({ className = "" }: { className?: string }) {
   return (
@@ -115,13 +115,16 @@ export const LiquidityHubNavbar = () => {
   );
 };
 
-export const TwapNavbar = () => {
+export const TwapNavbar = ({hideChainSelect = false, hidePartnerSelect = false}: {
+  hideChainSelect?: boolean,
+  hidePartnerSelect?: boolean
+}) => {
   return (
     <Navbar>
       <TwapLogo />
       <StyledRight>
-        <ChainSelect />
-        <ExchangeSelect />
+        {!hideChainSelect && <ChainSelect />}
+        {!hidePartnerSelect && <PartnerSelect />}
       </StyledRight>
     </Navbar>
   );

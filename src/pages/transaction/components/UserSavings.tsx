@@ -1,6 +1,7 @@
+import { DataDisplay } from "components";
 import { useAmountUI, useToken } from "hooks";
 import { useOutTokenUsd, useSession, useUserSavings } from "../hooks";
-import { ListItem, TokenAmount } from "./shared";
+
 
 
 export const UserSavings = () => {
@@ -13,13 +14,14 @@ export const UserSavings = () => {
   const usd = useOutTokenUsd(amount)
 
   return (
-    <ListItem label="User Savings">
-      <TokenAmount
+    <DataDisplay.Row label="User Savings">
+      <DataDisplay.TokenAmount
         amount={amount as string}
         usd={usd as string}
         address={outToken?.address}
         symbol={outToken?.symbol}
+        chainId={session?.chainId}
       />
-    </ListItem>
+    </DataDisplay.Row>
   );
 };

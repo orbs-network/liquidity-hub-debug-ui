@@ -1,3 +1,5 @@
+import { Config } from "@orbs-network/twap-sdk";
+
 export interface SwapLog {
   chainId: number;
   dex: string;

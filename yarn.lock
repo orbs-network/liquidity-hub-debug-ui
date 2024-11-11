@@ -1186,10 +1186,10 @@
   resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.9.5.tgz"
   integrity sha512-ZK+W5mVhRppff9BE6YdR8CC52C8zAvsVAiWhEtQ5+oNxFE6h1WdeWo+FJSF8KKvtxxVYZ7MTP/5KoVpAU3aSWg==
 
-"@orbs-network/twap-sdk@^2.0.44":
-  version "2.0.44"
-  resolved "https://registry.yarnpkg.com/@orbs-network/twap-sdk/-/twap-sdk-2.0.44.tgz#d0af56993cc84ecbba20f0486ac00efb374dd0b3"
-  integrity sha512-BXjfWefcmkGRGtkeNBhDMLhZyn5SdafdZvMTE8qOL4hChz/6DcMbiamxE80NlBUqNDzRLqhT0xCFns+DXy4hdw==
+"@orbs-network/twap-sdk@^2.0.46":
+  version "2.0.46"
+  resolved "https://registry.yarnpkg.com/@orbs-network/twap-sdk/-/twap-sdk-2.0.46.tgz#e8723c255b17d82b99f4ecee6c1df29072e0185e"
+  integrity sha512-vEIPs8/hM4EX+zpuWu6Bv+KiLoHO5VPpNTdRPyaaY0pEMfgVA+/BqS4SkKTh/XuUPtyxyTI0N03kbr7a/FEVRw==
   dependencies:
     "@orbs-network/twap" "^2.0.1"
     bignumber.js "9.x"

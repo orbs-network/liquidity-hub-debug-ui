@@ -1,5 +1,5 @@
 import { App } from "App";
-import { OrdersPage } from "pages/twap";
+import { OrderPage, OrdersPage } from "pages/twap";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "./config";
 import { UserTransactionsPage, TransactionPage, TransactionsPage, HomePage } from "./pages";
@@ -28,6 +28,10 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.twap.root,
         element: <OrdersPage />,
+      },
+      {
+        path: ROUTES.twap.order,
+        element: <OrderPage />,
       },
 
       {
