@@ -5,9 +5,9 @@ export const parseOrderType = (orderType?: OrderType) => {
     case OrderType.LIMIT:
       return "Limit";
     case OrderType.TWAP_LIMIT:
-      return "TWAP";
+      return "TWAP Limit";
     case OrderType.TWAP_MARKET:
-      return "Market";
+      return "Twap Market";
 
     default:
       break;
