@@ -160,6 +160,8 @@ const SrcFilledAmount = () => {
   const token = useToken(order?.srcTokenAddress, chainId);
   const amount = useAmountUI(token?.decimals, order?.srcFilledAmount);
   const usd = order?.srcFilledAmountUsd;
+  console.log({});
+  
 
   return (
     <DataDisplay.Row label="Source Filled Amount">
@@ -373,7 +375,7 @@ const ChainId = () => {
   const network = useChainConfig(config?.chainId);
 
   return (
-    <DataDisplay.Row label="Chain ID">
+    <DataDisplay.Row label="Chain">
       <Avatar size={20} src={network?.logoUrl} />
       <DataDisplay.Row.Text>{network?.name}</DataDisplay.Row.Text>
     </DataDisplay.Row>

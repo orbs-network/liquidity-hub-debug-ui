@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import TextOverflow from "react-text-overflow";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import { createContext, useCallback, useContext } from "react";
 import { Virtuoso } from "react-virtuoso";

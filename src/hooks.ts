@@ -14,7 +14,6 @@ import Web3 from "web3";
 import { notification } from "antd";
 
 import {
-  eqIgnoreCase,
   isNativeAddress,
   zeroAddress,
 } from "@defi.org/web3-candies";

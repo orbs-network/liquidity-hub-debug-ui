@@ -120,9 +120,11 @@ const Timestamp = () => {
 
 const Dex = () => {
   const session = useSessionContext();
+  const chainConfig = useChainConfig(session.chainId);
   return (
     <StyledItem>
       <RowText text={session.dex} />
+      <Avatar src={chainConfig?.logoUrl} size={23} />
     </StyledItem>
   );
 };
@@ -266,16 +268,6 @@ const StyledList = styled.div`
   flex-direction: column;
 `;
 
-const Network = () => {
-  const session = useSessionContext();
-  const chainConfig = useChainConfig(session.chainId);
-  return (
-    <StyledItem>
-      <Avatar src={chainConfig?.logoUrl} size={23} />
-      <RowText text={chainConfig?.name} />
-    </StyledItem>
-  );
-};
 
 const ListHeader = () => {
   return (
@@ -286,6 +278,8 @@ const ListHeader = () => {
             key={index}
             style={{
               width: `${item.width}%`,
+              justifyContent: item.alignCenter ? "center" : "flex-start",
+              textAlign: item.alignCenter ? "center" : "left",
             }}
           >
             {item.label}
@@ -318,7 +312,10 @@ export const ListSession = ({
           return (
             <StyledListComponent
               key={index}
-              style={{ width: `${item.width}%` }}
+              style={{
+                width: `${item.width}%`,
+                justifyContent: item.alignCenter ? "center" : "flex-start",
+              }}
             >
               {item.component}
             </StyledListComponent>
@@ -344,19 +341,13 @@ const items = [
   {
     component: <Dex />,
     label: "Dex",
-    width: 10,
-  },
-  {
-    component: <Network />,
-    label: "Network",
-    width: 13,
+    width: 16,
   },
   {
     component: <SessionId />,
     label: "Session id",
-    width: 11,
+    width: 13,
   },
-
   {
     component: <Timestamp />,
     label: "Date",
@@ -365,7 +356,7 @@ const items = [
   {
     component: <Tokens />,
     label: "Tokens",
-    width: 14,
+    width: 16,
   },
   {
     component: <Usd />,
@@ -375,16 +366,38 @@ const items = [
   {
     component: <TxHash />,
     label: "Tx hash",
-    width: 11,
+    width: 13,
   },
   {
     component: <SwapStatus />,
     label: "Status",
     width: 10,
+    alignCenter: true,
   },
   {
     component: <GoButton />,
     label: "Action",
     width: 5,
+    alignCenter: true,
   },
 ];
+
+// const MobileList = () => {
+//   return (
+//     <MobileContainer>
+//       {items.map((it) => {
+//         return (
+//           <MobileItem>
+//             <MobileItemLabel>{it.label}</MobileItemLabel>
+//           </MobileItem>
+//         );
+//       })}
+//     </MobileContainer>
+//   );
+// };
+
+// const MobileItemLabel = styled("p")({});
+
+// const MobileItem = styled("div")({});
+
+// const MobileContainer = styled("div")({});
