@@ -1,24 +1,22 @@
 import styled from "styled-components";
 import { RowFlex } from "../styles";
-import TextOverflow from "react-text-overflow";
 import { ROUTES } from "../config";
 import { Link, useNavigate } from "react-router-dom";
 import _ from "lodash";
-import { useChainConfig, useNumberFormatter } from "../hooks";
-import { makeElipsisAddress } from "../helpers";
+import {
+  useChainConfig,
+  useLiquidityHubPartner,
+  useNumberFormatter,
+} from "../hooks";
+import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { AddressLink } from "./AddressLink";
-import { createContext, useCallback, useContext } from "react";
-import { Virtuoso } from "react-virtuoso";
+import { useCallback } from "react";
 import moment from "moment";
 import { SwapLog } from "types";
 import { StatusBadge } from "./StatusBadge";
-import { Button, Typography, Avatar, Spin, Skeleton } from "antd";
+import { Button, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
-
-export const StyledRow = styled(RowFlex)`
-  text-align: left;
-  padding-right: 0px;
-`;
+import { List } from "./List";
 
 export const TransactionsList = ({
   sessions = [],
@@ -28,70 +26,46 @@ export const TransactionsList = ({
 }: {
   sessions?: SwapLog[];
   loadMore: () => void;
-  isFetchingNextPage?: boolean;
   isLoading?: boolean;
+  isFetchingNextPage?: boolean;
 }) => {
-  const noLoadMore = useCallback(() => {
-    if (isFetchingNextPage) return;
-    loadMore();
-  }, [loadMore, isFetchingNextPage]);
-
-  if (isLoading) {
-    return <Skeleton />;
-  }
-
-  if (_.isEmpty(sessions)) {
-    return <StyledEmpty>No sessions found</StyledEmpty>;
-  }
-
-  const totalCount = isFetchingNextPage
-    ? _.size(sessions) + 1
-    : _.size(sessions);
-
   return (
-    <StyledList>
-      <ListHeader />
-      <Virtuoso
-        endReached={noLoadMore}
-        useWindowScroll
-        totalCount={totalCount}
-        overscan={10}
-        itemContent={(index) => {
-          const session = sessions[index];
-          return (
-            <ListSession swapLog={session} isLast={index + 1 === totalCount} />
-          );
-        }}
-      />
-    </StyledList>
+    <List<SwapLog>
+      isLoading={isLoading}
+      loadMore={loadMore}
+      isFetchingNextPage={isFetchingNextPage}
+      items={sessions}
+      DesktopComponent={DesktopComponent}
+      MobileComponent={MobileComponent}
+      headerLabels={headerLabels}
+    />
   );
 };
 
-const StyledEmpty = styled.div`
-  padding: 20px;
-`;
-
-const StyledLoaderContainer = styled("div")`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  flex: 1;
-  height: 100px;
-`;
-
-const Context = createContext<SwapLog>(undefined as any as SwapLog);
-const useSessionContext = () => {
-  return useContext(Context);
+const DesktopComponent = ({ item }: { item: SwapLog }) => {
+  return (
+    <List.DesktopRow>
+      {desktopRows.map((it) => {
+        return (
+          <List.DesktopRow.Element
+            key={it.label}
+            alignCenter={it.alignCenter}
+            width={it.width}
+          >
+            <it.Component item={item} />
+          </List.DesktopRow.Element>
+        );
+      })}
+    </List.DesktopRow>
+  );
 };
 
-const GoButton = () => {
-  const swapLog = useSessionContext();
+const GoButton = ({ item }: { item: SwapLog }) => {
   const navigate = useNavigate();
 
   const onNavigate = useCallback(() => {
-    navigate(ROUTES.navigate.tx(swapLog.id));
-  }, [navigate, swapLog.id]);
+    navigate(ROUTES.navigate.tx(item.id));
+  }, [navigate, item.id]);
 
   return (
     <StyledButtons>
@@ -109,29 +83,26 @@ const GoButton = () => {
     </StyledButtons>
   );
 };
-const Timestamp = () => {
-  const session = useSessionContext();
+const Timestamp = ({ item }: { item: SwapLog }) => {
   return (
-    <StyledItem>
-      <RowText text={moment(session.timestamp).format("MMM D, h:mm A")} />
-    </StyledItem>
+    <List.DesktopRow.Element.Text
+      text={moment(item.timestamp).format("MMM D, h:mm A")}
+    />
   );
 };
 
-const Dex = () => {
-  const session = useSessionContext();
-  const chainConfig = useChainConfig(session.chainId);
+const Dex = ({ item }: { item: SwapLog }) => {
+  const chainConfig = useChainConfig(item.chainId);
   return (
-    <StyledItem>
-      <RowText text={session.dex} />
+    <RowFlex style={{ gap: 6 }}>
+      <List.DesktopRow.Element.Text text={item.dex} />
       <Avatar src={chainConfig?.logoUrl} size={23} />
-    </StyledItem>
+    </RowFlex>
   );
 };
 
-const Tokens = () => {
-  const session = useSessionContext();
-  const { tokenInName, tokenOutName, tokenInAddress, chainId } = session;
+const Tokens = ({ item }: { item: SwapLog }) => {
+  const { tokenInName, tokenOutName, tokenInAddress, chainId } = item;
   return (
     <StyledTokens $gap={2}>
       <AddressLink
@@ -151,253 +122,128 @@ const Tokens = () => {
   );
 };
 
-const StyledTokens = styled(StyledRow)({
+const StyledTokens = styled(RowFlex)({
   fontSize: 13,
   "*": {
     fontWeight: 400,
   },
 });
 
-const SessionId = () => {
-  const session = useSessionContext();
-
+const SessionId = ({ item }: { item: SwapLog }) => {
   return (
-    <StyledRow>
-      <Link
-        to={ROUTES.navigate.tx(session.id)}
-        style={{ textDecoration: "unset" }}
-      >
-        <RowText text={session.id} />
+    <Link to={ROUTES.navigate.tx(item.id)} style={{ textDecoration: "unset" }}>
+      <List.DesktopRow.Element.Text text={item.id} />
+    </Link>
+  );
+};
+
+const TxHash = ({ item }: { item: SwapLog }) => {
+  const { txHash } = item;
+  return (
+    <>
+      <Link to={ROUTES.navigate.tx(txHash)} style={{ textDecoration: "unset" }}>
+        <List.DesktopRow.Element.Text text={makeElipsisAddress(txHash) || ""} />
       </Link>
-    </StyledRow>
+    </>
   );
 };
 
-const TxHash = () => {
-  const session = useSessionContext();
-  const { txHash } = session;
-  return (
-    <StyledItem>
-      <StyledText>
-        <Link to={ROUTES.navigate.tx(txHash)}>
-          <TextOverflow text={makeElipsisAddress(txHash) || ""} />
-        </Link>
-      </StyledText>
-    </StyledItem>
-  );
+const SwapStatus = ({ item }: { item: SwapLog }) => {
+  return <StatusBadge swapStatus={item.swapStatus} />;
 };
 
-const SwapStatus = () => {
-  const session = useSessionContext();
-
-  return (
-    <StyledItem>
-      <StatusBadge swapStatus={session.swapStatus} />
-    </StyledItem>
-  );
-};
-
-const Usd = () => {
-  const session = useSessionContext();
-  const { dollarValue } = session;
+const Usd = ({ item }: { item: SwapLog }) => {
+  const { dollarValue } = item;
   const result = useNumberFormatter({ value: dollarValue });
 
-  return (
-    <StyledItem>
-      <RowText text={result ? `$${result}` : "-"} />
-    </StyledItem>
-  );
+  return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
 };
-
-const RowText = ({ text = "-" }: { text?: string }) => {
-  return (
-    <StyledText>
-      <TextOverflow text={text} />
-    </StyledText>
-  );
-};
-
-const StyledItem = styled(StyledRow)`
-  gap: 5px;
-`;
-
-const StyledText = styled(Typography)`
-  font-size: 13px;
-`;
 
 const StyledButtons = styled(RowFlex)`
   justify-content: flex-end;
   width: 100%;
 `;
 
-const ListSessionContainer = styled(RowFlex)`
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 10px 15px;
-  gap: 0px;
-  position: relative;
-  border-bottom: 1px solid #f1f3fe;
-`;
-
-const StyledHeader = styled(RowFlex)`
-  justify-content: flex-start;
-  padding: 0px 15px;
-  height: 50px;
-  gap: 0px;
-  font-weight: 500;
-  background: #f1f3fe;
-  border-radius: 6px;
-`;
-
-const StyledHeaderItem = styled(Typography)({
-  fontSize: 14,
-  textAlign: "left",
-  paddingRight: 20,
-  fontWeight: 600,
-  "&:last-child": {
-    textAlign: "center",
-    paddingRight: 0,
-  },
-});
-
-const StyledList = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-`;
-
-
-const ListHeader = () => {
-  return (
-    <StyledHeader>
-      {_.map(items, (item, index) => {
-        return (
-          <StyledHeaderItem
-            key={index}
-            style={{
-              width: `${item.width}%`,
-              justifyContent: item.alignCenter ? "center" : "flex-start",
-              textAlign: item.alignCenter ? "center" : "left",
-            }}
-          >
-            {item.label}
-          </StyledHeaderItem>
-        );
-      })}
-    </StyledHeader>
-  );
-};
-
-export const ListSession = ({
-  swapLog,
-  isLast,
-}: {
-  swapLog: SwapLog;
-  isLast: boolean;
-}) => {
-  if (!swapLog) {
-    return (
-      <StyledLoaderContainer>
-        <Spin />
-      </StyledLoaderContainer>
-    );
-  }
-
-  return (
-    <Context.Provider value={swapLog}>
-      <ListSessionContainer style={{ borderBottom: isLast ? "unset" : "" }}>
-        {items.map((item, index) => {
-          return (
-            <StyledListComponent
-              key={index}
-              style={{
-                width: `${item.width}%`,
-                justifyContent: item.alignCenter ? "center" : "flex-start",
-              }}
-            >
-              {item.component}
-            </StyledListComponent>
-          );
-        })}
-      </ListSessionContainer>
-    </Context.Provider>
-  );
-};
-
-const StyledListComponent = styled("div")({
-  display: "flex",
-  justifyContent: "flex-start",
-  alignItems: "center",
-  textAlign: "left",
-  paddingRight: 20,
-  "&:last-child": {
-    paddingRight: 10,
-  },
-});
-
-const items = [
+const desktopRows = [
   {
-    component: <Dex />,
+    Component: Dex,
     label: "Dex",
     width: 16,
   },
   {
-    component: <SessionId />,
+    Component: SessionId,
     label: "Session id",
     width: 13,
   },
   {
-    component: <Timestamp />,
+    Component: Timestamp,
     label: "Date",
     width: 16,
   },
   {
-    component: <Tokens />,
+    Component: Tokens,
     label: "Tokens",
     width: 16,
   },
   {
-    component: <Usd />,
+    Component: Usd,
     label: "USD",
     width: 10,
   },
   {
-    component: <TxHash />,
+    Component: TxHash,
     label: "Tx hash",
     width: 13,
   },
   {
-    component: <SwapStatus />,
+    Component: SwapStatus,
     label: "Status",
     width: 10,
     alignCenter: true,
   },
   {
-    component: <GoButton />,
+    Component: GoButton,
     label: "Action",
     width: 5,
     alignCenter: true,
   },
 ];
 
-// const MobileList = () => {
-//   return (
-//     <MobileContainer>
-//       {items.map((it) => {
-//         return (
-//           <MobileItem>
-//             <MobileItemLabel>{it.label}</MobileItemLabel>
-//           </MobileItem>
-//         );
-//       })}
-//     </MobileContainer>
-//   );
-// };
+const headerLabels = desktopRows.map((it) => {
+  return {
+    label: it.label,
+    width: it.width,
+    alignCenter: it.alignCenter,
+  };
+});
 
-// const MobileItemLabel = styled("p")({});
+const MobileComponent = ({ item }: { item: SwapLog }) => {
+  const partner = useLiquidityHubPartner(item.dex);
+  const navigate = useNavigate();
+  const onClick = useCallback(
+    () => {
+      navigate(ROUTES.navigate.tx(item.id))
+    },
+    [navigate, item.id]
+  );
 
-// const MobileItem = styled("div")({});
+  return (
+    <MobileContainer onClick={onClick}>
+      <List.MobileRow
+        partner={partner?.name || item.dex}
+        chainId={item.chainId}
+        inToken={item.tokenInName}
+        outToken={item.tokenOutName}
+        usd={item.dollarValue}
+        timestamp={item.timestamp}
+        status={swapStatusText(item.swapStatus)}
+        statusColor={item.swapStatus === "success" ? "#F0AD4E" :  item.swapStatus === 'failed' ?  "red" : undefined }
+      />
+    </MobileContainer>
+  );
+};
 
-// const MobileContainer = styled("div")({});
+const MobileContainer = styled("div")({
+  padding: "8px 0px",
+  width: "100%",
+});

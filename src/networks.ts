@@ -1,7 +1,11 @@
-import { erc20sData, zeroAddress } from "@defi.org/web3-candies";
-import Linea from 'assets/linea.svg'
+import {
+  erc20sData,
+  zeroAddress,
+} from "@defi.org/web3-candies";
+
+import Linea from "assets/linea.svg";
 export const networks = {
-  1: {
+  eth: {
     id: 1,
     name: "Ethereum",
     shortname: "eth",
@@ -16,7 +20,7 @@ export const networks = {
     logoUrl: "https://app.1inch.io/assets/images/network-logos/ethereum.svg",
     explorer: "https://etherscan.io",
   },
-  56: {
+  bsc: {
     id: 56,
     name: "Bsc",
     shortname: "bsc",
@@ -32,7 +36,7 @@ export const networks = {
     explorer: "https://bscscan.com",
     eip1559: false,
   },
-  137: {
+  poly: {
     id: 137,
     name: "Polygon",
     shortname: "poly",
@@ -48,7 +52,7 @@ export const networks = {
     explorer: "https://polygonscan.com",
     eip1559: true,
   },
-  42161: {
+  arb: {
     id: 42161,
     name: "Arbitrum",
     shortname: "arb",
@@ -64,7 +68,7 @@ export const networks = {
     explorer: "https://arbiscan.io",
     eip1559: true,
   },
-  250: {
+  ftm: {
     id: 250,
     name: "Fantom",
     shortname: "ftm",
@@ -80,7 +84,7 @@ export const networks = {
     explorer: "https://ftmscan.com",
     eip1559: true,
   },
-  8453: {
+  base: {
     id: 8453,
     name: "Base",
     shortname: "base",
@@ -96,7 +100,7 @@ export const networks = {
     explorer: "https://basescan.org",
     eip1559: false,
   },
-  59144: {
+  linea: {
     id: 59144,
     name: "Linea",
     shortname: "linea",
@@ -112,7 +116,7 @@ export const networks = {
     explorer: "https://lineascan.build",
     eip1559: false,
   },
-  1329: {
+  sei: {
     id: 1329,
     name: "Sei",
     shortname: "sei",
@@ -120,21 +124,69 @@ export const networks = {
       address: zeroAddress,
       symbol: "SEI",
       decimals: 18,
-      logoUrl: 'https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE/logo.png',
+      logoUrl:
+        "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE/logo.png",
     },
     wToken: {
       symbol: "WSEI",
       address: "0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7",
       decimals: 18,
       weth: false,
-      logoUrl: "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7/logo.png",
+      logoUrl:
+        "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7/logo.png",
     },
     publicRpcUrl: "https://evm-rpc.sei-apis.com",
     logoUrl: "https://s2.coinmarketcap.com/static/img/coins/128x128/23149.png",
     explorer: "https://seitrace.com",
     eip1559: false,
   },
+  blast: {
+    id: 81457,
+    name: "Blast",
+    shortname: "blast",
+    native: {
+      address: zeroAddress,
+      symbol: "BLAST",
+      decimals: 18,
+      logoUrl:
+        "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE/logo.png",
+    },
+    wToken: {
+      symbol: "WSEI",
+      address: "0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7",
+      decimals: 18,
+      weth: false,
+      logoUrl:
+        "https://raw.githubusercontent.com/dragonswap-app/assets/main/logos/0xE30feDd158A2e3b13e9badaeABaFc5516e95e8C7/logo.png",
+    },
+    publicRpcUrl: "https://evm-rpc.sei-apis.com",
+    logoUrl: "https://s2.coinmarketcap.com/static/img/coins/128x128/28480.png",
+    explorer: "https://blastscan.io",
+    eip1559: false,
+  },
+  avax: {
+    id: 43114,
+    name: "Avalanche",
+    shortname: "avax",
+    native: {
+      address: "0x0000000000000000000000000000000000000000",
+      symbol: "AVAX",
+      decimals: 18,
+      logoUrl: "https://app.1inch.io/assets/images/network-logos/avalanche.svg",
+    },
+    wToken: {
+      symbol: "WAVAX",
+      address: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+      decimals: 18,
+      weth: true,
+      logoUrl:
+        "https://tokens-data.1inch.io/images/0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7.png",
+    },
+    publicRpcUrl: "https://api.avax.network/ext/bc/C/rpc",
+    logoUrl: "https://app.1inch.io/assets/images/network-logos/avalanche.svg",
+    explorer: "https://snowtrace.io",
+    baseGasPrice: 0,
+    eip1559: true,
+    pendingBlocks: true,
+  },
 };
-
-
-

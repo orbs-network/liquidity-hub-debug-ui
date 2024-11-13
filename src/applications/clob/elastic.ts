@@ -47,53 +47,42 @@ const sessionId = (sessionId: string) => {
 };
 
 
-const quote = (sessionIds: string[], page: number, limit: number) => {
+const quote = (sessionId: string) => {
   return {
     ...queryInitialData,
     query: {
       bool: {
         filter: [
           {
-            terms: {
-              "sessionId.keyword": sessionIds, // Array of specific sessionIds
+            term: {
+              "sessionId.keyword": sessionId,
             },
           },
           {
             term: {
-              "type.keyword": "quote", // Type must be 'quote'
+              "type.keyword": "quote",
             },
           },
         ],
       },
     },
-    size: limit, // Number of results per page
-    from: page * limit, // Starting point (adjust for pagination, e.g., 0 for page 1, 100 for page 2, etc.)
-    sort: [
-      {
-        timestamp: {
-          order: "desc",
-        },
-      },
-    ],
   };
 };
 
-const client = (sessionIds: string[], page: number, limit: number) => {
+const client = (sessionId: string) => {
   return {
     ...queryInitialData,
     query: {
       bool: {
         filter: [
           {
-            terms: {
-              "sessionId.keyword": sessionIds, // Array of specific sessionIds
+            term: {
+              "sessionId.keyword": sessionId, // Array of specific sessionIds
             },
           },
         ],
       },
     },
-    size: limit, // Number of results per page
-    from: page * limit, // Starting point (adjust for pagination, e.g., 0 for page 1, 100 for page 2, etc.)
     sort: [
       {
         timestamp: {
@@ -109,11 +98,13 @@ const swaps = ({
   limit,
   chainId,
   walletAddress,
+  dex
 }: {
   chainId?: number;
   page: number;
   limit: number;
   walletAddress?: string;
+  dex?: string;
 }) => {
   return {
     ...queryInitialData,
@@ -127,10 +118,27 @@ const swaps = ({
           },
           walletAddress
             ? {
-                term: {
-                  "user.keyword": walletAddress,
+              script: {
+                script: {
+                  source: "doc['user.keyword'].value.toLowerCase() == params.user.toLowerCase()",
+                  params: {
+                    user: walletAddress,
+                  },
                 },
-              }
+              },
+            }
+            : undefined,
+            dex
+            ? {
+              script: {
+                script: {
+                  source: "doc['dex.keyword'].value.toLowerCase() == params.dex.toLowerCase()",
+                  params: {
+                    dex: dex,
+                  },
+                },
+              },
+            }
             : undefined,
           {
             term: {

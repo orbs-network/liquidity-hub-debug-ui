@@ -24,7 +24,7 @@ export const useAppParams = () => {
       timeRange: StringParam,
       sessionType: StringParam,
       chainId: NumberParam,
-      exchangeAddress: StringParam,
+      partner: StringParam,
     },
     {
       updateType: "pushIn",
@@ -36,7 +36,7 @@ export const useAppParams = () => {
       timeRange: query.timeRange || DEFAULT_SESSIONS_TIME_RANGE,
       sessionType: query.sessionType,
       chainId: query.chainId as number | undefined,
-      exchangeAddress: query.exchangeAddress as string | undefined,
+      partner: query.partner as string | undefined,
     },
     setQuery,
   };
@@ -153,9 +153,10 @@ export function useCopyToClipboard(): CopyFn {
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { partners } from "partners";
+import { Partner, partners } from "partners";
 import _ from "lodash";
 import { getPartnerWithExchangeAddress } from "utils";
+import { MOBILE } from "consts";
 
 export const useResizeObserver = (elementRef: any) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -197,6 +198,26 @@ export const useHeight = () => {
   return height;
 };
 
+export const useIsMobile = () =>  {
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= MOBILE);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= MOBILE);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return isMobile;
+}
+
+
 export const useToken = (tokenAddress?: string, chainId?: number) => {
   const w3 = useWeb3(chainId);
   const chainConfig = useChainConfig(chainId);
@@ -229,6 +250,15 @@ export const useAmountUI = (
   );
 };
 
+
+
+
+export const usePartnerFromName = (name?: string): Partner | undefined => {
+  return useMemo(() => {
+    return partners[name?.toLowerCase() as keyof typeof partners];
+  }, [name]);
+}
+
 export const useLiquidityHubPartner = (dex?: string) => {
   return useMemo(() => {
     if (!dex) return;
@@ -243,9 +273,16 @@ export const useTwapPartner = (exchangeAddress?: string) => {
   }, [exchangeAddress]);
 };
 
-export const useTwapPartnerConfig = (exchangeAddress?: string) => {
+export const usePartnerByName = (name?: string) => {
+  return useMemo(() => {
+    if (!name) return;
+    return Object.values(partners).find((partner) => partner.name.toLowerCase() === name.toLowerCase());
+  }, [name]);
+};
+
+export const usePartnerByTwapExchange = (exchangeAddress?: string) => {
   const partner = useTwapPartner(exchangeAddress);
   return useMemo(() => {
-    return partner?.getConfig(exchangeAddress);
+    return partner?.getTwapConfigByExchange(exchangeAddress);
   }, [partner, exchangeAddress]);
 };

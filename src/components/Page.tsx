@@ -1,13 +1,15 @@
 import { styled } from "styled-components";
-import { Card, ColumnFlex, RowFlex } from "styles";
+import { Card, ColumnFlex, LightButton, RowFlex } from "styles";
 import { Link } from "react-router-dom";
 import { Skeleton, Typography } from "antd";
-
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { SearchSessionInput } from "./SearchSessionInput";
-import { ChainSelect } from "./ChainSelect";
 import orbsLogo from "assets/orbs.svg";
-import { PartnerSelect } from "./PartnerSelect";
+import { useIsMobile } from "hooks";
+import { MOBILE } from "consts";
+import { Filters } from "./Filters";
+import { Search } from "react-feather";
+import { Popover } from "antd";
 
 export function Loader({ className = "" }: { className?: string }) {
   return (
@@ -37,6 +39,9 @@ const StyledNavbar = styled("div")`
   justify-content: center;
   width: 100%;
   z-index: 2;
+  @media (max-width: ${MOBILE}px) {
+    top: 10px;
+  }
 `;
 
 const StyledNavbarContent = styled(Card)({
@@ -48,17 +53,25 @@ const StyledNavbarContent = styled(Card)({
   padding: "6px 20px",
   backgroundColor: "white",
   maxWidth: 1200,
+  gap: 20,
+  [`@media (max-width: ${MOBILE}px)`]: {
+    padding: "6px 10px",
+    height: 50,
+  },
 });
 
 const StyledSearchSessionInput = styled(SearchSessionInput)({
-  maxWidth: 400,
+  maxWidth: 300,
   width: "100%",
   ".search-input-button": {
     width: 25,
     height: 25,
   },
   input: {
-    fontSize: 14,
+    fontSize: 16,
+    "&::placeholder": {
+      fontSize: 14,
+    },
   },
 });
 
@@ -69,15 +82,25 @@ const StyledLogo = styled(Link)({
   gap: 10,
   textDecoration: "unset",
   span: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 600,
     position: "relative",
     top: 2,
     color: "#947DE5",
   },
   img: {
-    width: "40px",
-    height: "40px",
+    width: "35px",
+    height: "35px",
+  },
+  [`@media (max-width: ${MOBILE}px)`]: {
+    gap: 0,
+    img: {
+      width: "25px",
+      height: "25px",
+    },
+    span: {
+      display: "none",
+    },
   },
 });
 
@@ -103,28 +126,91 @@ const TwapLogo = () => {
   );
 };
 
-export const LiquidityHubNavbar = () => {
+export const LiquidityHubNavbar = ({
+  hideFilters,
+}: {
+  hideFilters?: boolean;
+}) => {
   return (
     <Navbar>
       <LiquidityHubLogo />
       <StyledRight>
-        <StyledSearchSessionInput />
-        <ChainSelect />
+        <SearchInput />
+        {!hideFilters && (
+          <>
+            <Filters.Chain type="lh" />
+            <Filters.Partner type="lh" />
+          </>
+        )}
       </StyledRight>
     </Navbar>
   );
 };
 
-export const TwapNavbar = ({hideChainSelect = false, hidePartnerSelect = false}: {
-  hideChainSelect?: boolean,
-  hidePartnerSelect?: boolean
+const SearchInput = () => {
+  const isMobile = useIsMobile();
+
+  const [open, setOpen] = useState(false);
+
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
+
+  if (!isMobile) {
+    return <StyledSearchSessionInput />;
+  }
+
+  return (
+    <Popover
+
+      overlayInnerStyle={{
+        borderRadius: 20,
+        padding: 10,
+
+      }}
+      content={
+        <div>
+          <StyledMobileSearchInput />
+        </div>
+      }
+      trigger="click"
+      open={open}
+      onOpenChange={handleOpenChange}
+    >
+      <StyledMobileSearchButton>
+        <Search />
+      </StyledMobileSearchButton>
+    </Popover>
+  );
+};
+
+const StyledMobileSearchButton = styled(LightButton)({
+  padding: 5,
+  borderRadius:'50%',
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+})
+
+const StyledMobileSearchInput = styled(StyledSearchSessionInput)({
+  width: "90vw",
+  maxWidth: 400
+});
+
+export const TwapNavbar = ({
+  hideChainSelect = false,
+  hidePartnerSelect = false,
+}: {
+  hideChainSelect?: boolean;
+  hidePartnerSelect?: boolean;
 }) => {
   return (
     <Navbar>
       <TwapLogo />
       <StyledRight>
-        {!hideChainSelect && <ChainSelect />}
-        {!hidePartnerSelect && <PartnerSelect />}
+        {!hideChainSelect && <Filters.Chain type="twap" />}
+        {!hidePartnerSelect && <Filters.Partner type="twap" />}
       </StyledRight>
     </Navbar>
   );
@@ -160,6 +246,9 @@ const Placeholder = styled.div`
   top: 0px;
   background-color: #f8f9fb;
   z-index: 1;
+  @media (max-width: ${MOBILE}px) {
+    height: 70px;
+  }
 `;
 
 export const Container = styled(ColumnFlex)`
@@ -168,6 +257,9 @@ export const Container = styled(ColumnFlex)`
   position: relative;
   padding: 20px;
   border-radius: 20px;
+  @media (max-width: ${MOBILE}px) {
+    padding: 10px;
+  }
 `;
 
 export const StyledLayout = styled(Card)`
@@ -196,8 +288,6 @@ const Layout = ({
     </StyledLayout>
   );
 };
-
-
 
 Navbar.LiquidityHubLogo = LiquidityHubLogo;
 Navbar.LiquidityHub = LiquidityHubNavbar;

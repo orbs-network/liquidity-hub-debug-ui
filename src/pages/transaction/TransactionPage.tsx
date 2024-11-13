@@ -26,16 +26,18 @@ import moment from "moment";
 import { StatusBadge } from "components/StatusBadge";
 import { LogTrace } from "./components/LogTrace";
 import { UserSavings } from "./components/UserSavings";
+import { MOBILE } from "consts";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useSession();
   const inToken = useToken(session?.tokenInAddress, session?.chainId);
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+
   const isLoading = sessionLoading || !inToken || !outToken;
 
   return (
-    <Page navbar={<Page.Navbar.LiquidityHub />}>
-      <Page.Layout isLoading={isLoading}>
+    <Page navbar={<Page.Navbar.LiquidityHub hideFilters={true} />}>
+      <StyledPageLayout isLoading={isLoading}>
         {!session ? (
           <>
             <p>Session not found</p>
@@ -43,10 +45,17 @@ export function TransactionPage() {
         ) : (
           <Content />
         )}
-      </Page.Layout>
+      </StyledPageLayout>
     </Page>
   );
 }
+
+const StyledPageLayout = styled(Page.Layout)({
+  [`@media (max-width: ${MOBILE}px)`]: {
+    // background:'transparent',
+    // boxShadow: 'none',
+  }
+})
 
 const SessionId = () => {
   const session = useSession().data;

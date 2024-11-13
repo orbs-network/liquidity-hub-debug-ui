@@ -33,7 +33,7 @@ export const addSlippage = (amount?: string, slippage?: number) => {
 
 
 export const getPartnerWithExchangeAddress = (exchangeAddress?: string) => {
-  return  _.find(partners, (p) => p.isExchangeExists(exchangeAddress))
+  return  _.find(partners, (p) => !!p.getTwapConfigByExchange(exchangeAddress))
 }
 
 

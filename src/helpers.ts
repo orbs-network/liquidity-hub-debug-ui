@@ -144,7 +144,7 @@ export const isTxHash = (value?: string) => value?.startsWith("0x");
 
 export const getChainConfig = (chainId?: number) => {
   if (!chainId) return undefined;
-  return networks[chainId as keyof typeof networks];
+  return Object.values(networks).find((network) => network.id === chainId);
 };
 
 export const datesDiff = (date: Moment) => {
@@ -278,3 +278,4 @@ export const amountBNV2 = (decimals?: number, amount?: string | number) => {
 
   return parsebn(amount).times(new BN(10).pow(decimals || 0)).decimalPlaces(0).toFixed();
 };
+

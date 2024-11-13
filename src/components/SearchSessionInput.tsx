@@ -25,7 +25,7 @@ export function SearchSessionInput({ className = "" }: { className?: string }) {
         message: "Invalid input",
         description:
           "Please enter a valid Tx Hash, Wallet Address or Session ID",
-          placement: 'top',
+        placement: "top",
       });
     }
   }, [value, navigate, api]);
@@ -36,25 +36,27 @@ export function SearchSessionInput({ className = "" }: { className?: string }) {
         searchSession();
       }
     },
-    [searchSession],
-  )
-  
+    [searchSession]
+  );
 
   return (
     <>
-    {contextHolder}
-    <StyledInputContainer className={className}>
-      
-      <StyledInput
-        placeholder="Search  Tx Hash / Wallet / Session ID"
-        value={value}
-        onKeyDown={onKeyDown}
-        onChange={(e: any) => setVale(e.target.value)}
-      />
-      <StyledButton className="search-input-button" $disabled={!value} onClick={searchSession}>
-        <ArrowUp size={16} color="white" />
-      </StyledButton>
-    </StyledInputContainer>
+      {contextHolder}
+      <StyledInputContainer className={className}>
+        <StyledInput
+          placeholder="Tx Hash / Session ID / Wallet "
+          value={value}
+          onKeyDown={onKeyDown}
+          onChange={(e: any) => setVale(e.target.value)}
+        />
+        <StyledButton
+          className="search-input-button"
+          $disabled={!value}
+          onClick={searchSession}
+        >
+          <ArrowUp size={16} color="white" />
+        </StyledButton>
+      </StyledInputContainer>
     </>
   );
 }

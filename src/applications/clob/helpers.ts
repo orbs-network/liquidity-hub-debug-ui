@@ -48,27 +48,39 @@ const parseSwapLog = (log: any): SwapLog => {
   };
 };
 
-const parseQuotesLog = (quotes: any[]): QuoteLog => {
+const parseQuotesLog = (quotes: any[], swapLog: any): QuoteLog => {
   const sorted = quotes.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
   const quote = sorted[0];
-
-  const actionWinner = quote.auctionWinner;
-  const exchanges = quote["auctionData.exchange"];
-  const winnerIndex = exchanges.indexOf(actionWinner);
-  let gasCostOutToken = "";
+  let lhAmountOut = undefined;
+  let lhAmountOutUsd = 0;
+  let dexAmountOut = undefined;
+  let dexAmountOutWS = undefined;
+  let lhAmountOutWS = undefined;
+  let gasCostOutToken = '';
 
   try {
-    gasCostOutToken = quote["auctionData.gasCost"][winnerIndex];
-  } catch (error) {}
+    const actionWinner = quote.auctionWinner;
+    const exchanges = quote["auctionData.exchange"];
+    const winnerIndex = exchanges.indexOf(actionWinner);
 
-  return {
-    lhAmountOut: quote.amountOut,
-    lhAmountOutUsd: quote.dollarValue,
-    dexAmountOut: quote.amountOutUI,
-    dexAmountOutWS: addSlippage(quote.amountOutUI, quote.slippage),
-    lhAmountOutWS: addSlippage(quote.amountOut, quote.slippage),
+    lhAmountOut = quote.amountOut;
+    lhAmountOutUsd = quote.dollarValue;
+    dexAmountOut = quote.amountOutUI;
+    dexAmountOutWS = addSlippage(quote.amountOutUI, quote.slippage);
+    lhAmountOutWS = addSlippage(quote.amountOut, quote.slippage);
+    gasCostOutToken = quote["auctionData.gasCost"][winnerIndex];
+  } catch (error) {
+    console.error("Error parsing quotes log", error);
+  }
+  dexAmountOut = dexAmountOut || swapLog.amountOutUI || 0
+  return {  
+    lhAmountOut: lhAmountOut || swapLog.amountOut,
+    lhAmountOutUsd: lhAmountOutUsd || swapLog.dollarValue,
+    dexAmountOut: BN(dexAmountOut).lte(0) ? 0 : dexAmountOut ,
+    dexAmountOutWS: dexAmountOutWS || addSlippage(swapLog.amountOutUI, swapLog.slippage),
+    lhAmountOutWS: lhAmountOutWS || addSlippage(swapLog.amountOut, swapLog.slippage),
     gasCostOutToken,
   };
 };
@@ -85,7 +97,7 @@ export const parseFullSessionLogs = (
   clientLogs: any[]
 ): LHSession => {
   const parsedSwapLog = parseSwapLog(swapLog);
-  const parsedQuotes = parseQuotesLog(quoteLogs);
+  const parsedQuotes = parseQuotesLog(quoteLogs, swapLog);
 
   return {
     ...parsedSwapLog,

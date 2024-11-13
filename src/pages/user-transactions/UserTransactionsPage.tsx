@@ -15,13 +15,14 @@ export const UserTransactionsPage = () => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
 
+
   return (
     <Page navbar={<Page.Navbar.LiquidityHub />}>
       <Page.Layout>
         <TransactionsList
-          isFetchingNextPage={isFetchingNextPage}
           sessions={sessions}
           loadMore={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
           isLoading={isLoading}
         />
       </Page.Layout>

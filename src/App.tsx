@@ -5,7 +5,7 @@ import { ConfigProvider, ThemeConfig } from "antd";
 
 const theme: ThemeConfig = {
   token: {
-
+    fontFamily:'"Inter", sans-serif',
   },
   components: {
     Button: {},

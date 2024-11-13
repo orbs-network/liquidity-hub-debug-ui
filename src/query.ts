@@ -18,17 +18,18 @@ export const queryKey = {
 
 export const useSwapsQuery = (walletAddress?: string) => {
   const {
-    query: { chainId },
+    query: { chainId, partner },
   } = useAppParams();
 
   return useInfiniteQuery({
-    queryKey: [queryKey.allSessions, chainId],
+    queryKey: [queryKey.allSessions, chainId, walletAddress, partner],
     queryFn: ({ signal, pageParam }) => {
       return clob.fetchSwaps({
         page: pageParam,
         chainId: chainId ?? undefined,
         signal,
         walletAddress,
+        dex: partner
       });
     },
     initialPageParam: 0,

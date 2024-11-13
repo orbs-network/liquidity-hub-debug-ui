@@ -48,3 +48,17 @@ export const Card = styled.div`
   background-color: white;
 `;
 
+
+
+export const LightButton = styled(RowFlex)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  gap: 5,
+  backgroundColor: "#F5F8F8",
+  borderRadius: 20,
+  paddingRight: 10,
+});

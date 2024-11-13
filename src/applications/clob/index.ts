@@ -25,84 +25,53 @@ const fetchSwaps = async ({
   chainId,
   signal,
   walletAddress,
+  dex,
 }: {
   page: number;
   chainId?: number;
   signal?: AbortSignal;
   walletAddress?: string;
+  dex?: string;
 }) => {
-  const data = queries.swaps({ page, chainId, limit: 100, walletAddress });
+  const data = queries.swaps({
+    page,
+    chainId,
+    limit: 100,
+    walletAddress,
+    dex: dex?.toLowerCase(),
+  });
 
   const logs = await fetchElastic(SERVER_URL, data, signal);
-  return parseSwapLogs(logs);
-};
+  const result = parseSwapLogs(logs);
 
-const fetchQuoteLogs = async (sessionIds: string[], signal?: AbortSignal) => {
-  let allLogs: any[] = [];
-  let page = 0;
-  let hasMoreData = true;
-
-  // Loop to fetch pages until no more data is returned
-  while (hasMoreData) {
-    const data = queries.quote(sessionIds, page, 100);
-    const logs = await fetchElastic(SERVER_URL, data, signal);
-
-    // Check if logs were returned; if empty, stop the loop
-    if (logs.length === 0) {
-      hasMoreData = false; // Stop loop
-    } else {
-      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
-      page++; // Fetch next page
-    }
-  }
-
-  return allLogs;
-};
-
-const fetchClientLogs = async (sessionIds: string[], signal?: AbortSignal) => {
-  let allLogs: any[] = [];
-  let page = 0;
-  let hasMoreData = true;
-
-  // Loop to fetch pages until no more data is returned
-  while (hasMoreData) {
-    const data = queries.client(sessionIds, page, 100);
-    const logs = await fetchElastic(CLIENT_URL, data, signal);
-
-    // Check if logs were returned; if empty, stop the loop
-    if (logs.length === 0) {
-      hasMoreData = false; // Stop loop
-    } else {
-      allLogs = [...allLogs, ...logs]; // Append new logs to allLogs
-      page++; // Fetch next page
-    }
-  }
-
-  return allLogs;
+  return result;
 };
 
 const getSession = async (
   txHashOrSessionId: string,
   signal?: AbortSignal
 ): Promise<LHSession> => {
-  let data;
+  let query;
 
   if (isValidTxHash(txHashOrSessionId)) {
-    data = queries.transactionHash(txHashOrSessionId);
-  } else if(isValidSessionId(txHashOrSessionId)) {
-    data = queries.sessionId(txHashOrSessionId);
-  }
-  else {
+    query = queries.transactionHash(txHashOrSessionId);
+  } else if (isValidSessionId(txHashOrSessionId)) {
+    query = queries.sessionId(txHashOrSessionId);
+  } else {
     throw new Error("Invalid transaction hash or session id");
   }
 
-  const result = await fetchElastic(SERVER_URL, data, signal);
-  const swapLog = result[0];
+  const swapLogs = await fetchElastic(SERVER_URL, query, signal);
+  const [swapLog] = swapLogs;
 
-  const quoteLogs = await fetchQuoteLogs([swapLog.sessionId], signal);
-  const clientLogs = await fetchClientLogs([swapLog.sessionId], signal);
-
-  return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
+  const quoteQuery = queries.quote(swapLog.sessionId);
+  const clientQuery = queries.client(swapLog.sessionId);
+  
+  const [quoteLogs, clientLogs] = [
+    await fetchElastic(SERVER_URL, quoteQuery, signal),
+    await fetchElastic(CLIENT_URL, clientQuery, signal),
+  ];
+    return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
 };
 
 const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {

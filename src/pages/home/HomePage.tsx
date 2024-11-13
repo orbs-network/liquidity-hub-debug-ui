@@ -5,6 +5,7 @@ import _ from "lodash";
 import styled from "styled-components";
 import { ColumnFlex } from "styles";
 import { Typography } from "antd";
+import { MOBILE } from "consts";
 
 export const HomePage = () => {
   return (
@@ -13,7 +14,7 @@ export const HomePage = () => {
         <Page.Layout>
           <Page.Navbar.LiquidityHubLogo />
           <Content>
-            <StyledTitle.Title level={2}>Search for transaction</StyledTitle.Title>
+            <StyledTitle>Search for transaction</StyledTitle>
             <StyledSearchSessionInput />
           </Content>
         </Page.Layout>
@@ -21,6 +22,8 @@ export const HomePage = () => {
     </FullHeightContainer>
   );
 };
+
+
 
 const Content = styled(ColumnFlex)({
   flex: 1,
@@ -41,6 +44,9 @@ const StyledSearchSessionInput = styled(SearchSessionInput)`
 
 
 const StyledTitle = styled(Typography)`
-  font-size: 24px;
-  font-weight: 600;
+font-size: 28px;
+font-weight: 600;
+  @media (max-width: ${MOBILE}px) {
+    font-size: 20px;
+  }
 `;

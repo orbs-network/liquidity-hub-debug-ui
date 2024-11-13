@@ -7,9 +7,9 @@ import {
   useAppParams,
   useChainConfig,
   useNumberFormatter,
+  usePartnerByTwapExchange,
   useToken,
   useTwapPartner,
-  useTwapPartnerConfig,
 } from "hooks";
 import moment from "moment";
 import { createContext, useContext, useMemo } from "react";
@@ -57,7 +57,7 @@ export function OrderPage() {
             <FillDelay />
             <MinChunkSizeUsd />
             <DataDisplay.Divider />
-           
+
             <Progress />
             <SrcFilledAmount />
             <DstFilledAmount />
@@ -111,7 +111,6 @@ const Type = () => {
 
 const CreatedAt = () => {
   const { order } = useOrderContext();
-  console.log({ order });
 
   return (
     <DataDisplay.Row label="Created at">
@@ -160,8 +159,6 @@ const SrcFilledAmount = () => {
   const token = useToken(order?.srcTokenAddress, chainId);
   const amount = useAmountUI(token?.decimals, order?.srcFilledAmount);
   const usd = order?.srcFilledAmountUsd;
-  console.log({});
-  
 
   return (
     <DataDisplay.Row label="Source Filled Amount">
@@ -322,7 +319,7 @@ const Exchange = () => {
 
 const MinChunkSizeUsd = () => {
   const { order } = useOrderContext();
-  const config = useTwapPartnerConfig(order?.exchange);
+  const config = usePartnerByTwapExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Min Chunk Size Usd">
@@ -334,7 +331,7 @@ const MinChunkSizeUsd = () => {
 const TwapAddress = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const config = useTwapPartnerConfig(order?.exchange);
+  const config = usePartnerByTwapExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Twap Address">
@@ -350,7 +347,7 @@ const TwapAddress = () => {
 
 const TwapVersion = () => {
   const { order } = useOrderContext();
-  const config = useTwapPartnerConfig(order?.exchange);
+  const config = usePartnerByTwapExchange(order?.exchange);
   config?.twapVersion;
   return (
     <DataDisplay.Row label="Twap Version">
@@ -371,7 +368,7 @@ const Chunks = () => {
 
 const ChainId = () => {
   const { order } = useOrderContext();
-  const config = useTwapPartnerConfig(order?.exchange);
+  const config = usePartnerByTwapExchange(order?.exchange);
   const network = useChainConfig(config?.chainId);
 
   return (

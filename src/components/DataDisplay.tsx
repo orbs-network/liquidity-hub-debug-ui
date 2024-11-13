@@ -1,7 +1,8 @@
 import { Typography } from "antd";
 import { AddressLink } from "components/AddressLink";
 import { QuestionHelper } from "components/QuestionHelper";
-import { useNumberFormatter } from "hooks";
+import { MOBILE } from "consts";
+import { useIsMobile, useNumberFormatter } from "hooks";
 import { ReactNode } from "react";
 import { styled } from "styled-components";
 import { ColumnFlex, RowFlex } from "styles";
@@ -21,6 +22,17 @@ export const Row = ({
   children?: ReactNode;
   tooltip?: string;
 }) => {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <StyledMobileListItem>
+        <RowLabel tooltip={tooltip} label={label} />
+        <StyledRowChildren>{children}</StyledRowChildren>
+      </StyledMobileListItem>
+    );
+  }
+
   return (
     <StyledListItem>
       <RowLabel tooltip={tooltip} label={label} />
@@ -36,12 +48,23 @@ const StyledListItem = styled(RowFlex)`
   align-items: flex-start;
 `;
 
+const StyledMobileListItem = styled(ColumnFlex)({
+  width: "100%",  
+  alignItems: "flex-start",
+  borderBottom: "1px solid #e8e8e8",
+  paddingBottom: 10,
+  paddingTop: 5,
+});
+
 const StyledRowLabel = styled(Typography)`
   max-width: 280px;
   flex: 1;
   padding-right: 20px;
   font-weight: 500;
   font-size: 14px;
+  @media (max-width: ${MOBILE}px) {
+    font-weight: 600;
+  }
 `;
 
 export const StyledRowText = styled(Typography)`
@@ -61,17 +84,15 @@ const StyledRowChildren = styled.div`
   gap: 5px;
 `;
 
-
 export const StyledDivider = styled.div`
   width: 100%;
   margin: 8px 0;
   height: 1px;
   background-color: #e8e8e8;
+  @media (max-width: ${MOBILE}px) {
+    display: none;
+  }
 `;
-
-
-
-
 
 const RowLabel = ({ label, tooltip }: { label: string; tooltip?: string }) => {
   return (
@@ -100,7 +121,7 @@ export const TokenAmount = ({
     value: amount,
     decimalScale: 4,
   });
-  
+
   const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });
   return (
     <RowFlex $gap={5}>
@@ -110,7 +131,7 @@ export const TokenAmount = ({
       <AddressLink
         path="address"
         address={address}
-        text={symbol || '-'}
+        text={symbol || "-"}
         chainId={chainId}
       />
       {usd && (
@@ -125,7 +146,6 @@ export const TokenAmount = ({
 const DataDisplay = ({ children }: { children: ReactNode }) => {
   return <MainContainer>{children}</MainContainer>;
 };
-
 
 Row.Text = StyledRowText;
 DataDisplay.Row = Row;
