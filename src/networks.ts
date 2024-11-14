@@ -48,7 +48,7 @@ export const networks = {
     },
     wToken: erc20sData.poly.WMATIC,
     publicRpcUrl: "https://polygon-rpc.com",
-    logoUrl: "https://app.1inch.io/assets/images/network-logos/polygon.svg",
+    logoUrl: "https://s2.coinmarketcap.com/static/img/coins/128x128/3890.png",
     explorer: "https://polygonscan.com",
     eip1559: true,
   },

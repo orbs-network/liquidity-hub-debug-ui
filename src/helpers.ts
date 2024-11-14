@@ -6,6 +6,7 @@ import BN from "bignumber.js";
 import { ethers } from "ethers";
 import { Token, TransferLog } from "types";
 import { networks } from "networks";
+import axios from "axios";
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -279,3 +280,13 @@ export const amountBNV2 = (decimals?: number, amount?: string | number) => {
   return parsebn(amount).times(new BN(10).pow(decimals || 0)).decimalPlaces(0).toFixed();
 };
 
+
+
+
+export const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {
+  const response = await axios.post(`${url}/_search`, { ...data }, { signal });
+
+  return normalizeSessions(
+    response.data.hits?.hits.map((hit: any) => hit.fields)
+  );
+};

@@ -119,7 +119,7 @@ export const TokenAmount = ({
 }) => {
   const formattedAmount = useNumberFormatter({
     value: amount,
-    decimalScale: 4,
+    decimalScale: 3,
   });
 
   const formattedUsd = useNumberFormatter({ value: usd, decimalScale: 2 });

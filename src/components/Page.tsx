@@ -1,6 +1,6 @@
 import { styled } from "styled-components";
 import { Card, ColumnFlex, LightButton, RowFlex } from "styles";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Skeleton, Typography } from "antd";
 import { ReactNode, useState } from "react";
 import { SearchSessionInput } from "./SearchSessionInput";
@@ -10,6 +10,7 @@ import { MOBILE } from "consts";
 import { Filters } from "./Filters";
 import { Search } from "react-feather";
 import { Popover } from "antd";
+import { ROUTES } from "config";
 
 export function Loader({ className = "" }: { className?: string }) {
   return (
@@ -116,8 +117,10 @@ const LiquidityHubLogo = () => {
 };
 
 const TwapLogo = () => {
+  const search = useLocation().search;
+  
   return (
-    <StyledLogo to="/twap">
+    <StyledLogo to={`${ROUTES.twap.root}${search}`}>
       <img src={orbsLogo} alt="orbs Logo" />
       <Typography.Title>
         <span>TWAP</span>

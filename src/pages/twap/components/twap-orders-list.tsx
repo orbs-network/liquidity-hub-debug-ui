@@ -1,22 +1,20 @@
 import styled from "styled-components";
 import TextOverflow from "react-text-overflow";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import _ from "lodash";
-import { createContext, useCallback, useContext } from "react";
-import { Virtuoso } from "react-virtuoso";
+import { useCallback } from "react";
 import moment from "moment";
-import { Button, Typography, Spin, Skeleton, Avatar } from "antd";
+import { Button, Typography, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { RowFlex } from "styles";
-import { AddressLink } from "components";
+import { AddressLink, List } from "components";
+import BN from "bignumber.js";
 import {
-  useToken,
-  useAppParams,
-  useAmountUI,
   useNumberFormatter,
   useTwapPartner,
+  useTwapConfigByExchange,
+  useNavigateWithParams,
 } from "hooks";
-import { Order, OrderStatus } from "@orbs-network/twap-sdk";
+import { Order, OrderType as IOrderType } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
 import { ROUTES } from "config";
 
@@ -36,68 +34,42 @@ export const TwapOrdersList = ({
   isFetchingNextPage?: boolean;
   isLoading?: boolean;
 }) => {
-  const noLoadMore = useCallback(() => {
-    if (isFetchingNextPage) return;
-    loadMore();
-  }, [loadMore, isFetchingNextPage]);
-
-  if (isLoading) {
-    return <Skeleton />;
-  }
-
-  if (_.isEmpty(orders)) {
-    return <StyledEmpty>No orders found</StyledEmpty>;
-  }
-
-  const totalCount = isFetchingNextPage ? _.size(orders) + 1 : _.size(orders);
-
   return (
-    <StyledList>
-      <ListHeader />
-      <Virtuoso
-        endReached={noLoadMore}
-        useWindowScroll
-        totalCount={totalCount}
-        overscan={10}
-        itemContent={(index) => {
-          const order = orders[index];
-          return <ListOrder order={order} isLast={index + 1 === totalCount} />;
-        }}
-      />
-    </StyledList>
+    <List<Order>
+      headerLabels={headerLabels}
+      isLoading={isLoading}
+      items={orders}
+      loadMore={loadMore}
+      isFetchingNextPage={isFetchingNextPage}
+      DesktopComponent={DesktopComponent}
+      MobileComponent={MobileComponent}
+    />
   );
 };
 
-const StyledEmpty = styled.div`
-  padding: 20px;
-`;
-
-const StyledLoaderContainer = styled("div")`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  flex: 1;
-  height: 100px;
-`;
-
-interface ContextProps {
-  order: Order;
-  chainId: number;
-}
-
-const Context = createContext({} as ContextProps);
-const useOrderContext = () => {
-  return useContext(Context);
+const DesktopComponent = ({ item }: { item: Order }) => {
+  return (
+    <List.DesktopRow>
+      {desktopRows.map((it) => {
+        return (
+          <List.DesktopRow.Element
+            key={it.label}
+            alignCenter={it.alignCenter}
+            width={it.width}
+          >
+            <it.Component order={item} />
+          </List.DesktopRow.Element>
+        );
+      })}
+    </List.DesktopRow>
+  );
 };
 
-const GoButton = () => {
-  const { order } = useOrderContext();
-  const navigate = useNavigate();
-  const location = useLocation()
-  const onNavigate = () => {    
-    navigate(ROUTES.navigate.twap.order(order.id, location.search));
-  };
+const GoButton = ({ order }: { order: Order }) => {
+  const navigate = useNavigateWithParams();
+  const onNavigate = useCallback(() => {
+    navigate(ROUTES.navigate.twap.order(order.id));
+  }, [order.id, navigate]);
 
   return (
     <StyledButtons>
@@ -115,8 +87,7 @@ const GoButton = () => {
     </StyledButtons>
   );
 };
-const Timestamp = () => {
-  const { order } = useOrderContext();
+const Timestamp = ({ order }: { order: Order }) => {
   return (
     <StyledItem>
       <RowText text={moment(order.createdAt).format("MMM D, h:mm A")} />
@@ -124,8 +95,7 @@ const Timestamp = () => {
   );
 };
 
-const Dex = () => {
-  const { order } = useOrderContext();
+const Dex = ({ order }: { order: Order }) => {
   const partner = useTwapPartner(order.exchange);
   return (
     <StyledItem>
@@ -135,51 +105,42 @@ const Dex = () => {
   );
 };
 
-const TradeAmount = () => {
-  const { order, chainId } = useOrderContext();
-  const token = useToken(order.srcTokenAddress, chainId);
+const TradeAmount = ({ order }: { order: Order }) => {
   const amount = useNumberFormatter({
-    value: useAmountUI(token?.decimals, order.srcAmount),
+    value: order.dollarValueIn,
     format: true,
   });
+
   return (
     <StyledItem>
-      <RowText text={` ${amount} ${token?.symbol || ""}`} />
+      {BN(amount || 0).gt(0) ?  <RowText text={`$${amount}`} /> : <RowText text="-" />}
     </StyledItem>
   );
 };
 
-const Tokens = () => {
-  const { order, chainId } = useOrderContext();
-  const { srcTokenAddress, dstTokenAddress } = order;
-  const inToken = useToken(srcTokenAddress, chainId);
-  const outToken = useToken(dstTokenAddress, chainId);
+const Tokens = ({ order }: { order: Order }) => {
+  const config = useTwapConfigByExchange(order.exchange);
+
+  const { srcTokenAddress, dstTokenAddress, srcTokenSymbol, dstTokenSymbol } =
+    order;
 
   return (
     <StyledTokens $gap={2}>
-      {!inToken ? (
-        <Skeleton.Avatar size={25} />
-      ) : (
-        <AddressLink
-          path="address"
-          chainId={chainId}
-          text={inToken?.symbol}
-          address={srcTokenAddress}
-        />
-      )}
+      <AddressLink
+        path="address"
+        chainId={config?.chainId}
+        text={srcTokenSymbol}
+        address={srcTokenAddress}
+      />
 
       <ChevronRight size={10} />
 
-      {!outToken ? (
-        <Skeleton.Avatar size={25} />
-      ) : (
-        <AddressLink
-          path="address"
-          chainId={chainId}
-          text={outToken?.symbol}
-          address={dstTokenAddress}
-        />
-      )}
+      <AddressLink
+        path="address"
+        chainId={config?.chainId}
+        text={dstTokenSymbol}
+        address={dstTokenAddress}
+      />
     </StyledTokens>
   );
 };
@@ -191,14 +152,10 @@ const StyledTokens = styled(StyledRow)({
   },
 });
 
-const OrderId = () => {
-  const { order } = useOrderContext();
-
+const OrderId = ({ order }: { order: Order }) => {
   return (
     <StyledRow>
-      <Link to="/" style={{ textDecoration: "unset" }}>
-        <RowText text={order.id.toString()} />
-      </Link>
+      <RowText text={`#${order.id.toString()}`} />
     </StyledRow>
   );
 };
@@ -224,49 +181,11 @@ const StyledButtons = styled(RowFlex)`
   width: 100%;
 `;
 
-const ListOrderContainer = styled(RowFlex)`
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 10px 15px;
-  gap: 0px;
-  position: relative;
-  border-bottom: 1px solid #f1f3fe;
-`;
-
-const StyledHeader = styled(RowFlex)`
-  justify-content: flex-start;
-  padding: 0px 15px;
-  height: 50px;
-  gap: 0px;
-  font-weight: 500;
-  background: #f1f3fe;
-  border-radius: 6px;
-`;
-
-const StyledHeaderItem = styled(Typography)({
-  fontSize: 14,
-  textAlign: "left",
-  paddingRight: 20,
-  fontWeight: 600,
-  "&:last-child": {
-    textAlign: "center",
-    paddingRight: 0,
-  },
-});
-
-const StyledList = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-`;
-
-export const StatusBadge = ({ status }: { status?: OrderStatus }) => {
+export const StatusBadge = ({ status }: { status?: string }) => {
   return (
     <Container style={{ background: "#F0AD4E" }}>
-      <Typography>
-        <span style={{ textTransform: "capitalize" }}>{status}</span>
+      <Typography  style={{ textTransform: "capitalize" }}>
+        <TextOverflow  text={status || ''} />
       </Typography>
     </Container>
   );
@@ -281,8 +200,7 @@ const Container = styled("div")({
   },
 });
 
-const Status = () => {
-  const { order } = useOrderContext();
+const Status = ({ order }: { order: Order }) => {
   return (
     <StyledItem>
       <StatusBadge status={order.status} />
@@ -290,129 +208,93 @@ const Status = () => {
   );
 };
 
-const OrderType = () => {
-  const { order } = useOrderContext();
-
+const OrderType = ({ order }: { order: Order }) => {
   return (
     <StyledItem>
-      <RowText text={parseOrderType(order.orderType)} />
+      <RowText text={parseOrderType(order.orderType as IOrderType)} />
     </StyledItem>
   );
 };
 
-const ListHeader = () => {
-  return (
-    <StyledHeader>
-      {_.map(items, (item, index) => {
-        return (
-          <StyledHeaderItem
-            key={index}
-            style={{
-              width: `${item.width}%`,
-              textAlign: item.alignCenter ? "center" : "left",
-            }}
-          >
-            {item.label}
-          </StyledHeaderItem>
-        );
-      })}
-    </StyledHeader>
-  );
-};
-
-export const ListOrder = ({
-  order,
-  isLast,
-}: {
-  order: Order;
-  isLast: boolean;
-}) => {
-  const {
-    query: { chainId },
-  } = useAppParams();
-  if (!order) {
-    return (
-      <StyledLoaderContainer>
-        <Spin />
-      </StyledLoaderContainer>
-    );
-  }
-
-  return (
-    <Context.Provider value={{ order, chainId: chainId || 1 }}>
-      <ListOrderContainer style={{ borderBottom: isLast ? "unset" : "" }}>
-        {items.map((item, index) => {
-          return (
-            <StyledListComponent
-              key={index}
-              style={{
-                width: `${item.width}%`,
-                justifyContent: item.alignCenter ? "center" : "flex-start",
-              }}
-            >
-              {item.component}
-            </StyledListComponent>
-          );
-        })}
-      </ListOrderContainer>
-    </Context.Provider>
-  );
-};
-
-const StyledListComponent = styled("div")({
-  display: "flex",
-  justifyContent: "flex-start",
-  alignItems: "center",
-  textAlign: "left",
-  paddingRight: 20,
-  "&:last-child": {
-    paddingRight: 10,
-  },
-});
-
-const items = [
+const desktopRows = [
   {
-    component: <OrderId />,
-    label: "ID",
-    width: 10,
-  },
-  {
-    component: <Dex />,
+    Component: Dex,
     label: "Dex",
     width: 15,
   },
+  {
+    Component: OrderId,
+    label: "ID",
+    width: 10,
+  },
 
   {
-    component: <OrderType />,
+    Component: OrderType,
     label: "Type",
     width: 10,
   },
 
   {
-    component: <Timestamp />,
+    Component: Timestamp,
     label: "Date",
     width: 15,
   },
   {
-    component: <Tokens />,
+    Component: Tokens,
     label: "Tokens",
-    width: 20,
+    width: 18,
   },
   {
-    component: <TradeAmount />,
+    Component: TradeAmount,
     label: "Trade amount",
-    width: 15,
+    width: 16,
   },
   {
-    component: <Status />,
+    Component: Status,
     label: "Status",
     width: 10,
     alignCenter: true,
   },
   {
-    component: <GoButton />,
+    Component: GoButton,
     label: "Action",
     width: 5,
     alignCenter: true,
   },
 ];
+
+const MobileComponent = ({ item: order }: { item: Order }) => {
+  const partner = useTwapPartner(order.exchange);
+  const config = partner?.getTwapConfigByExchange(order.exchange);
+  const navigate = useNavigateWithParams();
+  const onClick = useCallback(() => {
+    navigate(ROUTES.navigate.twap.order(order.id));
+  }, [navigate, order.id]);
+
+  return (
+    <MobileContainer onClick={onClick}>
+      <List.MobileRow
+        partner={partner?.name || order.dex}
+        chainId={config?.chainId}
+        inToken={order?.srcTokenSymbol}
+        outToken={order?.dstTokenSymbol}
+        timestamp={order.createdAt}
+        status={order.status}
+        statusColor={"#F0AD4E"}
+      />
+    </MobileContainer>
+  );
+};
+
+const MobileContainer = styled("div")({
+  padding: "8px 0px",
+  width: "100%",
+});
+
+const headerLabels = desktopRows.map((it) => {
+  return {
+    label: it.label,
+    width: it.width,
+    alignCenter: it.alignCenter,
+  };
+});

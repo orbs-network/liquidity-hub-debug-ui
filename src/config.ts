@@ -16,14 +16,14 @@ export const ROUTES = {
     main: () => "/",
     transactions: () => ROUTES.transactions,
     twap: {
-      root: () => ROUTES.twap.root,
-      order: (orderId: number, search: string) => {        
-        return `${ROUTES.twap.root}/order/${orderId}${search}`
+      order: (orderId: number) => {        
+        return `${ROUTES.twap.root}/order/${orderId}`
       },
     }
   },
 };
 export const ELASTIC_ENDPOINT = "https://api.bi.orbs.network";
+export const TWAP_ELASTIC_CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-twap-ui*`
 
 export const DEFAULT_SESSIONS_TIME_RANGE = "30m";
 export const RPC_API_KEY = "7f79fe8f32bc4c29848c1f49a0b7fbb7";

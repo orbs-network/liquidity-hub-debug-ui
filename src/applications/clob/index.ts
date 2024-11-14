@@ -1,9 +1,8 @@
-import axios from "axios";
 import _ from "lodash";
-import { normalizeSessions } from "helpers";
+import { fetchElastic } from "helpers";
 import { parseFullSessionLogs, parseSwapLogs } from "./helpers";
 import { ELASTIC_ENDPOINT } from "config";
-import { queries } from "./elastic";
+import { queries } from "../elastic";
 import { isValidSessionId, isValidTxHash } from "utils";
 import { LHSession } from "types";
 
@@ -74,13 +73,6 @@ const getSession = async (
     return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
 };
 
-const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {
-  const response = await axios.post(`${url}/_search`, { ...data }, { signal });
-
-  return normalizeSessions(
-    response.data.hits?.hits.map((hit: any) => hit.fields)
-  );
-};
 
 export const clob = {
   fetchSwaps,

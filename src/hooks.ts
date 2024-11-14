@@ -1,5 +1,5 @@
 import { useUSDPriceQuery } from "query";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
@@ -14,6 +14,7 @@ import Web3 from "web3";
 import { notification } from "antd";
 
 import {
+  eqIgnoreCase,
   isNativeAddress,
   zeroAddress,
 } from "@defi.org/web3-candies";
@@ -56,7 +57,16 @@ function formatAmount(amount?: number | string | null) {
   const numericAmount =
     typeof amount === "string" ? parseFloat(amount) : amount;
 
-  if (numericAmount >= 1_000_000_000) {
+  if (numericAmount >= 1_000_000_000_000_000) {
+    return (
+      (numericAmount / 1_000_000_000_000_000).toFixed(2).replace(/\.00$/, "") +
+      "Q"
+    );
+  } else if (numericAmount >= 1_000_000_000_000) {
+    return (
+      (numericAmount / 1_000_000_000_000).toFixed(2).replace(/\.00$/, "") + "T"
+    );
+  } else if (numericAmount >= 1_000_000_000) {
     return (
       (numericAmount / 1_000_000_000).toFixed(2).replace(/\.00$/, "") + "B"
     );
@@ -78,9 +88,14 @@ export const useNumberFormatter = ({
   decimalScale?: number;
   format?: boolean;
 }) => {
+  const numericValue = typeof value === "string" ? parseFloat(value) : value;
+  const adjustedDecimalScale =
+  numericValue && Math.abs(numericValue) < 1
+    ? Math.min(decimalScale + Math.ceil(Math.abs(Math.log10(Math.abs(numericValue)))), 20) // Cap to 20 decimals for practical purposes
+    : decimalScale;
   const result = useNumericFormat({
     value,
-    decimalScale,
+    decimalScale: adjustedDecimalScale,
     thousandSeparator: ",",
   }).value;
   const formattedAmount = formatAmount(value);
@@ -157,6 +172,8 @@ import { Partner, partners } from "partners";
 import _ from "lodash";
 import { getPartnerWithExchangeAddress } from "utils";
 import { MOBILE } from "consts";
+import { Configs } from "@orbs-network/twap-sdk";
+import { useLocation, useNavigate } from "react-router";
 
 export const useResizeObserver = (elementRef: any) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -198,8 +215,7 @@ export const useHeight = () => {
   return height;
 };
 
-export const useIsMobile = () =>  {
-
+export const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= MOBILE);
 
   useEffect(() => {
@@ -207,16 +223,15 @@ export const useIsMobile = () =>  {
       setIsMobile(window.innerWidth <= MOBILE);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
   return isMobile;
-}
-
+};
 
 export const useToken = (tokenAddress?: string, chainId?: number) => {
   const w3 = useWeb3(chainId);
@@ -250,14 +265,11 @@ export const useAmountUI = (
   );
 };
 
-
-
-
 export const usePartnerFromName = (name?: string): Partner | undefined => {
   return useMemo(() => {
     return partners[name?.toLowerCase() as keyof typeof partners];
   }, [name]);
-}
+};
 
 export const useLiquidityHubPartner = (dex?: string) => {
   return useMemo(() => {
@@ -276,13 +288,29 @@ export const useTwapPartner = (exchangeAddress?: string) => {
 export const usePartnerByName = (name?: string) => {
   return useMemo(() => {
     if (!name) return;
-    return Object.values(partners).find((partner) => partner.name.toLowerCase() === name.toLowerCase());
+    return Object.values(partners).find(
+      (partner) => partner.name.toLowerCase() === name.toLowerCase()
+    );
   }, [name]);
 };
 
-export const usePartnerByTwapExchange = (exchangeAddress?: string) => {
-  const partner = useTwapPartner(exchangeAddress);
+export const useTwapConfigByExchange = (exchangeAddress?: string) => {
   return useMemo(() => {
-    return partner?.getTwapConfigByExchange(exchangeAddress);
-  }, [partner, exchangeAddress]);
+    if (!exchangeAddress) return;
+    return Object.values(Configs).find((config) =>
+      eqIgnoreCase(config.exchangeAddress, exchangeAddress)
+    );
+  }, [exchangeAddress]);
+};
+
+export const useNavigateWithParams = () => {
+  const search = useLocation().search;
+  const navigate = useNavigate();
+
+  return useCallback(
+    (route: string) => {
+      navigate(`${route}${search}`);
+    },
+    [navigate, search]
+  );
 };

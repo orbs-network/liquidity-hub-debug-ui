@@ -309,6 +309,7 @@ const StyledHeader = styled(RowFlex)`
 `;
 
 const StyledHeaderItem = styled(Typography)({
+    whiteSpace: "nowrap",
   fontSize: 14,
   textAlign: "left",
   paddingRight: 20,

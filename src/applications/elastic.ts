@@ -36,7 +36,7 @@ const sessionId = (sessionId: string) => {
           },
           {
             term: {
-              "type.keyword": "swap",
+              "chainId.keyword": "swap",
             },
           },
         ],
@@ -234,6 +234,52 @@ const queryInitialData = {
   },
 };
 
+const twapLogs = (orderId: number, chainId: number) => {
+  return {
+    ...queryInitialData,
+    query: {
+      bool: {
+        filter: [
+          {
+            bool: {
+              should: [
+                {
+                  term: {
+                    "chainId": chainId,
+                  },
+                },
+                {
+                  term: {
+                    "chain": chainId,
+                  },
+                },
+              ],
+              minimum_should_match: 1, // At least one of the conditions in 'should' must match
+            },
+          },
+          {
+            bool: {
+              should: [
+                {
+                  term: {
+                    "newOrderId": orderId,
+                  },
+                },
+                {
+                  term: {
+                    "orderId": orderId,
+                  },
+                },
+              ],
+              minimum_should_match: 1, // At least one of the conditions in 'should' must match
+            },
+          },
+        ],
+      },
+    },
+  };
+};
+
 export const queries = {
   transactionHash,
   swaps,
@@ -241,4 +287,5 @@ export const queries = {
   sessionId,
   quote,
   client,
+  twapLogs
 };

@@ -1,7 +1,12 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 import _ from "lodash";
 import { networks } from "networks";
-import { useAppParams, useChainConfig, useIsMobile, usePartnerFromName } from "hooks";
+import {
+  useAppParams,
+  useChainConfig,
+  useIsMobile,
+  usePartnerFromName,
+} from "hooks";
 import { Avatar, Drawer, Typography } from "antd";
 import { styled } from "styled-components";
 import { ColumnFlex, LightButton, RowFlex } from "styles";
@@ -14,7 +19,6 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   const { query, setQuery } = useAppParams();
   const selectedChain = useChainConfig(query.chainId);
   const selectedPartner = usePartnerFromName(query.partner);
-
 
   const onOpen = useCallback(() => setOpen(true), []);
 
@@ -33,23 +37,31 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   }, [setQuery]);
 
   const filteredChains = useMemo(() => {
-    if(selectedPartner && type === 'lh') {
-      return Object.values(networks).filter(it => selectedPartner.supportsLiquidityHub(it.id));
+    if (selectedPartner && type === "lh") {
+      return Object.values(networks).filter((it) =>
+        selectedPartner.supportsLiquidityHub(it.id)
+      );
     }
-    if(selectedPartner && type === 'twap') {
-      return Object.values(networks).filter(it => selectedPartner.supportsTwap(it.id));
+    if (selectedPartner && type === "twap") {
+      return Object.values(networks).filter((it) =>
+        selectedPartner.supportsTwap(it.id)
+      );
     }
-    if(type === 'lh') {
-      return Object.values(networks).filter(it => {
-        return Object.values(partners).some(partner => partner.supportsLiquidityHub(it.id));
+    if (type === "lh") {
+      return Object.values(networks).filter((it) => {
+        return Object.values(partners).some((partner) =>
+          partner.supportsLiquidityHub(it.id)
+        );
       });
     }
-    if(type === 'twap') {
-      return Object.values(networks).filter(it => {
-        return Object.values(partners).some(partner => partner.supportsTwap(it.id));
+    if (type === "twap") {
+      return Object.values(networks).filter((it) => {
+        return Object.values(partners).some((partner) =>
+          partner.supportsTwap(it.id)
+        );
       });
     }
-    return []
+    return [];
   }, [selectedPartner, type, query.chainId]);
 
   return (
@@ -86,7 +98,7 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   );
 };
 
-export const PartnerSelect = ({type}:{type: 'lh' | 'twap'}) => {
+export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useAppParams();
   const selectedPartner = usePartnerFromName(query.partner);
@@ -108,26 +120,33 @@ export const PartnerSelect = ({type}:{type: 'lh' | 'twap'}) => {
   }, [setQuery]);
 
   const filteredPartners = useMemo(() => {
-    if(query.chainId && type === 'lh') {
-      return Object.values(partners).filter(it => it.supportsLiquidityHub(query.chainId));
+    if (query.chainId && type === "lh") {
+      return Object.values(partners).filter((it) =>
+        it.supportsLiquidityHub(query.chainId)
+      );
     }
-    if(query.chainId && type === 'twap') {
-      return Object.values(partners).filter(it => it.supportsTwap(query.chainId));
+    if (query.chainId && type === "twap") {
+      return Object.values(partners).filter((it) =>
+        it.supportsTwap(query.chainId)
+      );
     }
-    if(type === 'lh') {
-      return Object.values(partners).filter(partner => {
-        return Object.values(networks).some(network => partner.supportsLiquidityHub(network.id));
+    if (type === "lh") {
+      return Object.values(partners).filter((partner) => {
+        return Object.values(networks).some((network) =>
+          partner.supportsLiquidityHub(network.id)
+        );
       });
     }
-    
-    if(type === 'twap') {
-      return Object.values(partners).filter(partner => {
-        return Object.values(networks).some(network => partner.supportsTwap(network.id));
-      });
-    }
-    return []
-  }, [selectedPartner, type, query.chainId]);
 
+    if (type === "twap") {
+      return Object.values(partners).filter((partner) => {
+        return Object.values(networks).some((network) =>
+          partner.supportsTwap(network.id)
+        );
+      });
+    }
+    return [];
+  }, [selectedPartner, type, query.chainId]);
 
   return (
     <>
@@ -187,7 +206,7 @@ const FilterDrawer = ({
   onReset: () => void;
   showReset?: boolean;
 }) => {
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile();
   const reset = useCallback(() => {
     onReset();
     onClose();
@@ -196,11 +215,11 @@ const FilterDrawer = ({
   return (
     <Drawer
       title={title}
-      placement={isMobile ? 'bottom' : "right"}
-      width={isMobile ? '100%' : "300px"}
+      placement={isMobile ? "bottom" : "right"}
+      width={isMobile ? "100%" : "300px"}
       onClose={onClose}
       open={isOpen}
-      height={isMobile ? '96%' : "100%"}
+      height={isMobile ? "96%" : "100%"}
       extra={
         showReset ? <StyledReset onClick={reset}>Reset</StyledReset> : null
       }
@@ -231,7 +250,7 @@ const Trigger = ({
   label?: string;
   emptyText: string;
 }) => {
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile();
   if (!label) {
     return (
       <StyledTriggerEmpty onClick={onClick}>
@@ -242,7 +261,9 @@ const Trigger = ({
   return (
     <LightButton onClick={onClick}>
       <Avatar src={logo} alt={label} size={35} />
-      {!isMobile && <Typography style={{whiteSpace:'nowrap'}}>{label}</Typography>}
+      {!isMobile && (
+        <Typography style={{ whiteSpace: "nowrap" }}>{label}</Typography>
+      )}
       <ChevronDown size="16px" />
     </LightButton>
   );
@@ -262,12 +283,10 @@ const StyledTriggerEmpty = styled(LightButton)({
   [`@media (max-width: ${MOBILE}px)`]: {
     padding: "4px 10px",
     ".ant-typography": {
-     fontSize: 13
+      fontSize: 13,
     },
-  }
+  },
 });
-
-
 
 const StyledList = styled(ColumnFlex)({
   gap: 5,

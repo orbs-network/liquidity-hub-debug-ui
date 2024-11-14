@@ -1,19 +1,20 @@
 import { Order } from "@orbs-network/twap-sdk";
-import { Avatar } from "antd";
-import { useTwapOrder } from "applications/twap";
+import { Avatar, Modal } from "antd";
+import { useTwapClientLogs, useTwapOrder } from "applications/twap";
 import { AddressLink, DataDisplay, Page } from "components";
 import {
   useAmountUI,
   useAppParams,
   useChainConfig,
   useNumberFormatter,
-  usePartnerByTwapExchange,
   useToken,
+  useTwapConfigByExchange,
   useTwapPartner,
 } from "hooks";
 import moment from "moment";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import { LightButton, RowFlex } from "styles";
 import { MillisToDuration } from "utils";
 import { parseOrderType } from "../utils";
 
@@ -29,6 +30,8 @@ export function OrderPage() {
   const orderId = useParams().orderId;
   const chainId = useAppParams().query.chainId;
   const { data: order, isLoading } = useTwapOrder(chainId, orderId);
+  const { data: logs } = useTwapClientLogs(order?.id, chainId);
+  console.log({ logs });
 
   return (
     <Context.Provider value={{ order }}>
@@ -67,12 +70,68 @@ export function OrderPage() {
             <Exchange />
             <TwapAddress />
             <TwapVersion />
+            <Logs />
           </DataDisplay>
         </Page.Layout>
       </Page>
     </Context.Provider>
   );
 }
+
+const Logs = () => {
+  const { order } = useOrderContext();
+  const chainId = useTwapConfigByExchange(order?.exchange)?.chainId;
+  const { data: logs } = useTwapClientLogs(order?.id, chainId);
+
+  return (
+    <DataDisplay.Row label="Client logs">
+      {!logs ? (
+        <DataDisplay.Row.Text>-</DataDisplay.Row.Text>
+      ) : (
+        <RowFlex>
+          {logs.map((log, index) => {
+            return <Log key={index} index={index} log={log} />;
+          })}
+        </RowFlex>
+      )}
+    </DataDisplay.Row>
+  );
+};
+
+const Log = ({ log, index }: { log: any; index: number }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const onClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const title = `Log #${index + 1}`;
+
+  return (
+    <>
+      <LightButton style={{ padding: "5px 10px" }} onClick={showModal}>
+        {title}
+      </LightButton>
+      <Modal
+        onCancel={() => onClose()}
+        title={title}
+        open={isModalOpen}
+        okButtonProps={{
+          style: { display: "none" },
+        }}
+        cancelButtonProps={{
+          style: { display: "none" },
+        }}
+      >
+        {JSON.stringify(log)}
+      </Modal>
+    </>
+  );
+};
 
 const ID = () => {
   const { order } = useOrderContext();
@@ -217,11 +276,12 @@ const DstMinAmount = () => {
 
 const FillDelay = () => {
   const { order } = useOrderContext();
+  const config = useTwapConfigByExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Fill Delay">
       <DataDisplay.Row.Text>
-        {MillisToDuration(order?.fillDelay)}
+        {config && MillisToDuration(order?.getFillDelay(config))}
       </DataDisplay.Row.Text>
     </DataDisplay.Row>
   );
@@ -319,7 +379,7 @@ const Exchange = () => {
 
 const MinChunkSizeUsd = () => {
   const { order } = useOrderContext();
-  const config = usePartnerByTwapExchange(order?.exchange);
+  const config = useTwapConfigByExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Min Chunk Size Usd">
@@ -331,7 +391,7 @@ const MinChunkSizeUsd = () => {
 const TwapAddress = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const config = usePartnerByTwapExchange(order?.exchange);
+  const config = useTwapConfigByExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Twap Address">
@@ -347,8 +407,8 @@ const TwapAddress = () => {
 
 const TwapVersion = () => {
   const { order } = useOrderContext();
-  const config = usePartnerByTwapExchange(order?.exchange);
-  config?.twapVersion;
+  const config = useTwapConfigByExchange(order?.exchange);
+
   return (
     <DataDisplay.Row label="Twap Version">
       <DataDisplay.Row.Text>{config?.twapVersion}</DataDisplay.Row.Text>
@@ -368,7 +428,7 @@ const Chunks = () => {
 
 const ChainId = () => {
   const { order } = useOrderContext();
-  const config = usePartnerByTwapExchange(order?.exchange);
+  const config = useTwapConfigByExchange(order?.exchange);
   const network = useChainConfig(config?.chainId);
 
   return (

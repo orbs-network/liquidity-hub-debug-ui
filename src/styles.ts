@@ -61,4 +61,9 @@ export const LightButton = styled(RowFlex)({
   backgroundColor: "#F5F8F8",
   borderRadius: 20,
   paddingRight: 10,
+  article: {
+    fontWeight: 600,
+    opacity: 0.87
+  }
+
 });

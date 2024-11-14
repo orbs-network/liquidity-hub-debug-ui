@@ -45,7 +45,7 @@ export class Partner {
 export const partners: { [key: string]: Partner } = {
   quickswap: new Partner(
     "https://quickswap.exchange/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1293.png",
+    "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",
     "Quickswap",
     "quickswap",
     [networks.poly.id, networks.eth.id]
