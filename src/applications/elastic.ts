@@ -36,7 +36,7 @@ const sessionId = (sessionId: string) => {
           },
           {
             term: {
-              "chainId.keyword": "swap",
+              "type.keyword": "swap",
             },
           },
         ],

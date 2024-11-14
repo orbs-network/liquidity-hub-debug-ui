@@ -1,20 +1,19 @@
 import _ from "lodash";
 import { useMemo } from "react";
-import { useSwapsQuery } from "query";
 import { TransactionsList } from "components";
-import { useParams } from "react-router-dom";
 import { Page } from "components/Page";
+import { useLiquidityHubSwaps } from "applications";
+import { useParams } from "react-router";
 
 export const UserTransactionsPage = () => {
-  const { address } = useParams();
+  const walletAddress = useParams().address;
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
-    useSwapsQuery(address);
+    useLiquidityHubSwaps(walletAddress);
 
   const sessions = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
-
 
   return (
     <Page navbar={<Page.Navbar.LiquidityHub />}>

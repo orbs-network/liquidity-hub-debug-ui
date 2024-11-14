@@ -1,10 +1,10 @@
+import { useLiquidityHubSession } from "applications";
 import { DataDisplay, LogModal } from "components";
 import { styled } from "styled-components";
 import { RowFlex } from "styles";
-import { useSession } from "../hooks";
 
 export const SessionLogs = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   if (!session || !session.logs) return null;
   return (
     <>

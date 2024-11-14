@@ -1,34 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
-import { useParams } from "react-router-dom";
 import { amountUiV2, getERC20Transfers } from "helpers";
-import { queryKey, useUSDPriceQuery } from "query";
-import { clob } from "applications";
-import { useToken, useTokenAmountUsd, useWeb3 } from "hooks";
+import { useToken, useTokenAmountUsd, useUSDPrice, useWeb3 } from "hooks";
 import { useMemo } from "react";
 import BN from "bignumber.js";
 import { zeroAddress } from "@defi.org/web3-candies";
+import { useLiquidityHubSession } from "applications";
 
-export const useSession = () => {
-  const params = useParams();
-
-  return useQuery({
-    queryKey: [queryKey.session, params.identifier],
-    queryFn: async ({ signal }) => {
-      const session = await clob.getSession(params.identifier!, signal);
-
-      return session;
-    },
-    staleTime: Infinity,
-    enabled: !!params.identifier,
-  });
-};
 
 export const useTransfers = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const web3 = useWeb3(session?.chainId);
   return useQuery({
-    queryKey: [queryKey.txDetails, session?.txHash],
+    queryKey: ['useTransfers', session?.txHash],
     queryFn: async () => {
       if (!session) return null;
 
@@ -45,9 +29,9 @@ export const useTransfers = () => {
 };
 
 export const useOutTokenUsd = (amount = "1") => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const currentUsd = useUSDPriceQuery(outToken?.address, session?.chainId).data;
+  const currentUsd = useUSDPrice(outToken?.address, session?.chainId).data;
 
   return useMemo(() => {
     if (!session || !outToken) return "0";
@@ -66,7 +50,7 @@ export const useOutTokenUsd = (amount = "1") => {
 };
 
 export const useGasCostUsd = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   const gasPrice = useMemo(() => {
     return BN(session?.gasUsedNativeToken || 0)
@@ -78,7 +62,7 @@ export const useGasCostUsd = () => {
 };
 
 export const useExactAmountOutPreDeduction = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   return useMemo(() => {
     return BN(session?.exactOutAmount || 0)
@@ -89,7 +73,7 @@ export const useExactAmountOutPreDeduction = () => {
 };
 
 export const useDexAmountOutMinusGas = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   return useMemo(() => {
     return BN(session?.dexAmountOut || 0)
@@ -100,7 +84,7 @@ export const useDexAmountOutMinusGas = () => {
 };
 
 export const useUserSavings = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   const dexAmountMinusGas = useDexAmountOutMinusGas();
   const exactOutAmount = session?.exactOutAmount;
@@ -113,7 +97,7 @@ export const useUserSavings = () => {
 };
 
 export const useExpectedToReceiveLH = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   return useMemo(
     () =>
       BN(session?.lhAmountOut || 0)

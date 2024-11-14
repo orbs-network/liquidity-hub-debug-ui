@@ -1,7 +1,4 @@
-import {
-  getAllOrders,
-  getOrderById,
-} from "@orbs-network/twap-sdk";
+import { getAllOrders, getOrderById } from "@orbs-network/twap-sdk";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { queries } from "applications/elastic";
 import { TWAP_ELASTIC_CLIENT_URL } from "config";
@@ -28,8 +25,8 @@ export const useTwapOrders = (
         limit: 200,
         chainId: chainId!,
         exchangeAddress,
-      });      
-      return orders
+      });
+      return orders;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
@@ -52,26 +49,22 @@ export const useTwapOrder = (chainId?: number, orderId?: string) => {
         chainId: chainId!,
         orderId: Number(orderId)!,
       });
-  
-      return order
+
+      return order;
     },
     enabled: !!chainId && !!orderId,
   });
 };
 
+export const useTwapClientLogs = (orderId?: number, chainId?: number) => {
+  return useQuery({
+    queryKey: ["useTwapClientLogs", orderId, chainId],
+    queryFn: async ({ signal }) => {
+      const query = queries.twapLogs(orderId!, chainId!);
+      const result = await fetchElastic(TWAP_ELASTIC_CLIENT_URL, query, signal);
 
-export const useTwapClientLogs = (orderId?: number, chainId?:  number) => {
-
-    return useQuery({
-        queryKey: ["useTwapClientLogs", orderId, chainId],
-        queryFn: async ({ signal }) => {
-            const query = queries.twapLogs(orderId!, chainId!)
-            const result =      await fetchElastic(TWAP_ELASTIC_CLIENT_URL, query, signal)
-            console.log({result});
-        
-            return result
-
-        },
-        enabled: !!orderId && !!chainId,
-    })
-}
+      return result;
+    },
+    enabled: !!orderId && !!chainId,
+  });
+};

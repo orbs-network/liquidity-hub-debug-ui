@@ -1,4 +1,3 @@
-import { useUSDPriceQuery } from "query";
 import { useCallback, useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
@@ -123,7 +122,7 @@ export const useTokenAmountUsd = (
       ? wrappedTokenAddress[chainId as keyof typeof wrappedTokenAddress]
       : tokenAddress;
 
-  const { data: price } = useUSDPriceQuery(tokenAddress, chainId);
+  const { data: price } = useUSDPrice(tokenAddress, chainId);
 
   return useMemo(() => {
     if (!amount || !price) return "";
@@ -174,6 +173,7 @@ import { getPartnerWithExchangeAddress } from "utils";
 import { MOBILE } from "consts";
 import { Configs } from "@orbs-network/twap-sdk";
 import { useLocation, useNavigate } from "react-router";
+import { priceUsdService } from "services/price-usd";
 
 export const useResizeObserver = (elementRef: any) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -313,4 +313,24 @@ export const useNavigateWithParams = () => {
     },
     [navigate, search]
   );
+};
+
+
+export const useUSDPrice = (address?: string, chainId?: number) => {
+
+  return useQuery({
+    queryFn: async () => {
+      if (!chainId || !address) return 0;
+
+      if (isNativeAddress(address)) {
+        const wToken = getChainConfig(chainId)?.wToken.address;
+        if (!wToken) return 0;
+        return priceUsdService.getPrice(wToken, chainId);
+      }
+
+      return priceUsdService.getPrice(address, chainId);
+    },
+    queryKey: ['usdPrice1Token', chainId, address],
+    staleTime: Infinity,
+  });
 };

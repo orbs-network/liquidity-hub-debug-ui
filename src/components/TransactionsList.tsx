@@ -12,11 +12,11 @@ import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { AddressLink } from "./AddressLink";
 import { useCallback } from "react";
 import moment from "moment";
-import { SwapLog } from "types";
 import { StatusBadge } from "./StatusBadge";
 import { Button, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { List } from "./List";
+import { LiquidityHubSwap } from "applications/clob/interface";
 
 export const TransactionsList = ({
   sessions = [],
@@ -24,13 +24,13 @@ export const TransactionsList = ({
   isFetchingNextPage,
   isLoading,
 }: {
-  sessions?: SwapLog[];
+  sessions?: LiquidityHubSwap[];
   loadMore: () => void;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
 }) => {
   return (
-    <List<SwapLog>
+    <List<LiquidityHubSwap>
       isLoading={isLoading}
       loadMore={loadMore}
       isFetchingNextPage={isFetchingNextPage}
@@ -42,7 +42,7 @@ export const TransactionsList = ({
   );
 };
 
-const DesktopComponent = ({ item }: { item: SwapLog }) => {
+const DesktopComponent = ({ item }: { item: LiquidityHubSwap }) => {
   return (
     <List.DesktopRow>
       {desktopRows.map((it) => {
@@ -60,7 +60,7 @@ const DesktopComponent = ({ item }: { item: SwapLog }) => {
   );
 };
 
-const GoButton = ({ item }: { item: SwapLog }) => {
+const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   const navigate = useNavigate();
 
   const onNavigate = useCallback(() => {
@@ -83,7 +83,7 @@ const GoButton = ({ item }: { item: SwapLog }) => {
     </StyledButtons>
   );
 };
-const Timestamp = ({ item }: { item: SwapLog }) => {
+const Timestamp = ({ item }: { item: LiquidityHubSwap }) => {
   return (
     <List.DesktopRow.Element.Text
       text={moment(item.timestamp).format("MMM D, h:mm A")}
@@ -91,7 +91,7 @@ const Timestamp = ({ item }: { item: SwapLog }) => {
   );
 };
 
-const Dex = ({ item }: { item: SwapLog }) => {
+const Dex = ({ item }: { item: LiquidityHubSwap }) => {
   const chainConfig = useChainConfig(item.chainId);
   return (
     <RowFlex style={{ gap: 6 }}>
@@ -101,7 +101,7 @@ const Dex = ({ item }: { item: SwapLog }) => {
   );
 };
 
-const Tokens = ({ item }: { item: SwapLog }) => {
+const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
   const { tokenInName, tokenOutName, tokenInAddress, chainId } = item;
   return (
     <StyledTokens $gap={2}>
@@ -129,7 +129,7 @@ const StyledTokens = styled(RowFlex)({
   },
 });
 
-const SessionId = ({ item }: { item: SwapLog }) => {
+const SessionId = ({ item }: { item: LiquidityHubSwap }) => {
   return (
     <Link to={ROUTES.navigate.tx(item.id)} style={{ textDecoration: "unset" }}>
       <List.DesktopRow.Element.Text text={item.id} />
@@ -137,7 +137,7 @@ const SessionId = ({ item }: { item: SwapLog }) => {
   );
 };
 
-const TxHash = ({ item }: { item: SwapLog }) => {
+const TxHash = ({ item }: { item: LiquidityHubSwap }) => {
   const { txHash } = item;
   return (
     <>
@@ -148,11 +148,11 @@ const TxHash = ({ item }: { item: SwapLog }) => {
   );
 };
 
-const SwapStatus = ({ item }: { item: SwapLog }) => {
+const SwapStatus = ({ item }: { item: LiquidityHubSwap }) => {
   return <StatusBadge swapStatus={item.swapStatus} />;
 };
 
-const Usd = ({ item }: { item: SwapLog }) => {
+const Usd = ({ item }: { item: LiquidityHubSwap }) => {
   const { dollarValue } = item;
   const result = useNumberFormatter({ value: dollarValue });
 
@@ -217,7 +217,7 @@ const headerLabels = desktopRows.map((it) => {
   };
 });
 
-const MobileComponent = ({ item }: { item: SwapLog }) => {
+const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
   const partner = useLiquidityHubPartner(item.dex);
   const navigate = useNavigate();
   const onClick = useCallback(

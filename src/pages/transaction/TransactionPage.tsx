@@ -8,7 +8,6 @@ import {
   useExactAmountOutPreDeduction,
   useExpectedToReceiveLH,
   useOutTokenUsd,
-  useSession,
   useTransfers,
 } from "./hooks";
 import {
@@ -27,9 +26,11 @@ import { StatusBadge } from "components/StatusBadge";
 import { LogTrace } from "./components/LogTrace";
 import { UserSavings } from "./components/UserSavings";
 import { MOBILE } from "consts";
+import { useLiquidityHubSession } from "applications";
 
 export function TransactionPage() {
-  const { data: session, isLoading: sessionLoading } = useSession();
+  const { data: session, isLoading: sessionLoading } = useLiquidityHubSession();
+  
   const inToken = useToken(session?.tokenInAddress, session?.chainId);
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
@@ -58,7 +59,8 @@ const StyledPageLayout = styled(Page.Layout)({
 })
 
 const SessionId = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
+  
   return (
     <DataDisplay.Row label="Session ID">
       <DataDisplay.Row.Text>{session?.id}</DataDisplay.Row.Text>
@@ -67,7 +69,7 @@ const SessionId = () => {
 };
 
 const Network = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const config = useChainConfig(session?.chainId);
   const networkName = config?.name;
   const logo = config?.logoUrl;
@@ -116,7 +118,7 @@ const Content = () => {
 };
 
 const Slippage = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   return (
     <DataDisplay.Row
       label="User Slippage"
@@ -128,7 +130,7 @@ const Slippage = () => {
 };
 
 const Dex = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const partner = useLiquidityHubPartner(session?.dex);
 
   return (
@@ -141,7 +143,7 @@ const Dex = () => {
   );
 };
 const User = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   return (
     <DataDisplay.Row label="User's Address">
@@ -150,7 +152,7 @@ const User = () => {
   );
 };
 const Timestamp = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   return (
     <DataDisplay.Row label="Timestamp">
       <RowFlex>
@@ -169,7 +171,7 @@ const Timestamp = () => {
 };
 
 const InTokenAmount = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const token = useToken(session?.tokenInAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.amountIn);
   return (
@@ -186,7 +188,7 @@ const InTokenAmount = () => {
 };
 
 const Status = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
 
   return (
     <DataDisplay.Row label="Status">
@@ -195,7 +197,7 @@ const Status = () => {
   );
 };
 const TxHash = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   return (
     <DataDisplay.Row label="Transaction Hash">
       <AddressLink
@@ -210,7 +212,7 @@ const TxHash = () => {
 };
 
 const ExpectedToReceiveLH = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useExpectedToReceiveLH();
   const amountF = useAmountUI(outToken?.decimals, amount);
@@ -230,7 +232,7 @@ const ExpectedToReceiveLH = () => {
 };
 
 const DexAmountOut = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
   const dexAmountOutMinusGas = useDexAmountOutMinusGas();
@@ -254,7 +256,7 @@ const DexAmountOut = () => {
 };
 
 const Fees = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const fee = useAmountUI(outToken?.decimals, session?.feeOutAmount);
 
@@ -274,7 +276,7 @@ const Fees = () => {
 };
 
 const ExactAmountReceivedPreDeductions = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
   const exactOutAmountPreDeduction = useExactAmountOutPreDeduction();
@@ -295,7 +297,7 @@ const ExactAmountReceivedPreDeductions = () => {
 };
 
 const ExactAmountReceivedPostDeductions = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(outToken?.decimals, session?.exactOutAmount);
   const usd = useOutTokenUsd(amount);
@@ -314,7 +316,7 @@ const ExactAmountReceivedPostDeductions = () => {
 };
 
 const ExactAmountOut = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const token = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
@@ -330,7 +332,7 @@ const ExactAmountOut = () => {
 };
 
 const DucthPrice = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const token = useToken(session?.tokenOutAddress, session?.chainId);
   const amount = useAmountUI(token?.decimals, session?.dutchPrice);
   return (
@@ -346,7 +348,7 @@ const DucthPrice = () => {
 };
 
 const Transfers = () => {
-  const { data: session } = useSession();
+  const { data: session } = useLiquidityHubSession();
   const transfers = useTransfers().data;
   if (!transfers || !session) return null;
 
@@ -367,7 +369,7 @@ const Transfers = () => {
 };
 
 const Transfer = ({ log }: { log: TransferLog }) => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   return (
     <StyledRow>
       <Typography>

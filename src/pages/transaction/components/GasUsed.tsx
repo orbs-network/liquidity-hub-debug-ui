@@ -1,11 +1,12 @@
 import { useNumberFormatter, useChainConfig } from "hooks";
 import { useMemo } from "react";
-import { useGasCostUsd, useSession } from "../hooks";
+import { useGasCostUsd } from "../hooks";
 import BN from "bignumber.js";
 import { DataDisplay } from "components";
+import { useLiquidityHubSession } from "applications";
 
 export const GasUsed = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const amount = useMemo(() => {
     return BN(session?.gasUsedNativeToken || 0)
       .dividedBy(1e9)

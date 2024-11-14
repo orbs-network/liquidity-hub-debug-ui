@@ -30,8 +30,7 @@ export function OrderPage() {
   const orderId = useParams().orderId;
   const chainId = useAppParams().query.chainId;
   const { data: order, isLoading } = useTwapOrder(chainId, orderId);
-  const { data: logs } = useTwapClientLogs(order?.id, chainId);
-  console.log({ logs });
+
 
   return (
     <Context.Provider value={{ order }}>

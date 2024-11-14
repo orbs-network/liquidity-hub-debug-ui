@@ -1,81 +1,95 @@
 import _ from "lodash";
 import { fetchElastic } from "helpers";
-import { parseFullSessionLogs, parseSwapLogs } from "./helpers";
-import { ELASTIC_ENDPOINT } from "config";
 import { queries } from "../elastic";
 import { isValidSessionId, isValidTxHash } from "utils";
-import { LHSession } from "types";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router";
+import { useAppParams } from "hooks";
+import {
+  LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
+  LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+} from "config";
+import { LiquidityHubSession, LiquidityHubSwap } from "./interface";
 
-const SERVER_URL = `${ELASTIC_ENDPOINT}/orbs-clob-poc10.*`;
-const CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-liquidity-hub-ui*`;
+export const useLiquidityHubSwaps = (walletAddress?: string) => {
+  const {
+    query: { chainId, partner },
+  } = useAppParams();
 
-const getClientLogs = async (
-  ids: string[],
-  page: number,
-  signal?: AbortSignal
-) => {
-  const data = queries.clientTrasactions(ids, page, 100);
+  return useInfiniteQuery({
+    queryKey: ["useLiquidityHubSwaps", chainId, walletAddress, partner],
+    queryFn: async ({ signal, pageParam }) => {
+      const data = queries.swaps({
+        page: pageParam,
+        chainId,
+        limit: 100,
+        walletAddress,
+        dex: partner?.toLowerCase(),
+      });
 
-  return fetchElastic(CLIENT_URL, data, signal);
-};
-
-const fetchSwaps = async ({
-  page = 0,
-  chainId,
-  signal,
-  walletAddress,
-  dex,
-}: {
-  page: number;
-  chainId?: number;
-  signal?: AbortSignal;
-  walletAddress?: string;
-  dex?: string;
-}) => {
-  const data = queries.swaps({
-    page,
-    chainId,
-    limit: 100,
-    walletAddress,
-    dex: dex?.toLowerCase(),
+      const logs = await fetchElastic(
+        LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+        data,
+        signal
+      );
+      return logs.map((log) => {
+        return new LiquidityHubSwap(log);
+      });
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      return lastPage.length > 0 ? pages.length : undefined; // Return next page number or undefined if no more pages
+    },
+    getPreviousPageParam: (firstPage) => {
+      return firstPage ? undefined : 0; // Modify based on how you paginate backwards
+    },
+    refetchInterval: 10000,
   });
-
-  const logs = await fetchElastic(SERVER_URL, data, signal);
-  const result = parseSwapLogs(logs);
-
-  return result;
 };
 
-const getSession = async (
-  txHashOrSessionId: string,
-  signal?: AbortSignal
-): Promise<LHSession> => {
-  let query;
+export const useLiquidityHubSession = () => {
+  const txHashOrSessionId = useParams().identifier;
 
-  if (isValidTxHash(txHashOrSessionId)) {
-    query = queries.transactionHash(txHashOrSessionId);
-  } else if (isValidSessionId(txHashOrSessionId)) {
-    query = queries.sessionId(txHashOrSessionId);
-  } else {
-    throw new Error("Invalid transaction hash or session id");
-  }
+  return useQuery({
+    queryKey: ["useLiquidityHubSession", txHashOrSessionId],
+    queryFn: async ({ signal }) => {
+      if (!txHashOrSessionId) {
+        throw new Error("Invalid transaction hash or session id");
+      }
+      let query;
 
-  const swapLogs = await fetchElastic(SERVER_URL, query, signal);
-  const [swapLog] = swapLogs;
+      if (isValidTxHash(txHashOrSessionId)) {
+        query = queries.transactionHash(txHashOrSessionId);
+      } else if (isValidSessionId(txHashOrSessionId)) {
+        query = queries.sessionId(txHashOrSessionId);
+      } else {
+        throw new Error("Invalid transaction hash or session id");
+      }
 
-  const quoteQuery = queries.quote(swapLog.sessionId);
-  const clientQuery = queries.client(swapLog.sessionId);
-  
-  const [quoteLogs, clientLogs] = [
-    await fetchElastic(SERVER_URL, quoteQuery, signal),
-    await fetchElastic(CLIENT_URL, clientQuery, signal),
-  ];
-    return parseFullSessionLogs(swapLog, quoteLogs, clientLogs);
-};
+      const swapLogs = await fetchElastic(
+        LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+        query,
+        signal
+      );
 
+      const [swapLog] = swapLogs;
+      const { sessionId } = swapLog;
 
-export const clob = {
-  fetchSwaps,
-  getClientLogs,
-  getSession,
+      const [quoteLogs, clientLogs] = [
+        await fetchElastic(
+          LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+          queries.quote(sessionId),
+          signal
+        ),
+        await fetchElastic(
+          LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
+          queries.client(sessionId),
+          signal
+        ),
+      ];
+      return new LiquidityHubSession(swapLog, quoteLogs, clientLogs);
+    },
+    staleTime: Infinity,
+    enabled: !!txHashOrSessionId,
+  });
 };

@@ -1,14 +1,14 @@
 import _ from "lodash";
 import { useCallback, useMemo, useState } from "react";
-import { useSwapsQuery } from "query";
 import { Page, TransactionsList } from "components";
 import { ColumnFlex } from "styles";
 import { Button, Input, Typography } from "antd";
+import { useLiquidityHubSwaps } from "applications";
 
 export const TransactionsPage = () => {
   const [password, setPassword] = useState(localStorage.getItem("password"));
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
-    useSwapsQuery();
+    useLiquidityHubSwaps();
 
   const sessions = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];

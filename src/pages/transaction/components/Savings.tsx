@@ -1,9 +1,10 @@
+import { useLiquidityHubSession } from "applications";
 import { DataDisplay } from "components";
 import { useAmountUI, useToken } from "hooks";
-import { useOutTokenUsd, useSession } from "../hooks";
+import { useOutTokenUsd } from "../hooks";
 
 export const Savings = () => {
-  const session = useSession().data;
+  const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const savings =
     !session?.savings || Number(session?.savings) < 0 ? 0 : session?.savings;
