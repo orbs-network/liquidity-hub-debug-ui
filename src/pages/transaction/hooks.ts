@@ -76,7 +76,7 @@ export const useDexAmountOutMinusGas = () => {
   const session = useLiquidityHubSession().data;
 
   return useMemo(() => {
-    return BN(session?.dexAmountOut || 0)
+    return BN(session?.dexAmountOutWS || 0)
       .minus(session?.gasCostOutToken || 0)
       .decimalPlaces(0)
       .toFixed();
