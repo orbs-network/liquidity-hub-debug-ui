@@ -11,7 +11,7 @@ export const UserSavings = () => {
   const savings = useUserSavings()
   
   const amount = useAmountUI(outToken?.decimals, savings);
-  
+
   const usd = useOutTokenUsd(amount)
 
   return (
@@ -20,7 +20,6 @@ export const UserSavings = () => {
         amount={amount as string}
         usd={usd as string}
         address={outToken?.address}
-        symbol={outToken?.symbol}
         chainId={session?.chainId}
       />
     </DataDisplay.Row>

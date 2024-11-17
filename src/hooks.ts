@@ -51,54 +51,88 @@ export const useWeb3 = (chainId?: number) => {
   }, [chainId]);
 };
 
-function formatAmount(amount?: number | string | null) {
+function shortenNumber(amount?: number | string | null, decimalScale = 2) {
   if (!amount) return "0";
   const numericAmount =
     typeof amount === "string" ? parseFloat(amount) : amount;
 
   if (numericAmount >= 1_000_000_000_000_000) {
     return (
-      (numericAmount / 1_000_000_000_000_000).toFixed(2).replace(/\.00$/, "") +
-      "Q"
+      (numericAmount / 1_000_000_000_000_000)
+        .toFixed(decimalScale)
+        .replace(/\.00$/, "") + "Q"
     );
   } else if (numericAmount >= 1_000_000_000_000) {
     return (
-      (numericAmount / 1_000_000_000_000).toFixed(2).replace(/\.00$/, "") + "T"
+      (numericAmount / 1_000_000_000_000)
+        .toFixed(decimalScale)
+        .replace(/\.00$/, "") + "T"
     );
   } else if (numericAmount >= 1_000_000_000) {
     return (
-      (numericAmount / 1_000_000_000).toFixed(2).replace(/\.00$/, "") + "B"
+      (numericAmount / 1_000_000_000)
+        .toFixed(decimalScale)
+        .replace(/\.00$/, "") + "B"
     );
   } else if (numericAmount >= 1_000_000) {
-    return (numericAmount / 1_000_000).toFixed(2).replace(/\.00$/, "") + "M";
+    return (
+      (numericAmount / 1_000_000).toFixed(decimalScale).replace(/\.00$/, "") +
+      "M"
+    );
   } else if (numericAmount >= 1_000) {
-    return (numericAmount / 1_000).toFixed(2).replace(/\.00$/, "") + "K";
+    return (
+      (numericAmount / 1_000).toFixed(decimalScale).replace(/\.00$/, "") + "K"
+    );
   }
 
   return undefined;
 }
 
+export const useTokenValueFromatter = ({
+  value,
+  tokenDecimals,
+  decimalScale,
+}: {
+  value?: any;
+  tokenDecimals?: number;
+  decimalScale?: number;
+}) => {
+  return useNumberFormatter({
+    value,
+    decimalScale:
+      decimalScale || tokenDecimals === 8
+        ? 2
+        : tokenDecimals === 18
+        ? 4
+        : undefined,
+  });
+};
+
 export const useNumberFormatter = ({
   value,
-  decimalScale = 3,
-  format,
+  decimalScale = 2,
 }: {
   value?: string | number;
   decimalScale?: number;
-  format?: boolean;
 }) => {
-  const numericValue = typeof value === "string" ? parseFloat(value) : value;
-  const adjustedDecimalScale =
-  numericValue && Math.abs(numericValue) < 1
-    ? Math.min(decimalScale + Math.ceil(Math.abs(Math.log10(Math.abs(numericValue)))), 20) // Cap to 20 decimals for practical purposes
-    : decimalScale;
-  const result = useNumericFormat({
+  const decimals = useMemo(() => {
+    return getMinDecimalScaleForLeadingZero(value) || decimalScale;
+  }, [value, decimalScale]);
+
+  const formatted = useNumericFormat({
     value,
-    decimalScale: adjustedDecimalScale,
+    decimalScale: decimals,
     thousandSeparator: ",",
   }).value;
-  const formattedAmount = formatAmount(value);
-  return format && formattedAmount ? formattedAmount : result;
+
+  const short = useMemo(() => {
+    return shortenNumber(value, decimals);
+  }, [value, decimals]);
+
+  return {
+    formatted,
+    short: short || formatted,
+  };
 };
 
 const wrappedTokenAddress = {
@@ -136,6 +170,13 @@ export const useChainConfig = (chainId?: number) => {
   }, [chainId]);
 };
 
+export const useExplorerUrl = (chainId?: number) => {
+  const chainConfig = useChainConfig(chainId);
+  return useMemo(() => {
+    return chainConfig?.explorer;
+  }, [chainConfig]);
+};
+
 type CopyFn = (text: string) => Promise<boolean>; // Return success
 
 export function useCopyToClipboard(): CopyFn {
@@ -169,7 +210,10 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Partner, partners } from "partners";
 import _ from "lodash";
-import { getPartnerWithExchangeAddress } from "utils";
+import {
+  getMinDecimalScaleForLeadingZero,
+  getPartnerWithExchangeAddress,
+} from "utils";
 import { MOBILE } from "consts";
 import { Configs } from "@orbs-network/twap-sdk";
 import { useLocation, useNavigate } from "react-router";
@@ -315,9 +359,7 @@ export const useNavigateWithParams = () => {
   );
 };
 
-
 export const useUSDPrice = (address?: string, chainId?: number) => {
-
   return useQuery({
     queryFn: async () => {
       if (!chainId || !address) return 0;
@@ -330,7 +372,7 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
 
       return priceUsdService.getPrice(address, chainId);
     },
-    queryKey: ['usdPrice1Token', chainId, address],
+    queryKey: ["usdPrice1Token", chainId, address],
     staleTime: Infinity,
   });
 };

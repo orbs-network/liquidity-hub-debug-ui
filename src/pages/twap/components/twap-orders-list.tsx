@@ -6,7 +6,7 @@ import moment from "moment";
 import { Button, Typography, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { RowFlex } from "styles";
-import { AddressLink, List } from "components";
+import { List, TokenAddress } from "components";
 import BN from "bignumber.js";
 import {
   useNumberFormatter,
@@ -108,8 +108,7 @@ const Dex = ({ order }: { order: Order }) => {
 const TradeAmount = ({ order }: { order: Order }) => {
   const amount = useNumberFormatter({
     value: order.dollarValueIn,
-    format: true,
-  });
+  }).short;
 
   return (
     <StyledItem>
@@ -126,19 +125,17 @@ const Tokens = ({ order }: { order: Order }) => {
 
   return (
     <StyledTokens $gap={2}>
-      <AddressLink
-        path="address"
+      <TokenAddress
         chainId={config?.chainId}
-        text={srcTokenSymbol}
         address={srcTokenAddress}
+        symbol={srcTokenSymbol}
       />
 
       <ChevronRight size={10} />
 
-      <AddressLink
-        path="address"
+      <TokenAddress
+        symbol={dstTokenSymbol}
         chainId={config?.chainId}
-        text={dstTokenSymbol}
         address={dstTokenAddress}
       />
     </StyledTokens>

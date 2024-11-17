@@ -64,3 +64,33 @@ export const MillisToDuration = (value?: number) => {
   }
   return arr.join(" ");
 };
+
+
+export function getMinDecimalScaleForLeadingZero(value?: string | number): number | undefined {
+  // Convert the value to a string
+  if(!value) return undefined;
+  const valueStr =  typeof value === 'number' ? value.toString() : value;
+
+  if (parseFloat(valueStr) === 0) return undefined; // If the value is 0, return undefined
+
+  const decimalIndex = valueStr.indexOf('.');
+
+  if (decimalIndex === -1) {
+      // No decimal point, it's an integer
+      return undefined;
+  }
+
+  const decimals = valueStr.slice(decimalIndex + 1);
+
+  // Check if decimals start with '0'
+  if (decimals.startsWith('0')) {
+      // Count decimal places until the first non-zero digit
+      for (let i = 0; i < decimals.length; i++) {
+          if (decimals[i] !== '0') {
+              return i + 1; // Include the first non-zero digit
+          }
+      }
+  }
+
+  return undefined; // Return null if decimals don't start with '0'
+}

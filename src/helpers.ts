@@ -105,9 +105,9 @@ export const swapStatusText = (status?: string) => {
   if (!status) return "-";
   switch (status) {
     case "success":
-      return "Success";
+      return "COMPLETED";
     case "failed":
-      return "Failed";
+      return "FAILED";
     default:
       return "-";
   }

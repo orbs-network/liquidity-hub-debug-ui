@@ -38,13 +38,14 @@ const StyledSearchSessionInput = styled(SearchSessionInput)`
   max-width: 800px;
   width: 100%;
   input {
-
+    height: 50px;
+    font-size: 16px;
   }
 `;
 
 
 const StyledTitle = styled(Typography)`
-font-size: 28px;
+font-size: 24px;
 font-weight: 600;
   @media (max-width: ${MOBILE}px) {
     font-size: 20px;

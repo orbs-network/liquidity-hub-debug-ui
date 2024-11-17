@@ -106,23 +106,21 @@ export class LiquidityHubSession extends LiquidityHubSwap {
       if (!quote) {
         throw new Error("No quote found");
       }
-      
+        
       const winnerIndex = quote["auctionData.exchange"].indexOf(quote['auctionWinner']);
       this.lhAmountOut = quote.amountOut;
       this.lhAmountOutUsd = quote.dollarValue;
       this.dexAmountOut = quote.amountOutUI;
-      this.dexAmountOutWS =
-        addSlippage(quote.amountOutUI, quote.slippage) || "";
       this.lhAmountOutWS = addSlippage(quote.amountOut, quote.slippage) || "";
       this.gasCostOutToken = quote["auctionData.gasCost"][winnerIndex] || '';
     } catch (error) {
       this.lhAmountOut = rawSwap.amountOut;
       this.lhAmountOutUsd = rawSwap.dollarValue;
       this.dexAmountOut = rawSwap.amountOutUI;
-      this.dexAmountOutWS =
-        addSlippage(rawSwap.amountOutUI, this.slippage) || "";
       this.lhAmountOutWS = addSlippage(rawSwap.amountOut, this.slippage) || "";
       this.gasCostOutToken = '';
     }
+    this.dexAmountOut = BN(this.dexAmountOut).lte(0) ? '' : this.dexAmountOut;
+    this.dexAmountOutWS = addSlippage(this.dexAmountOut, this.slippage) || ''
   }
 }

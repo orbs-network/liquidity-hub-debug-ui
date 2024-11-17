@@ -9,6 +9,7 @@ import TextOverflow from "react-text-overflow";
 import { DesktopRowComponent, MobileRowComponent } from "./types";
 import { ChevronRight } from "react-feather";
 import moment from "moment";
+import { colors } from "consts";
 
 type HeaderLabel = {
   label: string;
@@ -60,6 +61,7 @@ function List<T>({
           const item = items[index];
           return (
             <Item
+            index={index}
               isMobile={isMobile}
               item={item}
               DesktopComponent={DesktopComponent}
@@ -105,11 +107,13 @@ function Item<T>({
   DesktopComponent,
   MobileComponent,
   isMobile,
+  index
 }: {
   item: T;
   DesktopComponent: DesktopRowComponent<T>;
   MobileComponent: MobileRowComponent<T>;
   isMobile: boolean;
+  index: number;
 }) {
   if (!item) {
     return (
@@ -121,13 +125,23 @@ function Item<T>({
   if (isMobile) {
     return (
       <StyledMobileContainer>
-        <MobileComponent item={item} />
+        <ItemWrapper $index={index}>
+          <MobileComponent item={item} />
+        </ItemWrapper>
       </StyledMobileContainer>
     );
   }
 
-  return <DesktopComponent item={item} />;
+  return (
+    <ItemWrapper  $index={index}>
+      <DesktopComponent item={item} />
+    </ItemWrapper>
+  );
 }
+
+const ItemWrapper = styled("div")<{ $index: number}>(({$index}) => ({
+    background: $index % 2 === 0 ? "#1B1D25" : "transparent",
+}));
 
 const MobileRow = ({
   chainId,
@@ -149,7 +163,7 @@ const MobileRow = ({
   statusColor?: string;
 }) => {
   const chainIdConfig = useChainConfig(chainId);
-  const usdF = useNumberFormatter({ value: usd, format: true });
+  const usdF = useNumberFormatter({ value: usd }).short;
   return (
     <StyledMobileRow>
       <MobileStatus style={{ background: statusColor }}>
@@ -196,12 +210,12 @@ const MobileStatus = styled("div")({
   borderRadius: 20,
   ".ant-typography": {
     color: "white",
-    fontSize: 11
+    fontSize: 11,
   },
 });
 
-const StyledMobileContainer = styled('div')({
-  borderBottom: "1px solid #f0f0f0",
+const StyledMobileContainer = styled("div")({
+
   width: "100%",
 });
 
@@ -209,7 +223,7 @@ const StyledMobileContainerRight = styled("div")({
   flex: 1,
 });
 const StyledMobileContainerTokens = styled(RowFlex)({
-    gap: 2,
+  gap: 2,
   justifyContent: "flex-start",
   alignItems: "center",
   small: {
@@ -223,7 +237,7 @@ const StyledMobileContainerTokens = styled(RowFlex)({
     width: 14,
     height: 14,
     position: "relative",
-    top:-2
+    top: -2,
   },
 });
 
@@ -295,7 +309,6 @@ const ListSessionContainer = styled(RowFlex)`
   padding: 10px 15px;
   gap: 0px;
   position: relative;
-  border-bottom: 1px solid #f1f3fe;
 `;
 
 const StyledHeader = styled(RowFlex)`
@@ -304,12 +317,12 @@ const StyledHeader = styled(RowFlex)`
   height: 50px;
   gap: 0px;
   font-weight: 500;
-  background: #f1f3fe;
+  background: transparent;
   border-radius: 6px;
 `;
 
 const StyledHeaderItem = styled(Typography)({
-    whiteSpace: "nowrap",
+  whiteSpace: "nowrap",
   fontSize: 14,
   textAlign: "left",
   paddingRight: 20,
@@ -326,8 +339,12 @@ const StyledList = styled.div`
   flex-direction: column;
 `;
 
-const StyledText = styled("div")({
-  fontSize: 14,
+const StyledText = styled(Typography)({
+    fontSize: 13,
+  "*":{
+    color: colors.dark.textMain,
+    fontSize: 'inherit',
+  }
 });
 
 const StyledEmpty = styled.div`

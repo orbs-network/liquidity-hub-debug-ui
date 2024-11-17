@@ -9,14 +9,15 @@ import {
   useNumberFormatter,
 } from "../hooks";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
-import { AddressLink } from "./AddressLink";
+import { TokenAddress } from "./AddressLink";
 import { useCallback } from "react";
 import moment from "moment";
 import { StatusBadge } from "./StatusBadge";
-import { Button, Avatar } from "antd";
+import { Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { List } from "./List";
 import { LiquidityHubSwap } from "applications/clob/interface";
+import { colors } from "consts";
 
 export const TransactionsList = ({
   sessions = [],
@@ -68,26 +69,18 @@ const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   }, [navigate, item.id]);
 
   return (
-    <StyledButtons>
-      <Button
-        aria-label="Done"
-        style={{
-          backgroundColor: "#f8f9fb",
-          color: "#4a5568",
-          border: "1px solid #e2e8f0",
-          borderRadius: "50%",
-        }}
-        icon={<ChevronRight size={20} />}
-        onClick={onNavigate}
-      />
-    </StyledButtons>
+    <StyledButton  onClick={onNavigate}>
+      <ChevronRight size={20} />
+    </StyledButton>
   );
 };
 const Timestamp = ({ item }: { item: LiquidityHubSwap }) => {
   return (
-    <List.DesktopRow.Element.Text
-      text={moment(item.timestamp).format("MMM D, h:mm A")}
+    <RowFlex>
+      <List.DesktopRow.Element.Text
+      text={moment(item.timestamp).fromNow()}
     />
+    </RowFlex>
   );
 };
 
@@ -102,30 +95,34 @@ const Dex = ({ item }: { item: LiquidityHubSwap }) => {
 };
 
 const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
-  const { tokenInName, tokenOutName, tokenInAddress, chainId } = item;
+  const {
+    tokenInName,
+    tokenOutName,
+    tokenInAddress,
+    chainId,
+    tokenOutAddress,
+  } = item;
+
   return (
     <StyledTokens $gap={2}>
-      <AddressLink
-        path="address"
-        chainId={chainId}
-        text={tokenInName}
+      <TokenAddress
         address={tokenInAddress}
+        symbol={tokenInName}
+        chainId={chainId}
       />
       <ChevronRight size={10} />
-      <AddressLink
-        path="address"
+      <TokenAddress
+        address={tokenOutAddress}
+        symbol={tokenOutName}
         chainId={chainId}
-        text={tokenOutName}
-        address={tokenInAddress}
       />
     </StyledTokens>
   );
 };
 
 const StyledTokens = styled(RowFlex)({
-  fontSize: 13,
-  "*": {
-    fontWeight: 400,
+  "svg": {
+   color: colors.dark.textMain
   },
 });
 
@@ -154,14 +151,32 @@ const SwapStatus = ({ item }: { item: LiquidityHubSwap }) => {
 
 const Usd = ({ item }: { item: LiquidityHubSwap }) => {
   const { dollarValue } = item;
-  const result = useNumberFormatter({ value: dollarValue });
+  const result = useNumberFormatter({ value: dollarValue }).short;
 
   return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
 };
 
-const StyledButtons = styled(RowFlex)`
-  justify-content: flex-end;
-  width: 100%;
+const StyledButton = styled('button')`
+  background: none;
+  border: none;
+  cursor: pointer;
+  background: ${colors.dark.inputBg};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  transition: background 0.2s;
+  &:hover {
+    background: rgba(255,255,255, 0.1);
+  }
+  svg {
+    color: ${colors.dark.textMain};
+    width: 20px;
+    height: 20px;
+  }
 `;
 
 const desktopRows = [
@@ -177,13 +192,13 @@ const desktopRows = [
   },
   {
     Component: Timestamp,
-    label: "Date",
+    label: "Time",
     width: 16,
   },
   {
     Component: Tokens,
     label: "Tokens",
-    width: 16,
+    width: 15,
   },
   {
     Component: Usd,
@@ -193,18 +208,18 @@ const desktopRows = [
   {
     Component: TxHash,
     label: "Tx hash",
-    width: 13,
+    width: 15,
   },
   {
     Component: SwapStatus,
     label: "Status",
-    width: 10,
+    width: 12,
     alignCenter: true,
   },
   {
     Component: GoButton,
     label: "Action",
-    width: 5,
+    width: 4,
     alignCenter: true,
   },
 ];
@@ -220,12 +235,9 @@ const headerLabels = desktopRows.map((it) => {
 const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
   const partner = useLiquidityHubPartner(item.dex);
   const navigate = useNavigate();
-  const onClick = useCallback(
-    () => {
-      navigate(ROUTES.navigate.tx(item.id))
-    },
-    [navigate, item.id]
-  );
+  const onClick = useCallback(() => {
+    navigate(ROUTES.navigate.tx(item.id));
+  }, [navigate, item.id]);
 
   return (
     <MobileContainer onClick={onClick}>
@@ -237,7 +249,13 @@ const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
         usd={item.dollarValue}
         timestamp={item.timestamp}
         status={swapStatusText(item.swapStatus)}
-        statusColor={item.swapStatus === "success" ? "#F0AD4E" :  item.swapStatus === 'failed' ?  "red" : undefined }
+        statusColor={
+          item.swapStatus === "success"
+            ? "#F0AD4E"
+            : item.swapStatus === "failed"
+            ? "red"
+            : undefined
+        }
       />
     </MobileContainer>
   );

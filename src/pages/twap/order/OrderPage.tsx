@@ -1,7 +1,7 @@
 import { Order } from "@orbs-network/twap-sdk";
-import { Avatar, Modal } from "antd";
+import { Avatar, Modal, Typography } from "antd";
 import { useTwapClientLogs, useTwapOrder } from "applications/twap";
-import { AddressLink, DataDisplay, Page } from "components";
+import { DataDisplay, Page, TxHashAddress, WalletAddress } from "components";
 import {
   useAmountUI,
   useAppParams,
@@ -30,7 +30,6 @@ export function OrderPage() {
   const orderId = useParams().orderId;
   const chainId = useAppParams().query.chainId;
   const { data: order, isLoading } = useTwapOrder(chainId, orderId);
-
 
   return (
     <Context.Provider value={{ order }}>
@@ -85,7 +84,7 @@ const Logs = () => {
   return (
     <DataDisplay.Row label="Client logs">
       {!logs ? (
-        <DataDisplay.Row.Text>-</DataDisplay.Row.Text>
+        <Typography>-</Typography>
       ) : (
         <RowFlex>
           {logs.map((log, index) => {
@@ -137,7 +136,7 @@ const ID = () => {
 
   return (
     <DataDisplay.Row label="Order ID">
-      <DataDisplay.Row.Text>#{order?.id}</DataDisplay.Row.Text>
+      <Typography>#{order?.id}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -150,7 +149,7 @@ const Dex = () => {
   return (
     <DataDisplay.Row label="Partner">
       <Avatar src={partner?.logoUrl} size={20} />
-      <DataDisplay.Row.Text>{partner?.name}</DataDisplay.Row.Text>
+      <Typography>{partner?.name}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -160,9 +159,9 @@ const Type = () => {
 
   return (
     <DataDisplay.Row label="Type">
-      <DataDisplay.Row.Text>
+      <Typography>
         {parseOrderType(order?.orderType)}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -172,9 +171,9 @@ const CreatedAt = () => {
 
   return (
     <DataDisplay.Row label="Created at">
-      <DataDisplay.Row.Text>
+      <Typography>
         {moment(order?.createdAt).format("lll")}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -184,9 +183,9 @@ const Deadline = () => {
 
   return (
     <DataDisplay.Row label="Deadline">
-      <DataDisplay.Row.Text>
+      <Typography>
         {moment(order?.deadline).format("lll")}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -205,7 +204,6 @@ const DstFilledAmount = () => {
         address={order?.dstTokenAddress}
         chainId={chainId}
         usd={usd}
-        symbol={token?.symbol}
       />
     </DataDisplay.Row>
   );
@@ -225,7 +223,6 @@ const SrcFilledAmount = () => {
         address={order?.dstTokenAddress}
         chainId={chainId}
         usd={usd}
-        symbol={token?.symbol}
       />
     </DataDisplay.Row>
   );
@@ -238,7 +235,7 @@ const SrcToken = () => {
 
   return (
     <DataDisplay.Row label="Source Token">
-      <DataDisplay.Row.Text>{token?.symbol}</DataDisplay.Row.Text>
+      <Typography>{token?.symbol}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -250,7 +247,7 @@ const DstToken = () => {
 
   return (
     <DataDisplay.Row label="Destination Token">
-      <DataDisplay.Row.Text>{token?.symbol}</DataDisplay.Row.Text>
+      <Typography>{token?.symbol}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -267,7 +264,6 @@ const DstMinAmount = () => {
         amount={amount}
         address={order?.dstTokenAddress}
         chainId={chainId}
-        symbol={token?.symbol}
       />
     </DataDisplay.Row>
   );
@@ -279,9 +275,9 @@ const FillDelay = () => {
 
   return (
     <DataDisplay.Row label="Fill Delay">
-      <DataDisplay.Row.Text>
+      <Typography>
         {config && MillisToDuration(order?.getFillDelay(config))}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -291,7 +287,7 @@ const Progress = () => {
 
   return (
     <DataDisplay.Row label="Progress">
-      <DataDisplay.Row.Text>{order?.progress}%</DataDisplay.Row.Text>
+      <Typography>{order?.progress}%</Typography>
     </DataDisplay.Row>
   );
 };
@@ -308,7 +304,6 @@ const SrcAmount = () => {
         amount={amount}
         address={order?.srcTokenAddress}
         chainId={chainId}
-        symbol={token?.symbol}
       />
     </DataDisplay.Row>
   );
@@ -326,7 +321,6 @@ const SrcChunkAmount = () => {
         amount={amount}
         address={order?.srcTokenAddress}
         chainId={chainId}
-        symbol={token?.symbol}
       />
     </DataDisplay.Row>
   );
@@ -337,9 +331,9 @@ const Status = () => {
 
   return (
     <DataDisplay.Row label="Status">
-      <DataDisplay.Row.Text>
+      <Typography>
         <span style={{ textTransform: "capitalize" }}>{order?.status}</span>
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -350,11 +344,9 @@ const TxHash = () => {
 
   return (
     <DataDisplay.Row label="Tx Hash">
-      <AddressLink
-        path="tx"
+      <TxHashAddress
         chainId={chainId}
         address={order?.txHash}
-        short={true}
       />
     </DataDisplay.Row>
   );
@@ -366,11 +358,9 @@ const Exchange = () => {
 
   return (
     <DataDisplay.Row label="Exchange Address">
-      <AddressLink
+      <WalletAddress
         chainId={chainId}
         address={order?.exchange}
-        short={true}
-        path="address"
       />
     </DataDisplay.Row>
   );
@@ -382,7 +372,7 @@ const MinChunkSizeUsd = () => {
 
   return (
     <DataDisplay.Row label="Min Chunk Size Usd">
-      <DataDisplay.Row.Text>${config?.minChunkSizeUsd}</DataDisplay.Row.Text>
+      <Typography>${config?.minChunkSizeUsd}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -394,11 +384,9 @@ const TwapAddress = () => {
 
   return (
     <DataDisplay.Row label="Twap Address">
-      <AddressLink
+      <WalletAddress
         chainId={chainId}
         address={config?.twapAddress}
-        short={true}
-        path="address"
       />
     </DataDisplay.Row>
   );
@@ -410,7 +398,7 @@ const TwapVersion = () => {
 
   return (
     <DataDisplay.Row label="Twap Version">
-      <DataDisplay.Row.Text>{config?.twapVersion}</DataDisplay.Row.Text>
+      <Typography>{config?.twapVersion}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -420,7 +408,7 @@ const Chunks = () => {
 
   return (
     <DataDisplay.Row label="Chunks">
-      <DataDisplay.Row.Text>{order?.totalChunks}</DataDisplay.Row.Text>
+      <Typography>{order?.totalChunks}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -433,7 +421,7 @@ const ChainId = () => {
   return (
     <DataDisplay.Row label="Chain">
       <Avatar size={20} src={network?.logoUrl} />
-      <DataDisplay.Row.Text>{network?.name}</DataDisplay.Row.Text>
+      <Typography>{network?.name}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -453,9 +441,9 @@ const ExecutionPrice = () => {
 
   return (
     <DataDisplay.Row label="Excecution Price">
-      <DataDisplay.Row.Text>
+      <Typography>
         {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -475,9 +463,9 @@ const LimitPrice = () => {
 
   return (
     <DataDisplay.Row label="Limit Price">
-      <DataDisplay.Row.Text>
+      <Typography>
         {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
-      </DataDisplay.Row.Text>
+      </Typography>
     </DataDisplay.Row>
   );
 };

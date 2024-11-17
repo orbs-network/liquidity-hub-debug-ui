@@ -1,75 +1,151 @@
-import { useMemo } from "react";
-import { makeElipsisAddress } from "../helpers";
 import styled from "styled-components";
-import TextOverflow from "react-text-overflow";
-import { useChainConfig, useCopyToClipboard } from "hooks";
+import { useCopyToClipboard, useExplorerUrl } from "hooks";
 import { Copy } from "react-feather";
-import { Typography } from "antd";
+import { notification, Tooltip, Typography } from "antd";
+import { colors } from "consts";
+import TextOverflow from "react-text-overflow";
+const { Link } = Typography;
 
 export function AddressLink({
   address,
-  chainId,
+  url,
   text,
-  path = "tx",
-  short = false,
-  hideCopy = true,
-  underline = false,
 }: {
   address?: string;
-  chainId?: number;
+  url: string;
   text?: string;
-  path?: string;
-  short?: boolean;
-  hideCopy?: boolean;
-  underline?: boolean;
 }) {
+  const [api, contextHolder] = notification.useNotification();
+
   const copy = useCopyToClipboard();
   const onCopy = (e: any) => {
+    api.success({
+      showProgress: true,
+      message: "Copied to clipboard",
+      placement: "bottomRight",
+      duration: 3,
+    });
     e.preventDefault();
     copy(address!);
   };
 
-  const explorerUrl = useChainConfig(chainId)?.explorer;
-
-  const url = `${explorerUrl}/${path}/${address}`;
-
-  const _address = useMemo(() => {
-    if (text) return text;
-    if (!short) return address;
-    return makeElipsisAddress(address);
-  }, [address, short, text]);
-
-  if (!_address || !address) return <>-</>;
-
   return (
     <Container>
+      {contextHolder}
       <Typography>
-        <StyledLink href={url} target="_blank" $underline={underline}>
-          <TextOverflow text={_address || ""} />
+        <StyledLink href={url} target="_blank">
+          <TextOverflow text={text || ""} />
         </StyledLink>
       </Typography>
-      {!hideCopy && <StyledIcon onClick={onCopy} />}
+
+      {address && (
+        <StyledCopy onClick={onCopy} className="copy-btn">
+          <Copy />
+        </StyledCopy>
+      )}
     </Container>
   );
 }
 
-const StyledIcon = styled(Copy)`
-  color: rgb(115, 66, 220) !important;
+export const TokenAddress = ({
+  chainId,
+  address,
+  symbol,
+  name
+}: {
+  chainId?: number;
+  address?: string;
+  symbol?: string;
+  name?: string;
+}) => {
+  const explorer = useExplorerUrl(chainId);
+  return (
+    <StyledTokenAddress href={`${explorer}/address/${address}`} target="_blank">
+     <Tooltip placement="right" title={!name ? undefined : `${name} (${symbol})`}> <Typography>{symbol}</Typography></Tooltip>
+    </StyledTokenAddress>
+  );
+};
+
+const StyledTokenAddress = styled('a')({
+  textDecoration: "none",
+  color: colors.dark.textMain,
+  "&:hover": {
+    textDecoration: "underline",
+  },
+})
+
+export const WalletAddress = ({
+  address,
+  chainId,
+}: {
+  address?: string;
+  chainId?: number;
+}) => {
+  const explorer = useExplorerUrl(chainId);
+  return (
+    <AddressLink
+      address={address}
+      url={`${explorer}/address/${address}`}
+      text={address}
+    />
+  );
+};
+
+export const TxHashAddress = ({
+  address,
+  chainId,
+}: {
+  address?: string;
+  chainId?: number;
+}) => {
+  const explorer = useExplorerUrl(chainId);
+  return (
+    <AddressLink
+      address={address}
+      url={`${explorer}/tx/${address}`}
+      text={address}
+    />
+  );
+};
+
+const StyledCopy = styled("button")`
+  color: black;
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0;
+  background: none;
+  border: none;
+  position: relative;
+  top: 2px;
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${colors.dark.link};
+  }
 `;
 
-const Container = styled.span`
+const Container = styled.div`
   display: flex;
+  position: relative;
   align-items: center;
   gap: 5px;
+  &:hover {
+    ${StyledCopy} {
+      opacity: 1;
+      pointer-events: all;
+    }
+  }
 `;
 
-const StyledLink = styled("a")<{ $underline: boolean }>`
+const StyledLink = styled(Link)`
   font-weight: 500;
   display: flex;
   font-size: 14px;
-  text-decoration: ${({ $underline }) => ($underline ? "underline" : "none")};
-  color: black!important;
+  text-decoration: none;
+  * {
+    color: ${colors.dark.link}!important;
+  }
   &:hover {
     text-decoration: underline;
   }

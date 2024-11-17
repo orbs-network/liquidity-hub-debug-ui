@@ -1,3 +1,4 @@
+import { colors } from "consts";
 import styled from "styled-components";
 export const RowFlex = styled.div<{
   $gap?: number;
@@ -32,20 +33,13 @@ export const OverflowText = styled('p')`
 `;
 
 
-export const colors = {
-  border: "#e9ecef",
-};
-
-
-
 
 export const Card = styled.div`
-  box-shadow: 0 0.5rem 1.2rem rgb(189 197 209 / 20%);
   width: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  background-color: white;
+  background-color: ${colors.dark.cardBg};
 `;
 
 

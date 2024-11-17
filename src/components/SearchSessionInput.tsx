@@ -6,10 +6,13 @@ import { RowFlex } from "styles";
 import { ROUTES } from "config";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
+import { colors } from "consts";
+import { useIsMobile } from "hooks";
 
 export function SearchSessionInput({ className = "" }: { className?: string }) {
   const [value, setVale] = useState("");
   const navigate = useNavigate();
+  const isMobile= useIsMobile();
   const [api, contextHolder] = notification.useNotification();
 
   const searchSession = useCallback(() => {
@@ -49,13 +52,13 @@ export function SearchSessionInput({ className = "" }: { className?: string }) {
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}
         />
-        <StyledButton
+       {isMobile &&  <StyledButton
           className="search-input-button"
           $disabled={!value}
           onClick={searchSession}
         >
           <ArrowUp size={16} color="white" />
-        </StyledButton>
+        </StyledButton>}
       </StyledInputContainer>
     </>
   );
@@ -73,23 +76,30 @@ const StyledButton = styled("button")<{ $disabled: boolean }>(
     justifyContent: "center",
     cursor: "pointer",
     transition: "background-color 0.3s",
-    backgroundColor: $disabled ? "rgb(215 215 215/1)" : "black",
+    backgroundColor: 'black',
+    opacity: $disabled ? 0.5 : 1,
+    position: "absolute",
+    right: 5,
   })
 );
 
 const StyledInputContainer = styled(RowFlex)`
-  background-color: rgb(244 244 244/1);
-  border-radius: 20px;
-  padding: 8px 8px 8px 15px;
+  background-color: ${colors.dark.inputBg};
+  border-radius: 14px;
+  padding: 0;
+  position: relative;
 `;
 
 const StyledInput = styled("input")`
-  flex: 1;
+  height: 35px;
+  width: 100%;
+  text-indent: 10px;
   border: none;
   outline: none;
   background-color: transparent;
-  font-size: 16px;
-  height: unset;
+  color: ${colors.dark.textMain};
+  font-family: "IBM Plex Mono", monospace;
+  padding-right: 40px;
   &::placeholder {
     transition: opacity 0.2s;
   }

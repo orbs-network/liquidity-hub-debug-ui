@@ -6,7 +6,7 @@ import { ReactNode, useState } from "react";
 import { SearchSessionInput } from "./SearchSessionInput";
 import orbsLogo from "assets/orbs.svg";
 import { useIsMobile } from "hooks";
-import { MOBILE } from "consts";
+import { colors, MOBILE } from "consts";
 import { Filters } from "./Filters";
 import { Search } from "react-feather";
 import { Popover } from "antd";
@@ -52,7 +52,7 @@ const StyledNavbarContent = styled(Card)({
   alignItems: "center",
   height: "100%",
   padding: "6px 20px",
-  backgroundColor: "white",
+  backgroundColor: colors.dark.cardBg,
   maxWidth: 1200,
   gap: 20,
   [`@media (max-width: ${MOBILE}px)`]: {
@@ -64,12 +64,9 @@ const StyledNavbarContent = styled(Card)({
 const StyledSearchSessionInput = styled(SearchSessionInput)({
   maxWidth: 300,
   width: "100%",
-  ".search-input-button": {
-    width: 25,
-    height: 25,
-  },
+
   input: {
-    fontSize: 16,
+    fontSize: 14,
     "&::placeholder": {
       fontSize: 14,
     },
@@ -83,11 +80,11 @@ const StyledLogo = styled(Link)({
   gap: 10,
   textDecoration: "unset",
   span: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 600,
     position: "relative",
     top: 2,
-    color: "#947DE5",
+    color: colors.dark.textMain,
   },
   img: {
     width: "35px",
@@ -247,7 +244,7 @@ const Placeholder = styled.div`
   width: 100%;
   position: fixed;
   top: 0px;
-  background-color: #f8f9fb;
+  background-color: ${colors.dark.bgMain};
   z-index: 1;
   @media (max-width: ${MOBILE}px) {
     height: 70px;

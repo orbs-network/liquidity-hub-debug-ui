@@ -1,4 +1,10 @@
-import { AddressLink, DataDisplay, FormattedAmount, Page } from "components";
+import {
+  DataDisplay,
+  FormattedAmount,
+  Page,
+  TxHashAddress,
+  WalletAddress,
+} from "components";
 import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
@@ -13,11 +19,9 @@ import {
 import {
   useAmountUI,
   useChainConfig,
-  useNumberFormatter,
   useLiquidityHubPartner,
   useToken,
 } from "hooks";
-import { makeElipsisAddress } from "helpers";
 import { TransferLog } from "types";
 import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
@@ -27,10 +31,11 @@ import { LogTrace } from "./components/LogTrace";
 import { UserSavings } from "./components/UserSavings";
 import { MOBILE } from "consts";
 import { useLiquidityHubSession } from "applications";
+import { useQuery } from "@tanstack/react-query";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useLiquidityHubSession();
-  
+
   const inToken = useToken(session?.tokenInAddress, session?.chainId);
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
@@ -55,15 +60,15 @@ const StyledPageLayout = styled(Page.Layout)({
   [`@media (max-width: ${MOBILE}px)`]: {
     // background:'transparent',
     // boxShadow: 'none',
-  }
-})
+  },
+});
 
 const SessionId = () => {
   const session = useLiquidityHubSession().data;
-  
+
   return (
     <DataDisplay.Row label="Session ID">
-      <DataDisplay.Row.Text>{session?.id}</DataDisplay.Row.Text>
+      <Typography>{session?.id}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -75,12 +80,10 @@ const Network = () => {
   const logo = config?.logoUrl;
   return (
     <DataDisplay.Row label="Network">
-      <DataDisplay.Row.Text>
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <Avatar src={logo} style={{ width: "20px", height: "20px" }} />
-          {networkName}
-        </span>
-      </DataDisplay.Row.Text>
+        <Avatar src={logo} style={{ width: "20px", height: "20px" }} />
+      <Typography style={{textTransform:'uppercase'}}>
+        {networkName}
+      </Typography>
     </DataDisplay.Row>
   );
 };
@@ -89,8 +92,9 @@ const Content = () => {
   return (
     <DataDisplay>
       <Network />
-      <SessionId />
       <Dex />
+      <SessionId />
+     
       <Timestamp />
       <User />
       <DataDisplay.Divider />
@@ -121,10 +125,10 @@ const Slippage = () => {
   const session = useLiquidityHubSession().data;
   return (
     <DataDisplay.Row
-      label="User Slippage"
+      label="SLIPPAGE"
       tooltip="The slippage user sets in the UI"
     >
-      <DataDisplay.Row.Text>{session?.slippage}%</DataDisplay.Row.Text>
+      <Typography>{session?.slippage}%</Typography>
     </DataDisplay.Row>
   );
 };
@@ -137,7 +141,7 @@ const Dex = () => {
     <DataDisplay.Row label="Dex">
       <RowFlex $gap={8}>
         <Avatar src={partner?.logoUrl} style={{ width: 20, height: 20 }} />
-        <DataDisplay.Row.Text>{session?.dex}</DataDisplay.Row.Text>
+        <Typography>{session?.dex}</Typography>
       </RowFlex>
     </DataDisplay.Row>
   );
@@ -147,24 +151,30 @@ const User = () => {
 
   return (
     <DataDisplay.Row label="User's Address">
-      <AddressLink underline address={session?.userAddress} short={true} />
+      <WalletAddress
+        chainId={session?.chainId}
+        address={session?.userAddress}
+      />
     </DataDisplay.Row>
   );
 };
 const Timestamp = () => {
   const session = useLiquidityHubSession().data;
+
+  const fromNow = useQuery({
+    queryKey: ["fromNow", session?.id],
+    queryFn: async () => {
+      return moment(session?.timestamp).fromNow();
+    },
+    refetchInterval: 1_000,
+  }).data;
   return (
-    <DataDisplay.Row label="Timestamp">
+    <DataDisplay.Row label="TIME">
       <RowFlex>
-        <DataDisplay.Row.Text>
-          {moment(session?.timestamp).format("lll")}
-        </DataDisplay.Row.Text>
-        <AddressLink
-          chainId={session?.chainId}
-          address={session?.blockNumber?.toString()}
-          path="block"
-          text={`(${session?.blockNumber})`}
-        />
+        <Typography>
+          {fromNow}
+          {` (${moment(session?.timestamp).format("lll")})`}
+        </Typography>
       </RowFlex>
     </DataDisplay.Row>
   );
@@ -179,7 +189,6 @@ const InTokenAmount = () => {
       <DataDisplay.TokenAmount
         amount={amount}
         address={session?.tokenInAddress}
-        symbol={token?.symbol}
         usd={session?.amountInUsd}
         chainId={session?.chainId}
       />
@@ -191,22 +200,16 @@ const Status = () => {
   const session = useLiquidityHubSession().data;
 
   return (
-    <DataDisplay.Row label="Status">
-      <StatusBadge swapStatus={session?.swapStatus} />
+    <DataDisplay.Row label="STATUS">
+      <StatusBadge style={{ fontSize: 12 }} swapStatus={session?.swapStatus} />
     </DataDisplay.Row>
   );
 };
 const TxHash = () => {
   const session = useLiquidityHubSession().data;
   return (
-    <DataDisplay.Row label="Transaction Hash">
-      <AddressLink
-        underline
-        address={session?.txHash}
-        text={makeElipsisAddress(session?.txHash, 10)}
-        path="tx"
-        chainId={session?.chainId}
-      />
+    <DataDisplay.Row label="TRANSACTION HASH">
+      <TxHashAddress address={session?.txHash} chainId={session?.chainId} />
     </DataDisplay.Row>
   );
 };
@@ -223,7 +226,6 @@ const ExpectedToReceiveLH = () => {
       <DataDisplay.TokenAmount
         amount={amountF}
         address={session?.tokenOutAddress}
-        symbol={outToken?.symbol}
         usd={usd as string}
         chainId={session?.chainId}
       />
@@ -246,7 +248,6 @@ const DexAmountOut = () => {
     >
       <DataDisplay.TokenAmount
         amount={amount || "0"}
-        symbol={outToken?.symbol}
         address={session?.tokenOutAddress}
         usd={usd}
         chainId={session?.chainId}
@@ -259,16 +260,15 @@ const Fees = () => {
   const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const fee = useAmountUI(outToken?.decimals, session?.feeOutAmount);
+  
 
   const usdValue = useOutTokenUsd(fee);
-  const usd = useNumberFormatter({ value: usdValue });
   return (
     <DataDisplay.Row label="Fees">
       <DataDisplay.TokenAmount
         address={outToken?.address}
         amount={fee as string}
-        usd={usd as string}
-        symbol={outToken?.symbol}
+        usd={usdValue as string}
         chainId={session?.chainId}
       />
     </DataDisplay.Row>
@@ -288,7 +288,6 @@ const ExactAmountReceivedPreDeductions = () => {
       <DataDisplay.TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
-        symbol={outToken?.symbol}
         usd={usd as string}
         chainId={session?.chainId}
       />
@@ -307,7 +306,6 @@ const ExactAmountReceivedPostDeductions = () => {
       <DataDisplay.TokenAmount
         address={session?.tokenOutAddress}
         amount={amount as string}
-        symbol={outToken?.symbol}
         usd={usd as string}
         chainId={session?.chainId}
       />
@@ -322,7 +320,6 @@ const ExactAmountOut = () => {
   return (
     <DataDisplay.Row label="Exact Amount Out">
       <DataDisplay.TokenAmount
-        symbol={token?.symbol}
         address={session?.tokenOutAddress}
         amount={amount}
         chainId={session?.chainId}
@@ -338,7 +335,6 @@ const DucthPrice = () => {
   return (
     <DataDisplay.Row label="Dutch price">
       <DataDisplay.TokenAmount
-        symbol={token?.symbol}
         address={session?.tokenOutAddress}
         amount={amount}
         chainId={session?.chainId}
@@ -375,24 +371,20 @@ const Transfer = ({ log }: { log: TransferLog }) => {
       <Typography>
         <strong>From </strong>
       </Typography>
-      <AddressLink
-        hideCopy
+      <WalletAddress
         chainId={session?.chainId}
         address={log.from}
-        short
       />{" "}
       <Typography>
         <strong> To </strong>
       </Typography>
-      <AddressLink hideCopy chainId={session?.chainId} address={log.to} short />{" "}
+      <WalletAddress chainId={session?.chainId} address={log.to} />{" "}
       <Typography>
         <strong>For</strong> <FormattedAmount value={log.value} />{" "}
       </Typography>
-      <AddressLink
-        hideCopy
+      <WalletAddress
         chainId={session?.chainId}
         address={log.token.address}
-        text={log.token.symbol}
       />
     </StyledRow>
   );

@@ -12,7 +12,7 @@ import { styled } from "styled-components";
 import { ColumnFlex, LightButton, RowFlex } from "styles";
 import { ChevronDown } from "react-feather";
 import { partners } from "partners";
-import { MOBILE } from "consts";
+import { colors, MOBILE } from "consts";
 
 export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   const [open, setOpen] = useState(false);
@@ -215,6 +215,17 @@ const FilterDrawer = ({
   return (
     <Drawer
       title={title}
+      styles={{
+        header: {
+          border:'unset'
+        },
+        content: {
+          backgroundColor: colors.dark.cardBg,
+          color: colors.dark.textMain,
+          
+        },
+      
+      }}
       placement={isMobile ? "bottom" : "right"}
       width={isMobile ? "100%" : "300px"}
       onClose={onClose}
