@@ -127,7 +127,7 @@ export const TokenAmount = ({
 
   return (
     <StyledTokenAmount>
-      <Tooltip title={`${fullValue} ${token?.name}`} placement="right">
+      <Tooltip title={`${fullValue} ${token?.symbol}`} placement="right">
         <Typography>
           {prefix} {amountF.short || "0"}
         </Typography>
