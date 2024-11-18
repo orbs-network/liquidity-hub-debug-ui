@@ -128,7 +128,7 @@ const DexFee = ({ order }: { order: Order }) => {
 
   return (
     <StyledItem>
-      {order.dexFee ? <DexFeeAmount order={order} /> : <RowText text="-" />}
+      {BN(order.dexFee || 0).gt(0) ? <DexFeeAmount order={order} /> : <RowText text="-" />}
     </StyledItem>
   );
 };
