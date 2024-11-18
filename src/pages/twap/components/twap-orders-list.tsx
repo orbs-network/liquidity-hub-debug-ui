@@ -93,7 +93,7 @@ const GoButton = ({ order }: { order: Order }) => {
 const Timestamp = ({ order }: { order: Order }) => {
   return (
     <StyledItem>
-      <RowText text={moment(order.createdAt).format("MMM D, h:mm A")} />
+      <RowText text={moment(order.createdAt).fromNow()} />
     </StyledItem>
   );
 };
@@ -271,17 +271,17 @@ const desktopRows = [
   {
     Component: Tokens,
     label: "Tokens",
-    width: 18,
+    width: 14,
   },
   {
     Component: TradeAmount,
-    label: "Trade amount",
-    width: 13,
+    label: "$ Value",
+    width: 12,
   },
   {
     Component: DexFee,
     label: "Fee",
-    width: 16,
+    width: 14,
   },
   {
     Component: Status,

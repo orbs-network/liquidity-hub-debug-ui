@@ -284,10 +284,11 @@ const FillDelay = () => {
 
 const Progress = () => {
   const { order } = useOrderContext();
+  const value = useNumberFormatter({value: order?.progress, decimalScale: 2}).formatted
 
   return (
     <DataDisplay.Row label="Progress">
-      <Typography>{order?.progress}%</Typography>
+      <Typography>{value}%</Typography>
     </DataDisplay.Row>
   );
 };
