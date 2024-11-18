@@ -6,17 +6,20 @@ import moment from "moment";
 import { Button, Typography, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { RowFlex } from "styles";
-import { List, TokenAddress } from "components";
+import { DataDisplay, List, TokenAddress } from "components";
 import BN from "bignumber.js";
 import {
   useNumberFormatter,
   useTwapPartner,
   useTwapConfigByExchange,
   useNavigateWithParams,
+  useToken,
+  useAmountUI,
 } from "hooks";
 import { Order, OrderType as IOrderType } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
 import { ROUTES } from "config";
+import { colors } from "consts";
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
@@ -112,8 +115,34 @@ const TradeAmount = ({ order }: { order: Order }) => {
 
   return (
     <StyledItem>
-      {BN(amount || 0).gt(0) ?  <RowText text={`$${amount}`} /> : <RowText text="-" />}
+      {BN(amount || 0).gt(0) ? (
+        <RowText text={`$${amount}`} />
+      ) : (
+        <RowText text="-" />
+      )}
     </StyledItem>
+  );
+};
+
+const DexFee = ({ order }: { order: Order }) => {
+
+  return (
+    <StyledItem>
+      {order.dexFee ? <DexFeeAmount order={order} /> : <RowText text="-" />}
+    </StyledItem>
+  );
+};
+const DexFeeAmount = ({ order }: { order: Order }) => {
+  const config = useTwapConfigByExchange(order.exchange);
+  const token = useToken(order.dstTokenAddress, config?.chainId);
+  const amount = useAmountUI(token?.decimals, order.dexFee);
+
+  return (
+    <DataDisplay.TokenAmount
+      amount={amount}
+      address={order.dstTokenAddress}
+      chainId={config?.chainId}
+    />
   );
 };
 
@@ -131,7 +160,7 @@ const Tokens = ({ order }: { order: Order }) => {
         symbol={srcTokenSymbol}
       />
 
-      <ChevronRight size={10} />
+      <ChevronRight size={10} style={{ color: colors.dark.textMain }} />
 
       <TokenAddress
         symbol={dstTokenSymbol}
@@ -171,6 +200,9 @@ const StyledItem = styled(StyledRow)`
 
 const StyledText = styled(Typography)`
   font-size: 13px;
+  * {
+    color: ${colors.dark.textMain};
+  }
 `;
 
 const StyledButtons = styled(RowFlex)`
@@ -181,8 +213,8 @@ const StyledButtons = styled(RowFlex)`
 export const StatusBadge = ({ status }: { status?: string }) => {
   return (
     <Container style={{ background: "#F0AD4E" }}>
-      <Typography  style={{ textTransform: "capitalize" }}>
-        <TextOverflow  text={status || ''} />
+      <Typography style={{ textTransform: "capitalize" }}>
+        <TextOverflow text={status || ""} />
       </Typography>
     </Container>
   );
@@ -244,6 +276,11 @@ const desktopRows = [
   {
     Component: TradeAmount,
     label: "Trade amount",
+    width: 13,
+  },
+  {
+    Component: DexFee,
+    label: "Fee",
     width: 16,
   },
   {

@@ -112,7 +112,7 @@ const Log = ({ log, index }: { log: any; index: number }) => {
   return (
     <>
       <LightButton style={{ padding: "5px 10px" }} onClick={showModal}>
-        {title}
+        <Typography>{title}</Typography>
       </LightButton>
       <Modal
         onCancel={() => onClose()}
@@ -159,7 +159,7 @@ const Type = () => {
 
   return (
     <DataDisplay.Row label="Type">
-      <Typography>
+      <Typography style={{textTransform:'uppercase'}}>
         {parseOrderType(order?.orderType)}
       </Typography>
     </DataDisplay.Row>
@@ -220,7 +220,7 @@ const SrcFilledAmount = () => {
     <DataDisplay.Row label="Source Filled Amount">
       <DataDisplay.TokenAmount
         amount={amount}
-        address={order?.dstTokenAddress}
+        address={order?.srcTokenAddress}
         chainId={chainId}
         usd={usd}
       />
@@ -331,8 +331,8 @@ const Status = () => {
 
   return (
     <DataDisplay.Row label="Status">
-      <Typography>
-        <span style={{ textTransform: "capitalize" }}>{order?.status}</span>
+      <Typography style={{textTransform:'uppercase'}}>
+       {order?.status}
       </Typography>
     </DataDisplay.Row>
   );
@@ -437,7 +437,7 @@ const ExecutionPrice = () => {
     return order?.getExcecutionPrice(srcToken?.decimals, dstToken?.decimals);
   }, [order, srcToken, dstToken]);
 
-  const priceF = useNumberFormatter({ value: price });
+  const priceF = useNumberFormatter({ value: price }).formatted;
 
   return (
     <DataDisplay.Row label="Excecution Price">
@@ -459,7 +459,7 @@ const LimitPrice = () => {
     return order?.getLimitPrice(srcToken?.decimals, dstToken?.decimals);
   }, [order, srcToken, dstToken]);
 
-  const priceF = useNumberFormatter({ value: price });
+  const priceF = useNumberFormatter({ value: price }).formatted;
 
   return (
     <DataDisplay.Row label="Limit Price">

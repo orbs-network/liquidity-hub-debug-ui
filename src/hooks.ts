@@ -129,7 +129,7 @@ export const useNumberFormatter = ({
   }).value;
 
   const short = useMemo(() => {
-    return shortenNumber(value, decimals);
+    return shortenNumber(value, 2);
   }, [value, decimals]);
 
   return {
