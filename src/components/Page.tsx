@@ -268,7 +268,7 @@ export const StyledLayout = styled(Card)`
   flex: 1;
   padding: 20px;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1350px;
 `;
 
 const Layout = ({
