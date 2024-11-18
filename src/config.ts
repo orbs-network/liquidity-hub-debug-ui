@@ -3,7 +3,7 @@ import _ from "lodash";
 export const ROUTES = {
   main: "/",
   transactions: "/transactions",
-  tx: "/address/:identifier",
+  tx: "/tx/:identifier",
   address: "/user/:address",
   twap: {
     root: "/twap",
@@ -11,7 +11,7 @@ export const ROUTES = {
   },
 
   navigate: {
-    tx: (address: string) => `/address/${address}`,
+    tx: (address: string) => `/tx/${address}`,
     address: (address: string) => `/user/${address}`,
     main: () => "/",
     transactions: () => ROUTES.transactions,
