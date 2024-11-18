@@ -94,3 +94,10 @@ export function getMinDecimalScaleForLeadingZero(value?: string | number): numbe
 
   return undefined; // Return null if decimals don't start with '0'
 }
+
+export const handleZeroValue = (value?: any) => {
+  if(!value) return value;
+
+
+  return BN(value).gt(0) ? value : undefined;
+}

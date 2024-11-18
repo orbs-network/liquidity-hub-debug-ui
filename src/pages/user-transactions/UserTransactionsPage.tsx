@@ -4,6 +4,8 @@ import { TransactionsList } from "components";
 import { Page } from "components/Page";
 import { useLiquidityHubSwaps } from "applications";
 import { useParams } from "react-router";
+import { MOBILE } from "consts";
+import { styled } from "styled-components";
 
 export const UserTransactionsPage = () => {
   const walletAddress = useParams().address;
@@ -17,14 +19,22 @@ export const UserTransactionsPage = () => {
 
   return (
     <Page navbar={<Page.Navbar.LiquidityHub />}>
-      <Page.Layout>
+      <StyledLayout>
         <TransactionsList
           sessions={sessions}
           loadMore={fetchNextPage}
           isFetchingNextPage={isFetchingNextPage}
           isLoading={isLoading}
         />
-      </Page.Layout>
+      </StyledLayout>
     </Page>
   );
 };
+
+
+const StyledLayout = styled(Page.Layout)({
+  [`@media (max-width: ${MOBILE}px)`]: {
+    paddingLeft: 0,
+    paddingRight: 0,
+  }
+})

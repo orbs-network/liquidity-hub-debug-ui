@@ -173,22 +173,22 @@ const MobileRow = ({
         <ColumnFlex style={{ alignItems: "flex-start", gap: 2 }}>
           <RowFlex $gap={5}>
             <Typography style={{ fontSize: 14 }}>
-              <TextOverflow text={partner} />
+             {partner}
             </Typography>
             <Avatar src={chainIdConfig?.logoUrl} size={20} />
           </RowFlex>
           <StyledMobileContainerTokens>
             <Typography>{inToken}</Typography>
-            <ChevronRight />
+            <ChevronRight style={{color: colors.dark.textMain}} />
             <Typography> {outToken}</Typography>
             {usd && (
-              <Typography>
-                <small>{`($${usdF})`}</small>
+              <Typography style={{opacity: 0.7}}>
+               {`($${usdF})`}
               </Typography>
             )}
           </StyledMobileContainerTokens>
           <Typography style={{ fontSize: 13 }}>
-            <small>{moment(timestamp).format("D MMM HH:mm")}</small>
+          {moment(timestamp).format("D MMM HH:mm")}
           </Typography>
         </ColumnFlex>
       </StyledMobileContainerRight>
@@ -201,11 +201,12 @@ const StyledMobileRow = styled(RowFlex)({
   position: "relative",
   gap: 10,
   width: "100%",
+  padding: "0px 10px",
 });
 const MobileStatus = styled("div")({
   position: "absolute",
-  top: 0,
-  right: 0,
+  top: 10,
+  right: 10,
   padding: "2px 8px",
   borderRadius: 20,
   ".ant-typography": {

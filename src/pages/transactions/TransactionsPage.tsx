@@ -4,6 +4,8 @@ import { Page, TransactionsList } from "components";
 import { ColumnFlex } from "styles";
 import { Button, Input, Typography } from "antd";
 import { useLiquidityHubSwaps } from "applications";
+import { styled } from "styled-components";
+import { MOBILE } from "consts";
 
 export const TransactionsPage = () => {
   const [password, setPassword] = useState(localStorage.getItem("password"));
@@ -22,7 +24,7 @@ export const TransactionsPage = () => {
 
   return (
     <Page navbar={<Page.Navbar.LiquidityHub />}>
-      <Page.Layout>
+      <StyledLayout>
         {!password ? (
           <Password onSubmit={onSubmit} />
         ) : (
@@ -33,10 +35,17 @@ export const TransactionsPage = () => {
             isLoading={isLoading}
           />
         )}
-      </Page.Layout>
+      </StyledLayout>
     </Page>
   );
 };
+
+const StyledLayout = styled(Page.Layout)({
+  [`@media (max-width: ${MOBILE}px)`]: {
+    paddingLeft: 0,
+    paddingRight: 0,
+  }
+})
 
 const Password = ({ onSubmit }: { onSubmit: (value: string) => void }) => {
   const [value, setValue] = useState("");

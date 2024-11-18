@@ -51,10 +51,17 @@ export const LightButton = styled(RowFlex)({
   background: "transparent",
   border: "none",
   cursor: "pointer",
-  gap: 5,
-  backgroundColor: "#F5F8F8",
+  gap: 8,
+  backgroundColor: "#353547",
   borderRadius: 20,
   paddingRight: 10,
+  transition: "all 0.3s",
+  svg: {
+    color: colors.dark.textMain,
+  },
+  "&:hover": {
+    opacity: 0.8,
+  },
   article: {
     fontWeight: 600,
     opacity: 0.87

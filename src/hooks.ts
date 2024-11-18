@@ -116,8 +116,11 @@ export const useNumberFormatter = ({
   decimalScale?: number;
 }) => {
   const decimals = useMemo(() => {
-    return getMinDecimalScaleForLeadingZero(value) || decimalScale;
+    const res = getMinDecimalScaleForLeadingZero(value);
+    return !res ? decimalScale : res > 5 ? 0 : decimalScale;
   }, [value, decimalScale]);
+
+  
 
   const formatted = useNumericFormat({
     value,

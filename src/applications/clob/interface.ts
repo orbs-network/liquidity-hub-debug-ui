@@ -1,7 +1,7 @@
 import _ from "lodash";
 import moment from "moment";
 import BN from "bignumber.js";
-import { addSlippage } from "utils";
+import { addSlippage, handleZeroValue } from "utils";
 
 const nameModifier = (name?: string) => {
   if (name?.toLowerCase() === "matic") return "POL";
@@ -38,9 +38,13 @@ export class LiquidityHubSwap {
   blockNumber: number;
   amountInUsd: number;
   feeOutAmountUsd: number;
+  dexSimulateOutAmount: string;
+  dexRouteData: any;
+  dexRouteTo: string;
 
   constructor(rawSwap: any) {
-    const slippage = rawSwap.slippage;
+    const slippage = rawSwap.slippage;    
+    
 
     this.feeOutAmount = rawSwap.feeOutAmount;
     this.amountIn = rawSwap.amountIn;
@@ -74,6 +78,9 @@ export class LiquidityHubSwap {
     this.blockNumber = rawSwap.blockNumber;
     this.amountInUsd = rawSwap.amountInUSD;
     this.feeOutAmountUsd = rawSwap.feeOutAmountUsd;
+    this.dexSimulateOutAmount = handleZeroValue(rawSwap.dexSimulateOutAmount);
+    this.dexRouteData = rawSwap.dexRouteData;
+    this.dexRouteTo = rawSwap.dexRouteTo;
   }
 }
 
@@ -121,6 +128,6 @@ export class LiquidityHubSession extends LiquidityHubSwap {
       this.gasCostOutToken = '';
     }
     this.dexAmountOut = BN(this.dexAmountOut).lte(0) ? '' : this.dexAmountOut;
-    this.dexAmountOutWS = addSlippage(this.dexAmountOut, this.slippage) || ''
+    this.dexAmountOutWS = ! this.dexAmountOut ? ''  : addSlippage(this.dexAmountOut, this.slippage) || ''
   }
 }

@@ -74,7 +74,6 @@ const StyledRowLabel = styled(Typography)`
   }
 `;
 
-
 const StyledRowChildren = styled.div`
   flex: 1;
   justify-content: flex-start;
@@ -94,7 +93,7 @@ export const StyledDivider = styled.div`
 
 const RowLabel = ({ label, tooltip }: { label: string; tooltip?: string }) => {
   return (
-    <StyledRowLabel style={{fontSize: 13}}>
+    <StyledRowLabel style={{ fontSize: 13 }}>
       {`${label}:`} {tooltip && <QuestionHelper label={tooltip} />}
     </StyledRowLabel>
   );
@@ -106,12 +105,14 @@ export const TokenAmount = ({
   amount,
   usd,
   chainId,
+  tooltipContent,
 }: {
   address?: string;
   amount?: string | number;
   usd?: string | number;
   prefix?: string;
   chainId?: number;
+  tooltipContent?: ReactNode;
 }) => {
   const token = useToken(address, chainId);
 
@@ -120,21 +121,28 @@ export const TokenAmount = ({
     tokenDecimals: token?.decimals,
   });
   const usdF = useNumberFormatter({ value: usd, decimalScale: 2 });
-  const fullValue = useTokenValueFromatter({
+  const fullValue = useNumberFormatter({
     value: amount,
-    decimalScale: 18,
+    decimalScale: 8,
   }).formatted;
 
   return (
     <StyledTokenAmount>
-      <Tooltip title={`${fullValue} ${token?.symbol}`} placement="right">
+      <Tooltip
+        title={tooltipContent || `${fullValue} ${token?.symbol}`}
+        placement="right"
+      >
         <Typography>
           {prefix} {amountF.short || "0"}
         </Typography>
       </Tooltip>
 
-
-      <TokenAddress address={address} name={token?.name} symbol={token?.symbol} chainId={chainId} />
+      <TokenAddress
+        address={address}
+        name={token?.name}
+        symbol={token?.symbol}
+        chainId={chainId}
+      />
       {usd && <StyledUsd>{` ($${usdF.short || "-"})`}</StyledUsd>}
     </StyledTokenAmount>
   );
@@ -147,7 +155,6 @@ const StyledUsd = styled(Typography)({
 
 const StyledTokenAmount = styled(RowFlex)({
   gap: 5,
-
 });
 
 const DataDisplay = ({ children }: { children: ReactNode }) => {

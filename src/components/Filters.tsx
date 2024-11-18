@@ -88,7 +88,7 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
                 onClick={() => onSelect(network.id)}
               >
                 <Avatar src={network.logoUrl} alt={network.name} size={25} />
-                <span>{network.name}</span>
+                <Typography>{network.name}</Typography>
               </StyledListItem>
             );
           })}
@@ -172,7 +172,7 @@ export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
                 onClick={() => onSelect(partner.name)}
               >
                 <Avatar src={partner.logoUrl} alt={partner.name} size={25} />
-                <span>{partner.name}</span>
+                <Typography>{partner.name}</Typography>
               </StyledListItem>
             );
           })}
@@ -213,41 +213,47 @@ const FilterDrawer = ({
   }, [onReset, onClose]);
 
   return (
-    <Drawer
+    <CustomDrawer
       title={title}
       styles={{
         header: {
-          border:'unset'
+          border: "unset",
         },
         content: {
           backgroundColor: colors.dark.cardBg,
           color: colors.dark.textMain,
-          
         },
-      
       }}
       placement={isMobile ? "bottom" : "right"}
-      width={isMobile ? "100%" : "300px"}
+      width={isMobile ? "100%" : "400px"}
       onClose={onClose}
       open={isOpen}
       height={isMobile ? "96%" : "100%"}
       extra={
-        showReset ? <StyledReset onClick={reset}>Reset</StyledReset> : null
+        showReset ? <StyledReset onClick={reset}>
+          <Typography>Reset</Typography>
+        </StyledReset> : null
       }
     >
       {children}
-    </Drawer>
+    </CustomDrawer>
   );
 };
 
-const StyledReset = styled("button")({
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-  padding: "5px 10px",
-  borderRadius: 20,
-  backgroundColor: "#75DBE3",
-  color: "white",
+const CustomDrawer = styled(Drawer)`
+  .ant-drawer-title {
+    color: ${colors.dark.textMain}}; 
+  }
+  .ant-drawer-close {
+    * {
+      color: ${colors.dark.textMain};
+    }
+  }
+`;
+
+
+const StyledReset = styled(LightButton)({
+  padding: "4px 12px",
 });
 
 const Trigger = ({
@@ -270,22 +276,25 @@ const Trigger = ({
     );
   }
   return (
-    <LightButton onClick={onClick}>
-      <Avatar src={logo} alt={label} size={35} />
+    <StyledFilterButton onClick={onClick}>
+      <Avatar src={logo} alt={label} size={34} />
       {!isMobile && (
         <Typography style={{ whiteSpace: "nowrap" }}>{label}</Typography>
       )}
       <ChevronDown size="16px" />
-    </LightButton>
+    </StyledFilterButton>
   );
 };
-const StyledTriggerEmpty = styled(LightButton)({
-  boxShadow: "rgba(14, 14, 44, 0.4) 0px -1px 0px 0px inset",
-  background: "#1fc7d4",
-  color: "white",
+
+const StyledFilterButton = styled(LightButton)({
+  height: 34
+})
+
+const StyledTriggerEmpty = styled(StyledFilterButton)({
   borderRadius: 20,
   padding: "5px 15px",
   cursor: "pointer",
+
   ".ant-typography": {
     color: "white",
     fontWeight: 500,
@@ -308,12 +317,12 @@ const StyledListItem = styled(RowFlex)<{ $selected?: boolean }>`
   justify-content: flex-start;
   width: 100%;
   border-radius: 10px;
-  padding: 5px 20px 5px 5px;
+  padding: 8px 20px 8px 5px;
   cursor: pointer;
   transition: background 0.3s;
-  background: ${(props) => (props.$selected ? "#f0f0f0" : "transparent")};
+  background: ${(props) => (props.$selected ? colors.dark.inputBg : "transparent")};
 
   &:hover {
-    background: #f0f0f0;
+    background: ${colors.dark.inputBg };
   }
 `;

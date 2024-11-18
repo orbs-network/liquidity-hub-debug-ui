@@ -170,9 +170,7 @@ const SearchInput = () => {
 
       }}
       content={
-        <div>
-          <StyledMobileSearchInput />
-        </div>
+        <StyledMobileSearchInput />
       }
       trigger="click"
       open={open}

@@ -76,7 +76,23 @@ export const useDexAmountOutMinusGas = () => {
   const session = useLiquidityHubSession().data;
 
   return useMemo(() => {
+    if(BN(session?.dexAmountOutWS || 0).isZero()){
+      return 
+    }
     return BN(session?.dexAmountOutWS || 0)
+      .minus(session?.gasCostOutToken || 0)
+      .decimalPlaces(0)
+      .toFixed();
+  }, [session]);
+};
+export const useDexSimulateAmountOutMinusGas = () => {
+  const session = useLiquidityHubSession().data;
+
+  return useMemo(() => {
+    if(BN(session?.dexSimulateOutAmount || 0).isZero()){
+      return 
+    }
+    return BN(session?.dexSimulateOutAmount || 0)
       .minus(session?.gasCostOutToken || 0)
       .decimalPlaces(0)
       .toFixed();
@@ -91,7 +107,7 @@ export const useUserSavings = () => {
 
   return useMemo(() => {
     return BN(exactOutAmount || 0)
-      .minus(dexAmountMinusGas)
+      .minus(dexAmountMinusGas || 0)
       .toString();
   }, [session, dexAmountMinusGas, exactOutAmount]);
 };

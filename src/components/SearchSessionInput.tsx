@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { isValidSessionId, isValidTxHash, isValidWalletAddress } from "utils";
-import { RowFlex } from "styles";
+import { LightButton, RowFlex } from "styles";
 import { ROUTES } from "config";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
@@ -64,7 +64,7 @@ export function SearchSessionInput({ className = "" }: { className?: string }) {
   );
 }
 
-const StyledButton = styled("button")<{ $disabled: boolean }>(
+const StyledButton = styled(LightButton)<{ $disabled: boolean }>(
   ({ $disabled }) => ({
     borderRadius: "50%",
     border: "none",
@@ -72,11 +72,9 @@ const StyledButton = styled("button")<{ $disabled: boolean }>(
     width: "35px",
     height: "35px",
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer",
-    transition: "background-color 0.3s",
-    backgroundColor: 'black',
+    alignItems: "center",
+    padding: 0,
     opacity: $disabled ? 0.5 : 1,
     position: "absolute",
     right: 5,

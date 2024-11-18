@@ -1,9 +1,10 @@
 import styled from "styled-components";
 import { useCopyToClipboard, useExplorerUrl } from "hooks";
-import { Copy } from "react-feather";
-import { notification, Tooltip, Typography } from "antd";
+import { Copy , Check} from "react-feather";
+import { Tooltip, Typography } from "antd";
 import { colors } from "consts";
 import TextOverflow from "react-text-overflow";
+import { useState } from "react";
 const { Link } = Typography;
 
 export function AddressLink({
@@ -15,30 +16,28 @@ export function AddressLink({
   url: string;
   text?: string;
 }) {
-  const [api, contextHolder] = notification.useNotification();
+  const [success, setSuccess] = useState(false);
 
   const copy = useCopyToClipboard();
   const onCopy = (e: any) => {
-    api.success({
-      showProgress: true,
-      message: "Copied to clipboard",
-      placement: "bottomRight",
-      duration: 3,
-    });
+    if (success) return;
     e.preventDefault();
     copy(address!);
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+    }, 1_500);
   };
 
   return (
     <Container>
-      {contextHolder}
       <Typography>
         <StyledLink href={url} target="_blank">
           <TextOverflow text={text || ""} />
         </StyledLink>
       </Typography>
-
-      {address && (
+    {success && <StyledCopySuccess><Check /></StyledCopySuccess>}
+      {success ?  null  :address && (
         <StyledCopy onClick={onCopy} className="copy-btn">
           <Copy />
         </StyledCopy>
@@ -47,11 +46,12 @@ export function AddressLink({
   );
 }
 
+
 export const TokenAddress = ({
   chainId,
   address,
   symbol,
-  name
+  name,
 }: {
   chainId?: number;
   address?: string;
@@ -61,18 +61,24 @@ export const TokenAddress = ({
   const explorer = useExplorerUrl(chainId);
   return (
     <StyledTokenAddress href={`${explorer}/address/${address}`} target="_blank">
-     <Tooltip placement="right" title={!name ? undefined : `${name} (${symbol})`}> <Typography>{symbol}</Typography></Tooltip>
+      <Tooltip
+        placement="right"
+        title={!name ? undefined : `${name} (${symbol})`}
+      >
+        {" "}
+        <Typography>{symbol}</Typography>
+      </Tooltip>
     </StyledTokenAddress>
   );
 };
 
-const StyledTokenAddress = styled('a')({
+const StyledTokenAddress = styled("a")({
   textDecoration: "none",
   color: colors.dark.textMain,
   "&:hover": {
     textDecoration: "underline",
   },
-})
+});
 
 export const WalletAddress = ({
   address,
@@ -107,6 +113,18 @@ export const TxHashAddress = ({
     />
   );
 };
+
+
+const StyledCopySuccess = styled("span")`
+position: relative;
+top: 2px;
+svg {
+  width: 16px;
+  height: 16px;
+  color: ${colors.dark.link};
+}
+`
+
 
 const StyledCopy = styled("button")`
   color: black;

@@ -32,6 +32,9 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
         data,
         signal
       );
+
+      console.log({logs});
+      
       return logs.map((log) => {
         return new LiquidityHubSwap(log);
       });
