@@ -7,7 +7,7 @@ export const colors = {
     cardBg: "#14161F",
     textMain: "#ededed",
     textSecondary: "rgba(255, 255, 255, 0.6)",
-    inputBg:'#1D2029',
+    inputBg:'#15273A',
     bgTooltip:'black',
   },
 };

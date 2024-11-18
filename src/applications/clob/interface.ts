@@ -119,16 +119,15 @@ export class LiquidityHubSession extends LiquidityHubSwap {
       addSlippage(rawSwap.amountOut, this.slippage);
     this.gasCostOutToken = parsedQuote?.gasCostOutToken || "";
     this.dexAmountOutWS = addSlippage(this.dexAmountOut, this.slippage);
-    this.dexAmountOutWSminusGas = BN(this?.dexAmountOutWS || 0)
-      .minus(this.gasCostOutToken || 0)
-      .toFixed();
+    
+    this.dexAmountOutWSminusGas = BN(this?.dexAmountOutWS || 0).gt(0)
+      ? BN(this?.dexAmountOutWS || 0)
+          .minus(this.gasCostOutToken || 0)
+          .toFixed()
+      : "";
 
-    const userSavings = BN(this.exactOutAmount || 0).minus(
-      this.dexAmountOutWSminusGas || 0
-    );
 
-    this.userSavings = userSavings.gt(0) ? userSavings.toFixed() : "";
-    this.lhAmountOutExpected = BN(this?.lhAmountOut || 0)
+    this.lhAmountOutExpected = BN(this?.lhAmountOutWS || 0)
       .minus(this.gasCostOutToken || 0)
       .toFixed();
     const dexSimulateOutAmountMinusGas = BN(
@@ -141,6 +140,13 @@ export class LiquidityHubSession extends LiquidityHubSwap {
       .plus(this?.gasCostOutToken || 0)
       .plus(this?.feeOutAmount || 0)
       .toFixed();
+
+      const userSavings = BN(this.dexAmountOutWSminusGas).gt(0)
+      ? BN(this.exactOutAmount || 0).minus(this.dexAmountOutWSminusGas || 0)
+      : BN(0);
+
+    this.userSavings = userSavings.gt(0) ? userSavings.toFixed() : "";
+
   }
 }
 
