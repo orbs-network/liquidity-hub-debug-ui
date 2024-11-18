@@ -43,8 +43,7 @@ export class LiquidityHubSwap {
   dexRouteTo: string;
 
   constructor(rawSwap: any) {
-    const slippage = rawSwap.slippage;    
-    
+    const slippage = rawSwap.slippage;
 
     this.feeOutAmount = rawSwap.feeOutAmount;
     this.amountIn = rawSwap.amountIn;
@@ -91,6 +90,12 @@ export class LiquidityHubSession extends LiquidityHubSwap {
   dexAmountOutWS: string;
   lhAmountOutWS: string;
   gasCostOutToken: string;
+  dexAmountOutWSminusGas: string;
+  userSavings: string;
+  lhAmountOutExpected: string;
+  dexSimulateOutAmountMinusGas: string;
+  lhExactOutAmountPreDeduction: string;
+
   logs: {
     swap: any;
     quote: any[];
@@ -103,31 +108,61 @@ export class LiquidityHubSession extends LiquidityHubSwap {
       quote: quotes,
       client,
     };
-    const sorted = quotes.sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+
+    const parsedQuote = parseQuote(quotes);
+
+    this.lhAmountOut = parsedQuote?.lhAmountOut || rawSwap.amountOut;
+    this.lhAmountOutUsd = parsedQuote?.lhAmountOutUsd || rawSwap.dollarValue;
+    this.dexAmountOut = parsedQuote?.dexAmountOut || rawSwap.amountOutUI;
+    this.lhAmountOutWS =
+      parsedQuote?.lhAmountOutWS ||
+      addSlippage(rawSwap.amountOut, this.slippage);
+    this.gasCostOutToken = parsedQuote?.gasCostOutToken || "";
+    this.dexAmountOutWS = addSlippage(this.dexAmountOut, this.slippage);
+    this.dexAmountOutWSminusGas = BN(this?.dexAmountOutWS || 0)
+      .minus(this.gasCostOutToken || 0)
+      .toFixed();
+
+    const userSavings = BN(this.exactOutAmount || 0).minus(
+      this.dexAmountOutWSminusGas || 0
     );
 
-    try {
-      const quote = sorted[0];
-      if (!quote) {
-        throw new Error("No quote found");
-      }
-        
-      const winnerIndex = quote["auctionData.exchange"].indexOf(quote['auctionWinner']);
-      this.lhAmountOut = quote.amountOut;
-      this.lhAmountOutUsd = quote.dollarValue;
-      this.dexAmountOut = quote.amountOutUI;
-      this.lhAmountOutWS = addSlippage(quote.amountOut, quote.slippage) || "";
-      this.gasCostOutToken = quote["auctionData.gasCost"][winnerIndex] || '';
-    } catch (error) {
-      this.lhAmountOut = rawSwap.amountOut;
-      this.lhAmountOutUsd = rawSwap.dollarValue;
-      this.dexAmountOut = rawSwap.amountOutUI;
-      this.lhAmountOutWS = addSlippage(rawSwap.amountOut, this.slippage) || "";
-      this.gasCostOutToken = '';
-    }
-    this.dexAmountOut = BN(this.dexAmountOut).lte(0) ? '' : this.dexAmountOut;
-    this.dexAmountOutWS = ! this.dexAmountOut ? ''  : addSlippage(this.dexAmountOut, this.slippage) || ''
+    this.userSavings = userSavings.gt(0) ? userSavings.toFixed() : "";
+    this.lhAmountOutExpected = BN(this?.lhAmountOut || 0)
+      .minus(this.gasCostOutToken || 0)
+      .toFixed();
+    const dexSimulateOutAmountMinusGas = BN(
+      this?.dexSimulateOutAmount || 0
+    ).minus(this?.gasCostOutToken || 0);
+    this.dexSimulateOutAmountMinusGas = dexSimulateOutAmountMinusGas.gt(0)
+      ? dexSimulateOutAmountMinusGas.toFixed()
+      : "";
+    this.lhExactOutAmountPreDeduction = BN(this.exactOutAmount || 0)
+      .plus(this?.gasCostOutToken || 0)
+      .plus(this?.feeOutAmount || 0)
+      .toFixed();
   }
 }
+
+const parseQuote = (quotes: any[]) => {
+  const sorted = quotes.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+
+  const quote = sorted[0];
+  if (!quote) {
+    return undefined;
+  }
+
+  const winnerIndex = quote["auctionData.exchange"].indexOf(
+    quote["auctionWinner"]
+  );
+
+  return {
+    lhAmountOut: quote.amountOut,
+    lhAmountOutUsd: quote.dollarValue,
+    dexAmountOut: quote.amountOutUI,
+    lhAmountOutWS: addSlippage(quote.amountOut, quote.slippage) || "",
+    gasCostOutToken: quote["auctionData.gasCost"][winnerIndex] || "",
+  };
+};

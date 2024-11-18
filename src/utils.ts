@@ -23,7 +23,7 @@ export const isValidSessionId = (sessionId: string) => {
 };
 
 export const addSlippage = (amount?: string, slippage?: number) => {
-  if (!amount || !slippage) return amount;
+  if (!amount || !slippage) return '';
 
   const slippageBN = BN(amount).times(slippage).div(100);
 

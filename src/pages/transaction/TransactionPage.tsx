@@ -10,10 +10,6 @@ import styled from "styled-components";
 import _ from "lodash";
 import { Avatar, Typography } from "antd";
 import {
-  useDexAmountOutMinusGas,
-  useDexSimulateAmountOutMinusGas,
-  useExactAmountOutPreDeduction,
-  useExpectedToReceiveLH,
   useOutTokenUsd,
   useTransfers,
 } from "./hooks";
@@ -222,7 +218,8 @@ const TxHash = () => {
 const ExpectedToReceiveLH = () => {
   const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const amount = useExpectedToReceiveLH();
+
+  const amount = session?.lhAmountOutExpected
   const amountF = useAmountUI(outToken?.decimals, amount);
   const usd = useOutTokenUsd(amountF);
 
@@ -244,12 +241,12 @@ const DexAmountOut = () => {
 
   const dexAmountOut = useAmountUI(
     outToken?.decimals,
-    useDexAmountOutMinusGas()
+    session?.dexAmountOutWSminusGas
   );
   const dexAmountOutUsd = useOutTokenUsd(dexAmountOut);
   const dexSimulatedAmountOut = useAmountUI(
     outToken?.decimals,
-    useDexSimulateAmountOutMinusGas()
+    session?.dexSimulateOutAmountMinusGas
   );
   const dexSimulatedAmountOutF = useNumberFormatter({
     value: dexSimulatedAmountOut,
@@ -297,9 +294,7 @@ const Fees = () => {
 const ExactAmountReceivedPreDeductions = () => {
   const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-
-  const exactOutAmountPreDeduction = useExactAmountOutPreDeduction();
-  const amount = useAmountUI(outToken?.decimals, exactOutAmountPreDeduction);
+  const amount = useAmountUI(outToken?.decimals, session?.lhExactOutAmountPreDeduction);
   const usd = useOutTokenUsd(amount);
 
   return (
