@@ -1,4 +1,5 @@
 export const MOBILE = 768;
+export const MAX_LAYOUT_WIDTH = 1350;
 
 export const colors = {
   dark: {

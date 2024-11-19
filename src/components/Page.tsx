@@ -6,7 +6,7 @@ import { ReactNode, useState } from "react";
 import { SearchSessionInput } from "./SearchSessionInput";
 import orbsLogo from "assets/orbs.svg";
 import { useIsMobile } from "hooks";
-import { colors, MOBILE } from "consts";
+import { colors, MAX_LAYOUT_WIDTH, MOBILE } from "consts";
 import { Filters } from "./Filters";
 import { Search } from "react-feather";
 import { Popover } from "antd";
@@ -53,7 +53,7 @@ const StyledNavbarContent = styled(Card)({
   height: "100%",
   padding: "6px 20px",
   backgroundColor: colors.dark.cardBg,
-  maxWidth: 1200,
+  maxWidth: MAX_LAYOUT_WIDTH,
   gap: 20,
   [`@media (max-width: ${MOBILE}px)`]: {
     padding: "6px 10px",
@@ -268,7 +268,7 @@ export const StyledLayout = styled(Card)`
   flex: 1;
   padding: 20px;
   width: 100%;
-  max-width: 1350px;
+  max-width: ${MAX_LAYOUT_WIDTH}px;
 `;
 
 const Layout = ({
