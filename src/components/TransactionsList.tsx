@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { RowFlex } from "../styles";
-import { ROUTES } from "../config";
 import { Link, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import {
@@ -18,6 +17,7 @@ import { ChevronRight } from "react-feather";
 import { List } from "./List";
 import { LiquidityHubSwap } from "applications/clob/interface";
 import { colors } from "consts";
+import { navigation } from "utils";
 
 export const TransactionsList = ({
   sessions = [],
@@ -65,7 +65,7 @@ const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   const navigate = useNavigate();
 
   const onNavigate = useCallback(() => {
-    navigate(ROUTES.navigate.tx(item.id));
+    navigate(navigation.liquidityHub.tx(item.id));
   }, [navigate, item.id]);
 
   return (
@@ -128,7 +128,7 @@ const StyledTokens = styled(RowFlex)({
 
 const SessionId = ({ item }: { item: LiquidityHubSwap }) => {
   return (
-    <Link to={ROUTES.navigate.tx(item.id)} style={{ textDecoration: "unset" }}>
+    <Link to={navigation.liquidityHub.tx(item.id)} style={{ textDecoration: "unset" }}>
       <List.DesktopRow.Element.Text text={item.id} />
     </Link>
   );
@@ -138,7 +138,7 @@ const TxHash = ({ item }: { item: LiquidityHubSwap }) => {
   const { txHash } = item;
   return (
     <>
-      <Link to={ROUTES.navigate.tx(txHash)} style={{ textDecoration: "unset" }}>
+      <Link to={navigation.liquidityHub.tx(txHash)} style={{ textDecoration: "unset" }}>
         <List.DesktopRow.Element.Text text={makeElipsisAddress(txHash) || ""} />
       </Link>
     </>
@@ -236,7 +236,7 @@ const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
   const partner = useLiquidityHubPartner(item.dex);
   const navigate = useNavigate();
   const onClick = useCallback(() => {
-    navigate(ROUTES.navigate.tx(item.id));
+    navigate(navigation.liquidityHub.tx(item.id));
   }, [navigate, item.id]);
 
   return (

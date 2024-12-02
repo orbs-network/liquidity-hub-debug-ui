@@ -1,4 +1,5 @@
 import BN from "bignumber.js";
+import { ROUTES } from "config";
 import _ from "lodash";
 import moment from "moment";
 import { partners } from "partners";
@@ -17,30 +18,21 @@ export const isValidTxHash = (txHash: string) => {
   return ethereumTxHashPattern.test(txHash);
 };
 
-export const isValidSessionId = (sessionId: string) => {
-  const regex = /^[a-zA-Z0-9]+_\d+$/;
-  return regex.test(sessionId);
-};
-
 export const addSlippage = (amount?: string, slippage?: number) => {
-  if (!amount || !slippage) return '';
+  if (!amount || !slippage) return "";
 
   const slippageBN = BN(amount).times(slippage).div(100);
 
   return BN(amount).plus(slippageBN).toString();
 };
 
-
-
 export const getPartnerWithExchangeAddress = (exchangeAddress?: string) => {
-  return  _.find(partners, (p) => !!p.getTwapConfigByExchange(exchangeAddress))
-}
-
-
+  return _.find(partners, (p) => !!p.getTwapConfigByExchange(exchangeAddress));
+};
 
 export const MillisToDuration = (value?: number) => {
   if (!value) {
-      return "";
+    return "";
   }
   const time = moment.duration(value);
   const days = time.days();
@@ -65,39 +57,55 @@ export const MillisToDuration = (value?: number) => {
   return arr.join(" ");
 };
 
-
-export function getMinDecimalScaleForLeadingZero(value?: string | number): number | undefined {
+export function getMinDecimalScaleForLeadingZero(
+  value?: string | number
+): number | undefined {
   // Convert the value to a string
-  if(!value) return undefined;
-  const valueStr =  typeof value === 'number' ? value.toString() : value;
+  if (!value) return undefined;
+  const valueStr = typeof value === "number" ? value.toString() : value;
 
   if (parseFloat(valueStr) === 0) return undefined; // If the value is 0, return undefined
 
-  const decimalIndex = valueStr.indexOf('.');
+  const decimalIndex = valueStr.indexOf(".");
 
   if (decimalIndex === -1) {
-      // No decimal point, it's an integer
-      return undefined;
+    // No decimal point, it's an integer
+    return undefined;
   }
 
   const decimals = valueStr.slice(decimalIndex + 1);
 
   // Check if decimals start with '0'
-  if (decimals.startsWith('0')) {
-      // Count decimal places until the first non-zero digit
-      for (let i = 0; i < decimals.length; i++) {
-          if (decimals[i] !== '0') {
-              return i + 1; // Include the first non-zero digit
-          }
+  if (decimals.startsWith("0")) {
+    // Count decimal places until the first non-zero digit
+    for (let i = 0; i < decimals.length; i++) {
+      if (decimals[i] !== "0") {
+        return i + 1; // Include the first non-zero digit
       }
+    }
   }
 
   return undefined; // Return null if decimals don't start with '0'
 }
 
 export const handleZeroValue = (value?: any) => {
-  if(!value) return value;
-
+  if (!value) return value;
 
   return BN(value).gt(0) ? value : undefined;
-}
+};
+
+export const navigation = {
+  liquidityHub: {
+    tx: (value: string) =>
+      ROUTES.liquidityHub.tx.replace(":sessionIdOrTxHash", value),
+    user: (value: string) => ROUTES.liquidityHub.user.replace(":user", value),
+  },
+  twap: {
+    order: (orderId: number) => {
+      return ROUTES.twap.order.replace(":orderId", orderId.toString());
+    },
+    maker: (maker: string) => {
+      return ROUTES.twap.maker.replace(":maker", maker);
+    },
+  },
+};

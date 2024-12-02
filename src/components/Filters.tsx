@@ -13,8 +13,11 @@ import { ColumnFlex, LightButton, RowFlex } from "styles";
 import { ChevronDown } from "react-feather";
 import { partners } from "partners";
 import { colors, MOBILE } from "consts";
+import { ROUTES } from "config";
+import { useLocation } from "react-router-dom";
 
-export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
+export const ChainSelect = () => {
+  const isTwap = useLocation().pathname.includes(ROUTES.twap.root);
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useAppParams();
   const selectedChain = useChainConfig(query.chainId);
@@ -37,24 +40,24 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   }, [setQuery]);
 
   const filteredChains = useMemo(() => {
-    if (selectedPartner && type === "lh") {
+    if (selectedPartner && !isTwap) {
       return Object.values(networks).filter((it) =>
         selectedPartner.supportsLiquidityHub(it.id)
       );
     }
-    if (selectedPartner && type === "twap") {
+    if (selectedPartner && isTwap) {
       return Object.values(networks).filter((it) =>
         selectedPartner.supportsTwap(it.id)
       );
     }
-    if (type === "lh") {
+    if (!isTwap) {
       return Object.values(networks).filter((it) => {
         return Object.values(partners).some((partner) =>
           partner.supportsLiquidityHub(it.id)
         );
       });
     }
-    if (type === "twap") {
+    if (isTwap) {
       return Object.values(networks).filter((it) => {
         return Object.values(partners).some((partner) =>
           partner.supportsTwap(it.id)
@@ -62,7 +65,7 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
       });
     }
     return [];
-  }, [selectedPartner, type, query.chainId]);
+  }, [selectedPartner, isTwap, query.chainId]);
 
   return (
     <>
@@ -98,10 +101,11 @@ export const ChainSelect = ({ type }: { type: "twap" | "lh" }) => {
   );
 };
 
-export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
+export const PartnerSelect = () => {
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useAppParams();
   const selectedPartner = usePartnerFromName(query.partner);
+  const isTwap = useLocation().pathname.includes(ROUTES.twap.root);
 
   const onOpen = useCallback(() => setOpen(true), []);
 
@@ -120,17 +124,17 @@ export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
   }, [setQuery]);
 
   const filteredPartners = useMemo(() => {
-    if (query.chainId && type === "lh") {
+    if (query.chainId && !isTwap) {
       return Object.values(partners).filter((it) =>
         it.supportsLiquidityHub(query.chainId)
       );
     }
-    if (query.chainId && type === "twap") {
+    if (query.chainId && isTwap) {
       return Object.values(partners).filter((it) =>
         it.supportsTwap(query.chainId)
       );
     }
-    if (type === "lh") {
+    if (!isTwap) {
       return Object.values(partners).filter((partner) => {
         return Object.values(networks).some((network) =>
           partner.supportsLiquidityHub(network.id)
@@ -138,7 +142,7 @@ export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
       });
     }
 
-    if (type === "twap") {
+    if (isTwap) {
       return Object.values(partners).filter((partner) => {
         return Object.values(networks).some((network) =>
           partner.supportsTwap(network.id)
@@ -146,7 +150,7 @@ export const PartnerSelect = ({ type }: { type: "lh" | "twap" }) => {
       });
     }
     return [];
-  }, [selectedPartner, type, query.chainId]);
+  }, [selectedPartner, isTwap, query.chainId]);
 
   return (
     <>

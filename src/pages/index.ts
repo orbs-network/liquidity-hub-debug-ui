@@ -1,4 +1,3 @@
-export * from './home/HomePage'
-export * from './transaction/TransactionPage'
-export * from './user-transactions/UserTransactionsPage'
-export * from './transactions/TransactionsPage'
+export * from './twap'
+export * from './liquidity-hub'
+export * from './MainPage'

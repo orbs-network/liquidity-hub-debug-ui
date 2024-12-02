@@ -9,10 +9,7 @@ import { ColumnFlex, RowFlex } from "styles";
 import styled from "styled-components";
 import _ from "lodash";
 import { Avatar, Typography } from "antd";
-import {
-  useOutTokenUsd,
-  useTransfers,
-} from "./hooks";
+import { useOutTokenUsd, useTransfers } from "./hooks";
 import {
   useAmountUI,
   useChainConfig,
@@ -31,7 +28,6 @@ import { MOBILE } from "consts";
 import { useLiquidityHubSession } from "applications";
 import { useQuery } from "@tanstack/react-query";
 
-
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useLiquidityHubSession();
 
@@ -41,17 +37,15 @@ export function TransactionPage() {
   const isLoading = sessionLoading || !inToken || !outToken;
 
   return (
-    <Page navbar={<Page.Navbar.LiquidityHub hideFilters={true} />}>
-      <StyledPageLayout isLoading={isLoading}>
-        {!session ? (
-          <>
-            <p>Session not found</p>
-          </>
-        ) : (
-          <Content />
-        )}
-      </StyledPageLayout>
-    </Page>
+    <StyledPageLayout isLoading={isLoading}>
+      {!session ? (
+        <>
+          <p>Session not found</p>
+        </>
+      ) : (
+        <Content />
+      )}
+    </StyledPageLayout>
   );
 }
 
@@ -219,7 +213,7 @@ const ExpectedToReceiveLH = () => {
   const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
 
-  const amount = session?.lhAmountOutExpected
+  const amount = session?.lhAmountOutExpected;
   const amountF = useAmountUI(outToken?.decimals, amount);
   const usd = useOutTokenUsd(amountF);
 
@@ -264,14 +258,16 @@ const DexAmountOut = () => {
         usd={dexAmountOutUsd}
         chainId={session?.chainId}
         tooltipContent={
-          !dexSimulatedAmountOut ? null : 
-          <Typography>est. {dexSimulatedAmountOutF} {session?.tokenOutName}</Typography>
+          !dexSimulatedAmountOut ? null : (
+            <Typography>
+              est. {dexSimulatedAmountOutF} {session?.tokenOutName}
+            </Typography>
+          )
         }
       />
     </DataDisplay.Row>
   );
 };
-
 
 const Fees = () => {
   const session = useLiquidityHubSession().data;
@@ -294,7 +290,10 @@ const Fees = () => {
 const ExactAmountReceivedPreDeductions = () => {
   const session = useLiquidityHubSession().data;
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
-  const amount = useAmountUI(outToken?.decimals, session?.lhExactOutAmountPreDeduction);
+  const amount = useAmountUI(
+    outToken?.decimals,
+    session?.lhExactOutAmountPreDeduction
+  );
   const usd = useOutTokenUsd(amount);
 
   return (

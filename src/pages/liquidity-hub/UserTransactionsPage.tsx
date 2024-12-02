@@ -8,7 +8,7 @@ import { MOBILE } from "consts";
 import { styled } from "styled-components";
 
 export const UserTransactionsPage = () => {
-  const walletAddress = useParams().address;
+  const walletAddress = useParams().user;
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useLiquidityHubSwaps(walletAddress);
@@ -18,23 +18,20 @@ export const UserTransactionsPage = () => {
   }, [data]);
 
   return (
-    <Page navbar={<Page.Navbar.LiquidityHub />}>
-      <StyledLayout>
-        <TransactionsList
-          sessions={sessions}
-          loadMore={fetchNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          isLoading={isLoading}
-        />
-      </StyledLayout>
-    </Page>
+    <StyledLayout>
+      <TransactionsList
+        sessions={sessions}
+        loadMore={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        isLoading={isLoading}
+      />
+    </StyledLayout>
   );
 };
-
 
 const StyledLayout = styled(Page.Layout)({
   [`@media (max-width: ${MOBILE}px)`]: {
     paddingLeft: 0,
     paddingRight: 0,
-  }
-})
+  },
+});

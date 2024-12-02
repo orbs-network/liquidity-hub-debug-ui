@@ -1,13 +1,11 @@
 import { styled } from "styled-components";
-import { Card, ColumnFlex, LightButton, RowFlex } from "styles";
-import { Link, useLocation } from "react-router-dom";
+import { Card, ColumnFlex, LightButton } from "styles";
+import { Link } from "react-router-dom";
 import { Skeleton, Typography } from "antd";
 import { ReactNode, useState } from "react";
-import { SearchSessionInput } from "./SearchSessionInput";
 import orbsLogo from "assets/orbs.svg";
-import { useIsMobile } from "hooks";
+import { useHeight, useIsMobile } from "hooks";
 import { colors, MAX_LAYOUT_WIDTH, MOBILE } from "consts";
-import { Filters } from "./Filters";
 import { Search } from "react-feather";
 import { Popover } from "antd";
 import { ROUTES } from "config";
@@ -52,6 +50,8 @@ const StyledNavbarContent = styled(Card)({
   alignItems: "center",
   height: "100%",
   padding: "6px 20px",
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
   backgroundColor: colors.dark.cardBg,
   maxWidth: MAX_LAYOUT_WIDTH,
   gap: 20,
@@ -61,8 +61,8 @@ const StyledNavbarContent = styled(Card)({
   },
 });
 
-const StyledSearchSessionInput = styled(SearchSessionInput)({
-  maxWidth: 300,
+const StyledSearchSessionInput = styled("div")({
+  maxWidth: 320,
   width: "100%",
 
   input: {
@@ -102,76 +102,39 @@ const StyledLogo = styled(Link)({
   },
 });
 
-const LiquidityHubLogo = () => {
+const Logo = ({ text, path = ROUTES.root }: { text: string, path?: string }) => {
   return (
-    <StyledLogo to="/">
+    <StyledLogo to={path}>
       <img src={orbsLogo} alt="orbs Logo" />
       <Typography.Title>
-        <span>Liquidity Hub Explorer</span>
+        <span>{text}</span>
       </Typography.Title>
     </StyledLogo>
   );
 };
 
-const TwapLogo = () => {
-  const search = useLocation().search;
-  
-  return (
-    <StyledLogo to={`${ROUTES.twap.root}${search}`}>
-      <img src={orbsLogo} alt="orbs Logo" />
-      <Typography.Title>
-        <span>TWAP</span>
-      </Typography.Title>
-    </StyledLogo>
-  );
-};
 
-export const LiquidityHubNavbar = ({
-  hideFilters,
-}: {
-  hideFilters?: boolean;
-}) => {
-  return (
-    <Navbar>
-      <LiquidityHubLogo />
-      <StyledRight>
-        <SearchInput />
-        {!hideFilters && (
-          <>
-            <Filters.Chain type="lh" />
-            <Filters.Partner type="lh" />
-          </>
-        )}
-      </StyledRight>
-    </Navbar>
-  );
-};
 
-const SearchInput = () => {
+const NavbarSearchInput = ({ Input }: { Input: ReactNode }) => {
   const isMobile = useIsMobile();
 
   const [open, setOpen] = useState(false);
-
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
   };
 
   if (!isMobile) {
-    return <StyledSearchSessionInput />;
+    return <StyledSearchSessionInput>{Input}</StyledSearchSessionInput>;
   }
 
   return (
     <Popover
-
       overlayInnerStyle={{
         borderRadius: 20,
         padding: 10,
-
       }}
-      content={
-        <StyledMobileSearchInput />
-      }
+      content={<StyledMobileSearchInput>{Input}</StyledMobileSearchInput>}
       trigger="click"
       open={open}
       onOpenChange={handleOpenChange}
@@ -183,40 +146,17 @@ const SearchInput = () => {
   );
 };
 
+const StyledMobileSearchInput = styled("div")({
+  width: "90vw",
+  maxWidth: 400,
+});
+
 const StyledMobileSearchButton = styled(LightButton)({
   padding: 5,
-  borderRadius:'50%',
+  borderRadius: "50%",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-})
-
-const StyledMobileSearchInput = styled(StyledSearchSessionInput)({
-  width: "90vw",
-  maxWidth: 400
-});
-
-export const TwapNavbar = ({
-  hideChainSelect = false,
-  hidePartnerSelect = false,
-}: {
-  hideChainSelect?: boolean;
-  hidePartnerSelect?: boolean;
-}) => {
-  return (
-    <Navbar>
-      <TwapLogo />
-      <StyledRight>
-        {!hideChainSelect && <Filters.Chain type="twap" />}
-        {!hidePartnerSelect && <Filters.Partner type="twap" />}
-      </StyledRight>
-    </Navbar>
-  );
-};
-
-const StyledRight = styled(RowFlex)({
-  flex: 1,
-  justifyContent: "flex-end",
 });
 
 export function Page({
@@ -228,8 +168,10 @@ export function Page({
   children: React.ReactNode;
   navbar?: React.ReactNode;
 }) {
+  const height = useHeight();
+
   return (
-    <Container className={className}>
+    <Container className={className} style={{ minHeight: height }}>
       {navbar}
       {navbar && <Placeholder />}
       {children}
@@ -238,7 +180,7 @@ export function Page({
 }
 
 const Placeholder = styled.div`
-  height: 100px;
+  height: 90px;
   width: 100%;
   position: fixed;
   top: 0px;
@@ -255,6 +197,7 @@ export const Container = styled(ColumnFlex)`
   position: relative;
   padding: 20px;
   border-radius: 20px;
+  gap: 0px;
   @media (max-width: ${MOBILE}px) {
     padding: 10px;
   }
@@ -264,11 +207,13 @@ export const StyledLayout = styled(Card)`
   width: 100%;
   gap: 10px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex: 1;
   padding: 20px;
   width: 100%;
   max-width: ${MAX_LAYOUT_WIDTH}px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
 `;
 
 const Layout = ({
@@ -287,10 +232,8 @@ const Layout = ({
   );
 };
 
-Navbar.LiquidityHubLogo = LiquidityHubLogo;
-Navbar.LiquidityHub = LiquidityHubNavbar;
-Navbar.TwapLogo = TwapLogo;
-Navbar.Twap = TwapNavbar;
+Navbar.Logo = Logo;
+Navbar.InputContainer = NavbarSearchInput;
+
 Page.Navbar = Navbar;
 Page.Layout = Layout;
-Page.LiquidityHubLogo = LiquidityHubLogo;

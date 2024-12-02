@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { fetchElastic } from "helpers";
 import { queries } from "../elastic";
-import { isValidSessionId, isValidTxHash } from "utils";
+import { isValidTxHash } from "utils";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useAppParams } from "hooks";
@@ -49,22 +49,20 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
 };
 
 export const useLiquidityHubSession = () => {
-  const txHashOrSessionId = useParams().identifier;
+  const sessionIdOrTxHash = useParams().sessionIdOrTxHash;
 
+  
   return useQuery({
-    queryKey: ["useLiquidityHubSession", txHashOrSessionId],
+    queryKey: ["useLiquidityHubSession", sessionIdOrTxHash],
     queryFn: async ({ signal }) => {
-      if (!txHashOrSessionId) {
+      if (!sessionIdOrTxHash) {
         throw new Error("Invalid transaction hash or session id");
       }
-      let query;
-
-      if (isValidTxHash(txHashOrSessionId)) {
-        query = queries.transactionHash(txHashOrSessionId);
-      } else if (isValidSessionId(txHashOrSessionId)) {
-        query = queries.sessionId(txHashOrSessionId);
+      let query;      
+      if (isValidTxHash(sessionIdOrTxHash)) {
+        query = queries.transactionHash(sessionIdOrTxHash);
       } else {
-        throw new Error("Invalid transaction hash or session id");
+        query = queries.sessionId(sessionIdOrTxHash);
       }
 
       const swapLogs = await fetchElastic(
@@ -91,6 +89,6 @@ export const useLiquidityHubSession = () => {
       return new LiquidityHubSession(swapLog, quoteLogs, clientLogs);
     },
     staleTime: Infinity,
-    enabled: !!txHashOrSessionId,
+    enabled: !!sessionIdOrTxHash,
   });
 };

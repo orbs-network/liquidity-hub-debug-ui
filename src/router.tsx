@@ -1,42 +1,69 @@
 import { App } from "App";
-import { OrderPage, OrdersPage } from "pages/twap";
+import {
+  LiquidityHubPages,
+  TwapPages,
+  MainPage,
+} from "pages";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "./config";
-import { UserTransactionsPage, TransactionPage, TransactionsPage, HomePage } from "./pages";
 
 export const router = createBrowserRouter([
   {
-    path: ROUTES.main,
+    path: ROUTES.root,
     element: <App />,
     children: [
       {
-        element: <HomePage />,
+        element: <MainPage />,
         index: true,
       },
       {
-        path: ROUTES.transactions,
-        element: <TransactionsPage />,
-      },
-      {
-        path: ROUTES.address,
-        element: <UserTransactionsPage />,
-      },
-      {
-        path: ROUTES.tx,
-        element: <TransactionPage />,
+        path: ROUTES.liquidityHub.root,
+        element: <LiquidityHubPages.RootPage />,
+        children: [
+          {
+            index: true,
+            element: <LiquidityHubPages.SearchPage />,
+          },
+          {
+            path: ROUTES.liquidityHub.transactions,
+            element: <LiquidityHubPages.TransactionsPage />,
+          },
+          {
+            path: ROUTES.liquidityHub.tx,
+            element: <LiquidityHubPages.TransactionPage />,
+          },
+          {
+            path: ROUTES.liquidityHub.user,
+            element: <LiquidityHubPages.UserTransactionsPage />,
+          },
+        ],
       },
       {
         path: ROUTES.twap.root,
-        element: <OrdersPage />,
-      },
-      {
-        path: ROUTES.twap.order,
-        element: <OrderPage />,
+        element: <TwapPages.RootPage />,
+        children: [
+          {
+            index: true,
+            element: <TwapPages.SearchPage />,
+          },
+          {
+            path: ROUTES.twap.orders,
+            element: <TwapPages.OrdersPage />,
+          },
+          {
+            path: ROUTES.twap.maker,
+            element: <TwapPages.OrdersPage />,
+          },
+          {
+            path: ROUTES.twap.order,
+            element: <TwapPages.OrderPage />,
+          },
+        ],
       },
 
       {
         path: "*",
-        element: <Navigate to={ROUTES.main} />,
+        element: <Navigate to={ROUTES.root} />,
       },
     ],
   },

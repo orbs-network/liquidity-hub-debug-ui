@@ -23,20 +23,18 @@ export const TransactionsPage = () => {
   };
 
   return (
-    <Page navbar={<Page.Navbar.LiquidityHub />}>
-      <StyledLayout>
-        {!password ? (
-          <Password onSubmit={onSubmit} />
-        ) : (
-          <TransactionsList
-            isFetchingNextPage={isFetchingNextPage}
-            sessions={sessions}
-            loadMore={fetchNextPage}
-            isLoading={isLoading}
-          />
-        )}
-      </StyledLayout>
-    </Page>
+    <StyledLayout>
+      {!password ? (
+        <Password onSubmit={onSubmit} />
+      ) : (
+        <TransactionsList
+          isFetchingNextPage={isFetchingNextPage}
+          sessions={sessions}
+          loadMore={fetchNextPage}
+          isLoading={isLoading}
+        />
+      )}
+    </StyledLayout>
   );
 };
 
@@ -44,8 +42,8 @@ const StyledLayout = styled(Page.Layout)({
   [`@media (max-width: ${MOBILE}px)`]: {
     paddingLeft: 0,
     paddingRight: 0,
-  }
-})
+  },
+});
 
 const Password = ({ onSubmit }: { onSubmit: (value: string) => void }) => {
   const [value, setValue] = useState("");

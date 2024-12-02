@@ -1,45 +1,46 @@
 import { useCallback, useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
-import { isValidSessionId, isValidTxHash, isValidWalletAddress } from "utils";
 import { LightButton, RowFlex } from "styles";
-import { ROUTES } from "config";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
 import { colors } from "consts";
 import { useIsMobile } from "hooks";
 
-export function SearchSessionInput({ className = "" }: { className?: string }) {
+export function SearchInput({
+  className = "",
+  placeholder = "Search...",
+  onSubmit,
+}: {
+  className?: string;
+  placeholder?: string;
+  onSubmit: (value: string) => void;
+}) {
   const [value, setVale] = useState("");
-  const navigate = useNavigate();
-  const isMobile= useIsMobile();
+  const isMobile = useIsMobile();
   const [api, contextHolder] = notification.useNotification();
 
-  const searchSession = useCallback(() => {
+  const onSearch = useCallback(() => {
     if (!value) return;
-    if (isValidWalletAddress(value)) {
-      navigate(ROUTES.navigate.address(value));
-    } else if (isValidSessionId(value) || isValidTxHash(value)) {
-      navigate(ROUTES.navigate.tx(value));
-    } else {
+    try {
+      onSubmit(value);
+    } catch (error) {
       api.error({
         showProgress: true,
         pauseOnHover: true,
         message: "Invalid input",
-        description:
-          "Please enter a valid Tx Hash, Wallet Address or Session ID",
+        description: (error as Error).message,
         placement: "top",
       });
     }
-  }, [value, navigate, api]);
+  }, [value, onSubmit, api]);
 
   const onKeyDown = useCallback(
     (e: any) => {
       if (e.key === "Enter") {
-        searchSession();
+        onSearch();
       }
     },
-    [searchSession]
+    [onSearch]
   );
 
   return (
@@ -47,18 +48,20 @@ export function SearchSessionInput({ className = "" }: { className?: string }) {
       {contextHolder}
       <StyledInputContainer className={className}>
         <StyledInput
-          placeholder="Tx Hash / Session ID / Wallet "
+          placeholder={placeholder}
           value={value}
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}
         />
-       {isMobile &&  <StyledButton
-          className="search-input-button"
-          $disabled={!value}
-          onClick={searchSession}
-        >
-          <ArrowUp size={16} color="white" />
-        </StyledButton>}
+        {isMobile && (
+          <StyledButton
+            className="search-input-button"
+            $disabled={!value}
+            onClick={onSearch}
+          >
+            <ArrowUp size={16} color="white" />
+          </StyledButton>
+        )}
       </StyledInputContainer>
     </>
   );
@@ -86,6 +89,7 @@ const StyledInputContainer = styled(RowFlex)`
   border-radius: 14px;
   padding: 0;
   position: relative;
+  width: 100%;
 `;
 
 const StyledInput = styled("input")`

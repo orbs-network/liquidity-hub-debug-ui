@@ -18,8 +18,8 @@ import {
 } from "hooks";
 import { Order, OrderType as IOrderType } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
-import { ROUTES } from "config";
 import { colors } from "consts";
+import { navigation } from "utils";
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
@@ -71,7 +71,7 @@ const DesktopComponent = ({ item }: { item: Order }) => {
 const GoButton = ({ order }: { order: Order }) => {
   const navigate = useNavigateWithParams();
   const onNavigate = useCallback(() => {
-    navigate(ROUTES.navigate.twap.order(order.id));
+    navigate(navigation.twap.order(order.id));
   }, [order.id, navigate]);
 
   return (
@@ -302,7 +302,7 @@ const MobileComponent = ({ item: order }: { item: Order }) => {
   const config = partner?.getTwapConfigByExchange(order.exchange);
   const navigate = useNavigateWithParams();
   const onClick = useCallback(() => {
-    navigate(ROUTES.navigate.twap.order(order.id));
+    navigate(navigation.twap.order(order.id));
   }, [navigate, order.id]);
 
   return (

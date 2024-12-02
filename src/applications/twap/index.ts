@@ -1,4 +1,4 @@
-import { getAllOrders, getOrderById } from "@orbs-network/twap-sdk";
+import { getOrders, getOrderById } from "@orbs-network/twap-sdk";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { queries } from "applications/elastic";
 import { TWAP_ELASTIC_CLIENT_URL } from "config";
@@ -9,7 +9,8 @@ import { useMemo } from "react";
 
 export const useTwapOrders = (
   chainId?: number | null,
-  partnerName?: string
+  partnerName?: string,
+  maker?: string
 ) => {
   const partner = usePartnerByName(partnerName);
   const exchangeAddress = useMemo(
@@ -17,14 +18,16 @@ export const useTwapOrders = (
     [chainId, partner]
   );
   return useInfiniteQuery({
-    queryKey: ["useTwapOrders", chainId, exchangeAddress],
+    queryKey: ["useTwapOrders", chainId, exchangeAddress, maker],
     queryFn: async ({ signal, pageParam = 0 }) => {
-      const orders = await getAllOrders({
+      const orders = await getOrders({
         signal,
         page: pageParam,
         limit: 200,
         chainId: chainId!,
         exchangeAddress,
+        account: maker
+        
       });
       return orders;
     },

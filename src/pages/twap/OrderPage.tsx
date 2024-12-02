@@ -16,7 +16,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { LightButton, RowFlex } from "styles";
 import { MillisToDuration } from "utils";
-import { parseOrderType } from "../utils";
+import { parseOrderType } from "./utils";
 
 interface ContextType {
   order?: Order;
@@ -33,11 +33,7 @@ export function OrderPage() {
 
   return (
     <Context.Provider value={{ order }}>
-      <Page
-        navbar={
-          <Page.Navbar.Twap hideChainSelect={true} hidePartnerSelect={true} />
-        }
-      >
+   
         <Page.Layout isLoading={isLoading}>
           <DataDisplay>
             <ID />
@@ -71,7 +67,6 @@ export function OrderPage() {
             <Logs />
           </DataDisplay>
         </Page.Layout>
-      </Page>
     </Context.Provider>
   );
 }
