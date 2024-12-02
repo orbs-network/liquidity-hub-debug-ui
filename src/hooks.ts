@@ -25,6 +25,7 @@ export const useAppParams = () => {
       sessionType: StringParam,
       chainId: NumberParam,
       partner: StringParam,
+      minDollarValue: NumberParam,
     },
     {
       updateType: "pushIn",
@@ -37,6 +38,7 @@ export const useAppParams = () => {
       sessionType: query.sessionType,
       chainId: query.chainId as number | undefined,
       partner: query.partner as string | undefined,
+      minDollarValue: query.minDollarValue as number | undefined,
     },
     setQuery,
   };
@@ -379,3 +381,20 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
     staleTime: Infinity,
   });
 };
+export function useDebounce(value: string, delay = 5_00) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    // Set up a timer to update the debounced value after the specified delay
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    // Clean up the timer if the value or delay changes
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}

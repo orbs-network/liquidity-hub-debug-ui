@@ -68,3 +68,22 @@ export const LightButton = styled(RowFlex)({
   }
 
 });
+
+
+export const StyledInput = styled("input")`
+  height: 35px;
+  width: 100%;
+  text-indent: 10px;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: ${colors.dark.textMain};
+  font-family: "IBM Plex Mono", monospace;
+  padding-right: 40px;
+  &::placeholder {
+    transition: opacity 0.2s;
+  }
+  &:focus::placeholder {
+    opacity: 0; /* Hides the placeholder */
+  }
+`;

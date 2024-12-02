@@ -98,13 +98,15 @@ const swaps = ({
   limit,
   chainId,
   walletAddress,
-  dex
+  dex,
+  minDollarValue
 }: {
   chainId?: number;
   page: number;
   limit: number;
   walletAddress?: string;
   dex?: string;
+  minDollarValue?: number;
 }) => {
   return {
     ...queryInitialData,
@@ -155,6 +157,13 @@ const swaps = ({
               field: "swapStatus.keyword",
             },
           },
+          minDollarValue ? {
+            range: {
+              dollarValue: {
+                gt: minDollarValue,
+              },
+            },
+          } : undefined,
         ].filter(Boolean),
         must_not: [
           {

@@ -1,15 +1,17 @@
 import styled from "styled-components";
-import { RowFlex } from "../styles";
+import { RowFlex, StyledInput } from "../styles";
 import { Link, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import {
+  useAppParams,
   useChainConfig,
+  useDebounce,
   useLiquidityHubPartner,
   useNumberFormatter,
 } from "../hooks";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { TokenAddress } from "./AddressLink";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import moment from "moment";
 import { StatusBadge } from "./StatusBadge";
 import { Avatar } from "antd";
@@ -69,7 +71,7 @@ const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   }, [navigate, item.id]);
 
   return (
-    <StyledButton  onClick={onNavigate}>
+    <StyledButton onClick={onNavigate}>
       <ChevronRight size={20} />
     </StyledButton>
   );
@@ -77,9 +79,7 @@ const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
 const Timestamp = ({ item }: { item: LiquidityHubSwap }) => {
   return (
     <RowFlex>
-      <List.DesktopRow.Element.Text
-      text={moment(item.timestamp).fromNow()}
-    />
+      <List.DesktopRow.Element.Text text={moment(item.timestamp).fromNow()} />
     </RowFlex>
   );
 };
@@ -121,14 +121,17 @@ const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
 };
 
 const StyledTokens = styled(RowFlex)({
-  "svg": {
-   color: colors.dark.textMain
+  svg: {
+    color: colors.dark.textMain,
   },
 });
 
 const SessionId = ({ item }: { item: LiquidityHubSwap }) => {
   return (
-    <Link to={navigation.liquidityHub.tx(item.id)} style={{ textDecoration: "unset" }}>
+    <Link
+      to={navigation.liquidityHub.tx(item.id)}
+      style={{ textDecoration: "unset" }}
+    >
       <List.DesktopRow.Element.Text text={item.id} />
     </Link>
   );
@@ -138,7 +141,10 @@ const TxHash = ({ item }: { item: LiquidityHubSwap }) => {
   const { txHash } = item;
   return (
     <>
-      <Link to={navigation.liquidityHub.tx(txHash)} style={{ textDecoration: "unset" }}>
+      <Link
+        to={navigation.liquidityHub.tx(txHash)}
+        style={{ textDecoration: "unset" }}
+      >
         <List.DesktopRow.Element.Text text={makeElipsisAddress(txHash) || ""} />
       </Link>
     </>
@@ -156,7 +162,7 @@ const Usd = ({ item }: { item: LiquidityHubSwap }) => {
   return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
 };
 
-const StyledButton = styled('button')`
+const StyledButton = styled("button")`
   background: none;
   border: none;
   cursor: pointer;
@@ -170,7 +176,7 @@ const StyledButton = styled('button')`
   padding: 0;
   transition: background 0.2s;
   &:hover {
-    background: rgba(255,255,255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
   }
   svg {
     color: ${colors.dark.textMain};
@@ -178,6 +184,24 @@ const StyledButton = styled('button')`
     height: 20px;
   }
 `;
+
+const MinDollarValueFilter = () => {
+  const { setQuery, query } = useAppParams();
+
+  const [value, setValue] = useState(query.minDollarValue?.toString() || '');
+
+  const minDollarValue = useDebounce(value, 500);
+
+  useEffect(() => {
+    setQuery({ minDollarValue: minDollarValue ? Number(minDollarValue) : undefined });
+  }, [setQuery, minDollarValue]);
+
+  return (
+    <span>
+      <StyledInput value={value} onChange={(e) => setValue(e.target.value)} />
+    </span>
+  );
+};
 
 const desktopRows = [
   {
@@ -204,6 +228,7 @@ const desktopRows = [
     Component: Usd,
     label: "USD",
     width: 10,
+    filterComponent: <MinDollarValueFilter />,
   },
   {
     Component: TxHash,
@@ -229,6 +254,7 @@ const headerLabels = desktopRows.map((it) => {
     label: it.label,
     width: it.width,
     alignCenter: it.alignCenter,
+    filterComponent: it.filterComponent,
   };
 });
 

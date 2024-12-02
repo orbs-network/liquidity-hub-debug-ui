@@ -1,13 +1,13 @@
 import styled from "styled-components";
 import _ from "lodash";
-import { ReactNode, useCallback } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
-import { Typography, Spin, Skeleton, Avatar } from "antd";
+import { Typography, Spin, Skeleton, Avatar, Popover } from "antd";
 import { useChainConfig, useIsMobile, useNumberFormatter } from "hooks";
 import { ColumnFlex, RowFlex } from "styles";
 import TextOverflow from "react-text-overflow";
 import { DesktopRowComponent, MobileRowComponent } from "./types";
-import { ChevronRight } from "react-feather";
+import { ChevronRight, Filter } from "react-feather";
 import moment from "moment";
 import { colors } from "consts";
 
@@ -15,6 +15,7 @@ type HeaderLabel = {
   label: string;
   width: number;
   alignCenter?: boolean;
+  filterComponent?: ReactNode;
 };
 
 function List<T>({
@@ -61,7 +62,7 @@ function List<T>({
           const item = items[index];
           return (
             <Item
-            index={index}
+              index={index}
               isMobile={isMobile}
               item={item}
               DesktopComponent={DesktopComponent}
@@ -85,20 +86,48 @@ const ListHeader = ({
   return (
     <StyledHeader>
       {_.map(labels, (item, index) => {
-        return (
-          <StyledHeaderItem
-            key={index}
+        return <ListHeaderItem key={index} item={item} />;
+      })}
+    </StyledHeader>
+  );
+};
+
+const ListHeaderItem = ({ item }: { item: HeaderLabel }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <StyledHeaderItem
+      style={{
+        width: `${item.width}%`,
+        justifyContent: item.alignCenter ? "center" : "flex-start",
+        cursor: item.filterComponent ? "pointer" : "default",
+      }}
+    >
+      <Popover
+        overlayInnerStyle={{
+          borderRadius: 20,
+          padding: 10,
+        }}
+        content={
+          !item.filterComponent ? undefined : <div>{item.filterComponent}</div>
+        }
+        trigger="click"
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        placement="bottom"
+      >
+        <RowFlex>
+          <Typography
             style={{
-              width: `${item.width}%`,
-              justifyContent: item.alignCenter ? "center" : "flex-start",
-              textAlign: item.alignCenter ? "center" : "left",
+              width: "fit-content",
             }}
           >
             {item.label}
-          </StyledHeaderItem>
-        );
-      })}
-    </StyledHeader>
+          </Typography>
+          {item.filterComponent && <Filter size={16} style={{color:'white'}} />}
+        </RowFlex>
+      </Popover>
+    </StyledHeaderItem>
   );
 };
 
@@ -107,7 +136,7 @@ function Item<T>({
   DesktopComponent,
   MobileComponent,
   isMobile,
-  index
+  index,
 }: {
   item: T;
   DesktopComponent: DesktopRowComponent<T>;
@@ -133,14 +162,14 @@ function Item<T>({
   }
 
   return (
-    <ItemWrapper  $index={index}>
+    <ItemWrapper $index={index}>
       <DesktopComponent item={item} />
     </ItemWrapper>
   );
 }
 
-const ItemWrapper = styled("div")<{ $index: number}>(({$index}) => ({
-    background: $index % 2 === 0 ? "#1B1D25" : "transparent",
+const ItemWrapper = styled("div")<{ $index: number }>(({ $index }) => ({
+  background: $index % 2 === 0 ? "#1B1D25" : "transparent",
 }));
 
 const MobileRow = ({
@@ -172,23 +201,19 @@ const MobileRow = ({
       <StyledMobileContainerRight>
         <ColumnFlex style={{ alignItems: "flex-start", gap: 2 }}>
           <RowFlex $gap={5}>
-            <Typography style={{ fontSize: 14 }}>
-             {partner}
-            </Typography>
+            <Typography style={{ fontSize: 14 }}>{partner}</Typography>
             <Avatar src={chainIdConfig?.logoUrl} size={20} />
           </RowFlex>
           <StyledMobileContainerTokens>
             <Typography>{inToken}</Typography>
-            <ChevronRight style={{color: colors.dark.textMain}} />
+            <ChevronRight style={{ color: colors.dark.textMain }} />
             <Typography> {outToken}</Typography>
             {usd && (
-              <Typography style={{opacity: 0.7}}>
-               {`($${usdF})`}
-              </Typography>
+              <Typography style={{ opacity: 0.7 }}>{`($${usdF})`}</Typography>
             )}
           </StyledMobileContainerTokens>
           <Typography style={{ fontSize: 13 }}>
-          {moment(timestamp).format("D MMM HH:mm")}
+            {moment(timestamp).format("D MMM HH:mm")}
           </Typography>
         </ColumnFlex>
       </StyledMobileContainerRight>
@@ -216,7 +241,6 @@ const MobileStatus = styled("div")({
 });
 
 const StyledMobileContainer = styled("div")({
-
   width: "100%",
 });
 
@@ -322,12 +346,13 @@ const StyledHeader = styled(RowFlex)`
   border-radius: 6px;
 `;
 
-const StyledHeaderItem = styled(Typography)({
+const StyledHeaderItem = styled("div")({
   whiteSpace: "nowrap",
   fontSize: 14,
   textAlign: "left",
   paddingRight: 20,
   fontWeight: 600,
+  display: "flex",
   "&:last-child": {
     textAlign: "center",
     paddingRight: 0,
@@ -341,11 +366,11 @@ const StyledList = styled.div`
 `;
 
 const StyledText = styled(Typography)({
-    fontSize: 13,
-  "*":{
+  fontSize: 13,
+  "*": {
     color: colors.dark.textMain,
-    fontSize: 'inherit',
-  }
+    fontSize: "inherit",
+  },
 });
 
 const StyledEmpty = styled.div`

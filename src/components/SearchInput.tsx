@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import styled from "styled-components";
-import { LightButton, RowFlex } from "styles";
+import { LightButton, RowFlex, StyledInput } from "styles";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
 import { colors } from "consts";
@@ -49,7 +49,7 @@ export function SearchInput({
       <StyledInputContainer className={className}>
         <StyledInput
           placeholder={placeholder}
-          value={value}
+        value={value}
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}
         />
@@ -92,20 +92,4 @@ const StyledInputContainer = styled(RowFlex)`
   width: 100%;
 `;
 
-const StyledInput = styled("input")`
-  height: 35px;
-  width: 100%;
-  text-indent: 10px;
-  border: none;
-  outline: none;
-  background-color: transparent;
-  color: ${colors.dark.textMain};
-  font-family: "IBM Plex Mono", monospace;
-  padding-right: 40px;
-  &::placeholder {
-    transition: opacity 0.2s;
-  }
-  &:focus::placeholder {
-    opacity: 0; /* Hides the placeholder */
-  }
-`;
+
