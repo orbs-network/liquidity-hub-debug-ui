@@ -18,7 +18,7 @@ const Navbar = () => {
 
   return (
     <Page.Navbar>
-      <Page.Navbar.Logo text="TWAP Eplorer" path={ROUTES.twap.root} />
+      <Page.Navbar.Logo text="TWAP Explorer" path={ROUTES.twap.root} />
       <RowFlex style={{ flex: 1, justifyContent: "flex-end" }}>
         {!hideFilters && (
           <>
