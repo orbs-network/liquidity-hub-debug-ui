@@ -1,13 +1,18 @@
 import styled from "styled-components";
 import _ from "lodash";
-import { ReactNode, useCallback, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Typography, Spin, Skeleton, Avatar, Popover } from "antd";
-import { useChainConfig, useIsMobile, useNumberFormatter } from "hooks";
-import { ColumnFlex, RowFlex } from "styles";
+import {
+  useChainConfig,
+  useDebounce,
+  useIsMobile,
+  useNumberFormatter,
+} from "hooks";
+import { ColumnFlex, RowFlex, StyledInput } from "styles";
 import TextOverflow from "react-text-overflow";
 import { DesktopRowComponent, MobileRowComponent } from "./types";
-import { ChevronRight, Filter } from "react-feather";
+import { ChevronRight, Filter as FilterIcon } from "react-feather";
 import moment from "moment";
 import { colors } from "consts";
 
@@ -42,35 +47,33 @@ function List<T>({
     loadMore();
   }, [loadMore, isFetchingNextPage]);
 
-  if (isLoading) {
-    return <Skeleton />;
-  }
-
-  if (_.isEmpty(items)) {
-    return <StyledEmpty>Nothing found</StyledEmpty>;
-  }
-
   return (
     <StyledList>
       <ListHeader isMobile={isMobile} labels={headerLabels} />
-      <Virtuoso
-        endReached={endReached}
-        useWindowScroll
-        totalCount={isFetchingNextPage ? _.size(items) + 1 : _.size(items)}
-        overscan={10}
-        itemContent={(index) => {
-          const item = items[index];
-          return (
-            <Item
-              index={index}
-              isMobile={isMobile}
-              item={item}
-              DesktopComponent={DesktopComponent}
-              MobileComponent={MobileComponent}
-            />
-          );
-        }}
-      />
+      {isLoading ? (
+        <Skeleton style={{ marginTop: 20 }} />
+      ) : _.isEmpty(items) ? (
+        <StyledEmpty>Nothing found</StyledEmpty>
+      ) : (
+        <Virtuoso
+          endReached={endReached}
+          useWindowScroll
+          totalCount={isFetchingNextPage ? _.size(items) + 1 : _.size(items)}
+          overscan={10}
+          itemContent={(index) => {
+            const item = items[index];
+            return (
+              <Item
+                index={index}
+                isMobile={isMobile}
+                item={item}
+                DesktopComponent={DesktopComponent}
+                MobileComponent={MobileComponent}
+              />
+            );
+          }}
+        />
+      )}
     </StyledList>
   );
 }
@@ -100,13 +103,23 @@ const ListHeaderItem = ({ item }: { item: HeaderLabel }) => {
       style={{
         width: `${item.width}%`,
         justifyContent: item.alignCenter ? "center" : "flex-start",
-        cursor: item.filterComponent ? "pointer" : "default",
+        alignItems: "center",
+        gap: 6,
       }}
     >
+      <Typography
+        style={{
+          width: "fit-content",
+        }}
+      >
+        {item.label}
+      </Typography>
       <Popover
+        arrow={false}
         overlayInnerStyle={{
-          borderRadius: 20,
+          borderRadius: 10,
           padding: 10,
+          background: "#38242B",
         }}
         content={
           !item.filterComponent ? undefined : <div>{item.filterComponent}</div>
@@ -116,16 +129,11 @@ const ListHeaderItem = ({ item }: { item: HeaderLabel }) => {
         onOpenChange={setIsOpen}
         placement="bottom"
       >
-        <RowFlex>
-          <Typography
-            style={{
-              width: "fit-content",
-            }}
-          >
-            {item.label}
-          </Typography>
-          {item.filterComponent && <Filter size={16} style={{color:'white'}} />}
-        </RowFlex>
+        {item.filterComponent && (
+          <div style={{ cursor: "pointer" }}>
+            <FilterIcon size={16} style={{ color: "white" }} />
+          </div>
+        )}
       </Popover>
     </StyledHeaderItem>
   );
@@ -308,10 +316,63 @@ function DesktopRow({ children }: { children: ReactNode }) {
   return <ListSessionContainer>{children}</ListSessionContainer>;
 }
 
+const Filter = ({ children }: { children: ReactNode }) => {
+  return <StyledListFilter>{children}</StyledListFilter>;
+};
+
+const StyledListFilter = styled(ColumnFlex)({
+  gap: 5,
+  alignItems: "flex-start",
+});
+
+const FilterLabel = ({ text }: { text: string }) => {
+  return <StyledFilterLabel>{text}</StyledFilterLabel>;
+};
+
+const StyledFilterLabel = styled(Typography)({
+  fontSize: 13,
+});
+
+const FilterInput = ({
+  placeholder = "",
+  onChange,
+  initialValue,
+}: {
+  placeholder?: string;
+  onChange: (value?: string) => void;
+  initialValue?: string;
+}) => {
+  const [value, setValue] = useState(initialValue);
+  const debounedValue = useDebounce(value, 500);
+
+  console.log(initialValue);
+
+  useEffect(() => {
+    onChange(debounedValue);
+  }, [debounedValue]);
+
+  return (
+    <StyledListFilterInput
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
+};
+
+const StyledListFilterInput = styled(StyledInput)({
+  background: "hsla(0,0%,100%,.06)",
+  borderRadius: 10,
+});
+
+Filter.Input = FilterInput;
+Filter.Label = FilterLabel;
+
 DesktopRowElement.Text = DesktopRowElementText;
 DesktopRow.Element = DesktopRowElement;
 List.DesktopRow = DesktopRow;
 List.MobileRow = MobileRow;
+List.Filter = Filter;
 
 export { List };
 

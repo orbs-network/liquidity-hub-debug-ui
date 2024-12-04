@@ -26,6 +26,8 @@ export const useAppParams = () => {
       chainId: NumberParam,
       partner: StringParam,
       minDollarValue: NumberParam,
+      inToken: StringParam,
+      outToken: StringParam
     },
     {
       updateType: "pushIn",
@@ -39,6 +41,8 @@ export const useAppParams = () => {
       chainId: query.chainId as number | undefined,
       partner: query.partner as string | undefined,
       minDollarValue: query.minDollarValue as number | undefined,
+      inToken: query.inToken as string | undefined,
+      outToken: query.outToken as string | undefined
     },
     setQuery,
   };
@@ -381,7 +385,7 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
     staleTime: Infinity,
   });
 };
-export function useDebounce(value: string, delay = 5_00) {
+export function useDebounce(value?: string, delay = 5_00) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {

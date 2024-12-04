@@ -101,8 +101,8 @@ export const navigation = {
     user: (value: string) => ROUTES.liquidityHub.user.replace(":user", value),
   },
   twap: {
-    order: (orderId: number) => {
-      return ROUTES.twap.order.replace(":orderId", orderId.toString());
+    order: (orderIdOrTxHash: string) => {
+      return ROUTES.twap.order.replace(":orderIdOrTxHash", orderIdOrTxHash);
     },
     maker: (maker: string) => {
       return ROUTES.twap.maker.replace(":maker", maker);

@@ -27,9 +27,11 @@ const useOrderContext = () => {
   return useContext(Context);
 };
 export function OrderPage() {
-  const orderId = useParams().orderId;
+  const orderIdOrTxHash = useParams().orderIdOrTxHash;
   const chainId = useAppParams().query.chainId;
-  const { data: order, isLoading } = useTwapOrder(chainId, orderId);
+  const { data: order, isLoading } = useTwapOrder(orderIdOrTxHash, chainId);
+
+  
 
   return (
     <Context.Provider value={{ order }}>

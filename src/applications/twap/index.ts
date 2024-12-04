@@ -1,4 +1,4 @@
-import { getOrders, getOrderById } from "@orbs-network/twap-sdk";
+import { getOrders, getOrderById, getOrderByTxHash } from "@orbs-network/twap-sdk";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { queries } from "applications/elastic";
 import { TWAP_ELASTIC_CLIENT_URL } from "config";
@@ -6,6 +6,7 @@ import { fetchElastic } from "helpers";
 import { usePartnerByName } from "hooks";
 import _ from "lodash";
 import { useMemo } from "react";
+import { isValidTxHash } from "utils";
 
 export const useTwapOrders = (
   chainId?: number | null,
@@ -27,7 +28,6 @@ export const useTwapOrders = (
         chainId: chainId!,
         exchangeAddress,
         account: maker
-        
       });
       return orders;
     },
@@ -43,19 +43,25 @@ export const useTwapOrders = (
   });
 };
 
-export const useTwapOrder = (chainId?: number, orderId?: string) => {
+export const useTwapOrder = (chainIdOrTxHash?: string, chainId?: number) => {
   return useQuery({
-    queryKey: ["useTwapOrder", chainId, orderId],
+    queryKey: ["useTwapOrder", chainId, chainIdOrTxHash],
     queryFn: async ({ signal }) => {
-      const order = await getOrderById({
+      if(isValidTxHash(chainIdOrTxHash!)) {
+        return getOrderByTxHash({
+          signal,
+          chainId: chainId!,
+          txHash: chainIdOrTxHash!,
+        });
+      }
+      return getOrderById({
         signal,
         chainId: chainId!,
-        orderId: Number(orderId)!,
+        id: Number(chainIdOrTxHash)!,
       });
-
-      return order;
+      
     },
-    enabled: !!chainId && !!orderId,
+    enabled: !!chainId && !!chainIdOrTxHash,
   });
 };
 

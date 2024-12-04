@@ -25,7 +25,7 @@ export const ROUTES = {
     root: `/twap`,
     orders: `/twap/${TWAP_ROUTER_PATHS.orders}`,
     maker: `/twap/${TWAP_ROUTER_PATHS.maker}/:maker`,
-    order: `/twap/${TWAP_ROUTER_PATHS.order}/:orderId`,
+    order: `/twap/${TWAP_ROUTER_PATHS.order}/:orderIdOrTxHash`,
   },
 };
 

@@ -1,17 +1,16 @@
 import styled from "styled-components";
-import { RowFlex, StyledInput } from "../styles";
+import {RowFlex } from "../styles";
 import { Link, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import {
   useAppParams,
   useChainConfig,
-  useDebounce,
   useLiquidityHubPartner,
   useNumberFormatter,
 } from "../hooks";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { TokenAddress } from "./AddressLink";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback} from "react";
 import moment from "moment";
 import { StatusBadge } from "./StatusBadge";
 import { Avatar } from "antd";
@@ -162,6 +161,13 @@ const Usd = ({ item }: { item: LiquidityHubSwap }) => {
   return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
 };
 
+const FeesUsd = ({ item }: { item: LiquidityHubSwap }) => {
+  const { feesUsd } = item;
+  const result = useNumberFormatter({ value: feesUsd }).short;
+
+  return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
+};
+
 const StyledButton = styled("button")`
   background: none;
   border: none;
@@ -188,18 +194,49 @@ const StyledButton = styled("button")`
 const MinDollarValueFilter = () => {
   const { setQuery, query } = useAppParams();
 
-  const [value, setValue] = useState(query.minDollarValue?.toString() || '');
-
-  const minDollarValue = useDebounce(value, 500);
-
-  useEffect(() => {
-    setQuery({ minDollarValue: minDollarValue ? Number(minDollarValue) : undefined });
-  }, [setQuery, minDollarValue]);
+  const onChange = useCallback(
+    (value?: string) => {
+      setQuery({
+        minDollarValue: value ? Number(value) : undefined,
+      });
+    },
+    [setQuery]
+  );
 
   return (
-    <span>
-      <StyledInput value={value} onChange={(e) => setValue(e.target.value)} />
-    </span>
+    <List.Filter>
+      <List.Filter.Label text="Min USD value" />
+      <List.Filter.Input
+        placeholder="Enter value..."
+        onChange={onChange}
+        initialValue={query.minDollarValue?.toString()}
+      />
+    </List.Filter>
+  );
+};
+
+const TokensFilter = () => {
+  const { setQuery, query } = useAppParams();
+
+  return (
+    <RowFlex>
+      <List.Filter>
+        <List.Filter.Label text="In Token" />
+        <List.Filter.Input
+          placeholder="Enter value..."
+          onChange={(inToken) => setQuery({ inToken })}
+          initialValue={query.inToken}
+        />
+      </List.Filter>
+      <List.Filter>
+        <List.Filter.Label text="Out Token" />
+        <List.Filter.Input
+          placeholder="Enter value..."
+          onChange={(outToken) => setQuery({ outToken })}
+          initialValue={query.outToken}
+        />
+      </List.Filter>
+    </RowFlex>
   );
 };
 
@@ -223,12 +260,18 @@ const desktopRows = [
     Component: Tokens,
     label: "Tokens",
     width: 15,
+    filterComponent: <TokensFilter />,
   },
   {
     Component: Usd,
     label: "USD",
     width: 10,
     filterComponent: <MinDollarValueFilter />,
+  },
+  {
+    Component: FeesUsd,
+    label: "Fees",
+    width: 10,
   },
   {
     Component: TxHash,

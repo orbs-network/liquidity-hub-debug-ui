@@ -10,15 +10,11 @@ const GlobalStyle = createGlobalStyle`
   .ant-tooltip-inner {
     background: ${colors.dark.bgTooltip};
   }
-  .ant-popover-inner {
-    background: ${colors.dark.inputBg}!important;
-  }
 `;
 
 const theme: ThemeConfig = {
   token: {
     fontFamily: '"IBM Plex Mono", monospace',
-    colorBgContainer: "yellow",
   },
 
   components: {

@@ -71,7 +71,7 @@ const DesktopComponent = ({ item }: { item: Order }) => {
 const GoButton = ({ order }: { order: Order }) => {
   const navigate = useNavigateWithParams();
   const onNavigate = useCallback(() => {
-    navigate(navigation.twap.order(order.id));
+    navigate(navigation.twap.order(order.id.toString()));
   }, [order.id, navigate]);
 
   return (
@@ -302,7 +302,7 @@ const MobileComponent = ({ item: order }: { item: Order }) => {
   const config = partner?.getTwapConfigByExchange(order.exchange);
   const navigate = useNavigateWithParams();
   const onClick = useCallback(() => {
-    navigate(navigation.twap.order(order.id));
+    navigate(navigation.twap.order(order.id.toString()));
   }, [navigate, order.id]);
 
   return (

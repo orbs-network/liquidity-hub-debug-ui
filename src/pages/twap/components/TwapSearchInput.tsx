@@ -1,6 +1,6 @@
 import { SearchInput } from "components/SearchInput";
+import { useNavigateWithParams } from "hooks";
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { isValidWalletAddress, navigation } from "utils";
 
 export function TwapSearchInput({
@@ -8,14 +8,14 @@ export function TwapSearchInput({
 }: {
   className?: string;
 }) {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithParams();
 
   const onSubmit = useCallback(
     (value: string) => {
       if (isValidWalletAddress(value)) {
         navigate(navigation.twap.maker(value));
       } else {
-        navigate(navigation.twap.order(Number(value)));
+        navigate(navigation.twap.order(value));
       }
     },
     [navigate]

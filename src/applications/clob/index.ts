@@ -13,11 +13,11 @@ import { LiquidityHubSession, LiquidityHubSwap } from "./interface";
 
 export const useLiquidityHubSwaps = (walletAddress?: string) => {
   const {
-    query: { chainId, partner, minDollarValue },
+    query: { chainId, partner, minDollarValue, inToken, outToken },
   } = useAppParams();
 
   return useInfiniteQuery({
-    queryKey: ["useLiquidityHubSwaps", chainId, walletAddress, partner, minDollarValue],
+    queryKey: ["useLiquidityHubSwaps", chainId, walletAddress, partner, minDollarValue, inToken, outToken],
     queryFn: async ({ signal, pageParam }) => {
       const data = queries.swaps({
         page: pageParam,
@@ -25,7 +25,9 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
         limit: 100,
         walletAddress,
         dex: partner?.toLowerCase(),
-        minDollarValue
+        minDollarValue,
+        inToken,
+        outToken,
       });
 
       const logs = await fetchElastic(

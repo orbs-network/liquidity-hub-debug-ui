@@ -99,7 +99,9 @@ const swaps = ({
   chainId,
   walletAddress,
   dex,
-  minDollarValue
+  minDollarValue,
+  inToken,
+  outToken
 }: {
   chainId?: number;
   page: number;
@@ -107,6 +109,8 @@ const swaps = ({
   walletAddress?: string;
   dex?: string;
   minDollarValue?: number;
+  inToken?: string;
+  outToken?: string;
 }) => {
   return {
     ...queryInitialData,
@@ -147,6 +151,26 @@ const swaps = ({
               "type.keyword": "swap",
             },
           },
+          inToken ?  {
+            script: {
+              script: {
+                source: "doc['tokenInName.keyword'].value.toLowerCase() == params.tokenInName.toLowerCase()",
+                params: {
+                  tokenInName: inToken,
+                },
+              },
+            },
+          } : undefined,
+          outToken ?  {
+            script: {
+              script: {
+                source: "doc['tokenOutName.keyword'].value.toLowerCase() == params.tokenOutName.toLowerCase()",
+                params: {
+                  tokenOutName: outToken,
+                },
+              },
+            },
+          } : undefined,
           {
             exists: {
               field: "txHash.keyword",
