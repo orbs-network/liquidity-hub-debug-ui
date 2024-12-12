@@ -143,7 +143,7 @@ export const TokenAmount = ({
         symbol={token?.symbol}
         chainId={chainId}
       />
-      {usd && <StyledUsd>{` ($${usdF.short || "-"})`}</StyledUsd>}
+       <StyledUsd>{` ($${usdF.short || "0"})`}</StyledUsd>
     </StyledTokenAmount>
   );
 };

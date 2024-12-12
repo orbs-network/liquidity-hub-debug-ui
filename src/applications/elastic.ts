@@ -46,7 +46,6 @@ const sessionId = (sessionId: string) => {
   };
 };
 
-
 const quote = (sessionId: string) => {
   return {
     ...queryInitialData,
@@ -101,7 +100,10 @@ const swaps = ({
   dex,
   minDollarValue,
   inToken,
-  outToken
+  outToken,
+  fromDate,
+  toDate,
+  feeOutAmountUsd
 }: {
   chainId?: number;
   page: number;
@@ -111,6 +113,9 @@ const swaps = ({
   minDollarValue?: number;
   inToken?: string;
   outToken?: string;
+  fromDate?: number; // Timestamp (in seconds or milliseconds)
+  toDate?: number; // Timestamp (in seconds or milliseconds)
+  feeOutAmountUsd?: number;
 }) => {
   return {
     ...queryInitialData,
@@ -122,55 +127,55 @@ const swaps = ({
               chainId: chainId,
             },
           },
-          walletAddress
-            ? {
+          walletAddress && {
+            script: {
               script: {
-                script: {
-                  source: "doc['user.keyword'].value.toLowerCase() == params.user.toLowerCase()",
-                  params: {
-                    user: walletAddress,
-                  },
+                source:
+                  "doc['user.keyword'].value.toLowerCase() == params.user.toLowerCase()",
+                params: {
+                  user: walletAddress,
                 },
               },
-            }
-            : undefined,
-            dex
-            ? {
+            },
+          },
+          dex && {
+            script: {
               script: {
-                script: {
-                  source: "doc['dex.keyword'].value.toLowerCase() == params.dex.toLowerCase()",
-                  params: {
-                    dex: dex,
-                  },
+                source:
+                  "doc['dex.keyword'].value.toLowerCase() == params.dex.toLowerCase()",
+                params: {
+                  dex: dex,
                 },
               },
-            }
-            : undefined,
+            },
+          },
           {
             term: {
               "type.keyword": "swap",
             },
           },
-          inToken ?  {
+          inToken && {
             script: {
               script: {
-                source: "doc['tokenInName.keyword'].value.toLowerCase() == params.tokenInName.toLowerCase()",
+                source:
+                  "doc['tokenInName.keyword'].value.toLowerCase() == params.tokenInName.toLowerCase()",
                 params: {
                   tokenInName: inToken,
                 },
               },
             },
-          } : undefined,
-          outToken ?  {
+          },
+          outToken && {
             script: {
               script: {
-                source: "doc['tokenOutName.keyword'].value.toLowerCase() == params.tokenOutName.toLowerCase()",
+                source:
+                  "doc['tokenOutName.keyword'].value.toLowerCase() == params.tokenOutName.toLowerCase()",
                 params: {
                   tokenOutName: outToken,
                 },
               },
             },
-          } : undefined,
+          },
           {
             exists: {
               field: "txHash.keyword",
@@ -181,13 +186,28 @@ const swaps = ({
               field: "swapStatus.keyword",
             },
           },
-          minDollarValue ? {
+          minDollarValue && {
             range: {
               dollarValue: {
                 gt: minDollarValue,
               },
             },
-          } : undefined,
+          },
+          feeOutAmountUsd && {
+            range: {
+              feeOutAmountUsd: {
+                gt: feeOutAmountUsd,
+              },
+            },
+          },
+          (fromDate || toDate) && {
+            range: {
+              timestamp: {
+                ...(fromDate && { gte: fromDate }), // Greater than or equal to `fromDate`
+                ...(toDate && { lte: toDate }), // Less than or equal to `toDate`
+              },
+            },
+          },
         ].filter(Boolean),
         must_not: [
           {
@@ -214,8 +234,6 @@ const swaps = ({
     ],
   };
 };
-
-
 
 const clientTrasactions = (ids: string[], page: number, limit: number) => {
   return {
@@ -278,12 +296,12 @@ const twapLogs = (orderId: number, chainId: number) => {
               should: [
                 {
                   term: {
-                    "chainId": chainId,
+                    chainId: chainId,
                   },
                 },
                 {
                   term: {
-                    "chain": chainId,
+                    chain: chainId,
                   },
                 },
               ],
@@ -295,12 +313,12 @@ const twapLogs = (orderId: number, chainId: number) => {
               should: [
                 {
                   term: {
-                    "newOrderId": orderId,
+                    newOrderId: orderId,
                   },
                 },
                 {
                   term: {
-                    "orderId": orderId,
+                    orderId: orderId,
                   },
                 },
               ],
@@ -320,5 +338,5 @@ export const queries = {
   sessionId,
   quote,
   client,
-  twapLogs
+  twapLogs,
 };

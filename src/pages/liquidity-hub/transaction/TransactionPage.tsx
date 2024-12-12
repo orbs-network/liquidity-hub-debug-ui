@@ -274,13 +274,12 @@ const Fees = () => {
   const outToken = useToken(session?.tokenOutAddress, session?.chainId);
   const fee = useAmountUI(outToken?.decimals, session?.feeOutAmount);
 
-  const usdValue = useOutTokenUsd(fee);
   return (
     <DataDisplay.Row label="Fees">
       <DataDisplay.TokenAmount
         address={outToken?.address}
         amount={fee as string}
-        usd={usdValue as string}
+        usd={session?.feeOutAmountUsd || '' as string}
         chainId={session?.chainId}
       />
     </DataDisplay.Row>

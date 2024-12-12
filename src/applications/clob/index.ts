@@ -11,14 +11,58 @@ import {
 } from "config";
 import { LiquidityHubSession, LiquidityHubSwap } from "./interface";
 
+export const getSwapByTimestamp = async (
+  data: ReturnType<typeof queries.swaps>,
+  limit: number,
+  signal: AbortSignal
+) => {
+  let page = 0; // Start from the first page
+  let allLogs: any[] = []; // Array to collect all logs
+
+  while (true) {
+    // Prepare the query for the current page
+
+    // Fetch logs for the current page
+    const logs = await fetchElastic(
+      LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+      data,
+      signal
+    );
+    allLogs = [...allLogs, ...logs];
+    // Map logs to LiquidityHubSwap instances and add them to the collection
+
+    // Break the loop if no more logs are returned
+    if (logs.length < limit) {
+      break;
+    }
+
+    // Increment page for the next loop iteration
+    page++;
+  }
+
+  return allLogs;
+};
+
 export const useLiquidityHubSwaps = (walletAddress?: string) => {
   const {
-    query: { chainId, partner, minDollarValue, inToken, outToken },
+    query: { chainId, partner, minDollarValue, inToken, outToken, feeOutAmountUsd },
   } = useAppParams();
 
   return useInfiniteQuery({
-    queryKey: ["useLiquidityHubSwaps", chainId, walletAddress, partner, minDollarValue, inToken, outToken],
+    queryKey: [
+      "useLiquidityHubSwaps",
+      chainId,
+      walletAddress,
+      partner,
+      minDollarValue,
+      inToken,
+      outToken,
+      feeOutAmountUsd
+    ],
     queryFn: async ({ signal, pageParam }) => {
+      // const fromTimestamp = moment().subtract(4, "day").valueOf();
+      // const toTimestamp = moment().subtract(2, "day").valueOf();
+      // const limit = fromTimestamp && toTimestamp ? 1000 : 100;
       const data = queries.swaps({
         page: pageParam,
         chainId,
@@ -28,14 +72,30 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
         minDollarValue,
         inToken,
         outToken,
+        feeOutAmountUsd,
+        // fromDate: fromTimestamp,
+        // toDate: toTimestamp,
       });
+     
+      let logs = [];
+      // if (fromTimestamp && toTimestamp) {
+      //   logs = await getSwapByTimestamp(data,limit, signal);
+      //   console.log({logs});
+        
+      // } else {
+      //   logs = await fetchElastic(
+      //     LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+      //     data,
+      //     signal
+      //   );
+      // }
 
-      const logs = await fetchElastic(
+      logs = await fetchElastic(
         LIQUIDITY_HUB_ELASTIC_SERVER_URL,
         data,
         signal
       );
-      
+
       return logs.map((log) => {
         return new LiquidityHubSwap(log);
       });
@@ -54,14 +114,13 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
 export const useLiquidityHubSession = () => {
   const sessionIdOrTxHash = useParams().sessionIdOrTxHash;
 
-  
   return useQuery({
     queryKey: ["useLiquidityHubSession", sessionIdOrTxHash],
     queryFn: async ({ signal }) => {
       if (!sessionIdOrTxHash) {
         throw new Error("Invalid transaction hash or session id");
       }
-      let query;      
+      let query;
       if (isValidTxHash(sessionIdOrTxHash)) {
         query = queries.transactionHash(sessionIdOrTxHash);
       } else {

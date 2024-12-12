@@ -27,7 +27,8 @@ export const useAppParams = () => {
       partner: StringParam,
       minDollarValue: NumberParam,
       inToken: StringParam,
-      outToken: StringParam
+      outToken: StringParam,
+      feeOutAmountUsd: NumberParam,
     },
     {
       updateType: "pushIn",
@@ -42,7 +43,8 @@ export const useAppParams = () => {
       partner: query.partner as string | undefined,
       minDollarValue: query.minDollarValue as number | undefined,
       inToken: query.inToken as string | undefined,
-      outToken: query.outToken as string | undefined
+      outToken: query.outToken as string | undefined,
+      feeOutAmountUsd: query.feeOutAmountUsd as number | undefined,
     },
     setQuery,
   };

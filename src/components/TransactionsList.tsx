@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {RowFlex } from "../styles";
+import { RowFlex } from "../styles";
 import { Link, useNavigate } from "react-router-dom";
 import _ from "lodash";
 import {
@@ -10,7 +10,7 @@ import {
 } from "../hooks";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { TokenAddress } from "./AddressLink";
-import { useCallback} from "react";
+import { useCallback } from "react";
 import moment from "moment";
 import { StatusBadge } from "./StatusBadge";
 import { Avatar } from "antd";
@@ -32,15 +32,17 @@ export const TransactionsList = ({
   isFetchingNextPage?: boolean;
 }) => {
   return (
-    <List<LiquidityHubSwap>
-      isLoading={isLoading}
-      loadMore={loadMore}
-      isFetchingNextPage={isFetchingNextPage}
-      items={sessions}
-      DesktopComponent={DesktopComponent}
-      MobileComponent={MobileComponent}
-      headerLabels={headerLabels}
-    />
+    <>
+      <List<LiquidityHubSwap>
+        isLoading={isLoading}
+        loadMore={loadMore}
+        isFetchingNextPage={isFetchingNextPage}
+        items={sessions}
+        DesktopComponent={DesktopComponent}
+        MobileComponent={MobileComponent}
+        headerLabels={headerLabels}
+      />
+    </>
   );
 };
 
@@ -162,8 +164,8 @@ const Usd = ({ item }: { item: LiquidityHubSwap }) => {
 };
 
 const FeesUsd = ({ item }: { item: LiquidityHubSwap }) => {
-  const { feesUsd } = item;
-  const result = useNumberFormatter({ value: feesUsd }).short;
+  const { feeOutAmountUsd } = item;
+  const result = useNumberFormatter({ value: feeOutAmountUsd || "" }).short;
 
   return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
 };
@@ -204,38 +206,67 @@ const MinDollarValueFilter = () => {
   );
 
   return (
-    <List.Filter>
-      <List.Filter.Label text="Min USD value" />
+    <List.Filter active={Boolean(query.minDollarValue)}>
+      <List.Filter.Element label="Min USD value" >
       <List.Filter.Input
         placeholder="Enter value..."
         onChange={onChange}
         initialValue={query.minDollarValue?.toString()}
       />
+      </List.Filter.Element>
     </List.Filter>
+  );
+};
+const FeesFilter = () => {
+  const { setQuery, query } = useAppParams();
+
+  const onChange = useCallback(
+    (value?: string) => {
+      setQuery({
+        feeOutAmountUsd: value ? Number(value) : undefined,
+      });
+    },
+    [setQuery]
+  );
+
+  return (
+      <List.Filter active={Boolean(query.feeOutAmountUsd)}>
+        <List.Filter.Element label="Min Fee value">
+          <List.Filter.Input
+            placeholder="Enter value..."
+            onChange={onChange}
+            initialValue={query.feeOutAmountUsd?.toString()}
+          />
+        </List.Filter.Element>
+      </List.Filter>
   );
 };
 
 const TokensFilter = () => {
   const { setQuery, query } = useAppParams();
 
+
   return (
     <RowFlex>
-      <List.Filter>
-        <List.Filter.Label text="In Token" />
-        <List.Filter.Input
-          placeholder="Enter value..."
-          onChange={(inToken) => setQuery({ inToken })}
-          initialValue={query.inToken}
-        />
-      </List.Filter>
-      <List.Filter>
-        <List.Filter.Label text="Out Token" />
-        <List.Filter.Input
-          placeholder="Enter value..."
-          onChange={(outToken) => setQuery({ outToken })}
-          initialValue={query.outToken}
-        />
-      </List.Filter>
+        <List.Filter active={Boolean(query.inToken || query.outToken)}>
+          <RowFlex>
+          <List.Filter.Element label="In Token">
+            <List.Filter.Input
+              placeholder="Enter value..."
+              onChange={(inToken) => setQuery({ inToken })}
+              initialValue={query.inToken}
+            />
+          </List.Filter.Element>
+          <List.Filter.Element label="Out Token">
+            <List.Filter.Input
+              placeholder="Enter value..."
+              onChange={(outToken) => setQuery({ outToken })}
+              initialValue={query.outToken}
+            />
+          </List.Filter.Element>
+          </RowFlex>
+        </List.Filter>
+
     </RowFlex>
   );
 };
@@ -260,18 +291,19 @@ const desktopRows = [
     Component: Tokens,
     label: "Tokens",
     width: 15,
-    filterComponent: <TokensFilter />,
+    FilterComponent: TokensFilter,
   },
   {
     Component: Usd,
     label: "USD",
     width: 10,
-    filterComponent: <MinDollarValueFilter />,
+    FilterComponent: MinDollarValueFilter,
   },
   {
     Component: FeesUsd,
     label: "Fees",
     width: 10,
+    FilterComponent: FeesFilter,
   },
   {
     Component: TxHash,
@@ -297,7 +329,7 @@ const headerLabels = desktopRows.map((it) => {
     label: it.label,
     width: it.width,
     alignCenter: it.alignCenter,
-    filterComponent: it.filterComponent,
+    FilterComponent: it.FilterComponent,
   };
 });
 

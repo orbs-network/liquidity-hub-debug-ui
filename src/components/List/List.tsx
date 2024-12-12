@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import _ from "lodash";
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Typography, Spin, Skeleton, Avatar, Popover } from "antd";
 import {
@@ -20,7 +20,7 @@ type HeaderLabel = {
   label: string;
   width: number;
   alignCenter?: boolean;
-  filterComponent?: ReactNode;
+  FilterComponent?: FC;
 };
 
 function List<T>({
@@ -96,7 +96,6 @@ const ListHeader = ({
 };
 
 const ListHeaderItem = ({ item }: { item: HeaderLabel }) => {
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <StyledHeaderItem
@@ -114,30 +113,52 @@ const ListHeaderItem = ({ item }: { item: HeaderLabel }) => {
       >
         {item.label}
       </Typography>
-      <Popover
-        arrow={false}
-        overlayInnerStyle={{
-          borderRadius: 10,
-          padding: 10,
-          background: "#38242B",
-        }}
-        content={
-          !item.filterComponent ? undefined : <div>{item.filterComponent}</div>
-        }
-        trigger="click"
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        placement="bottom"
-      >
-        {item.filterComponent && (
-          <div style={{ cursor: "pointer" }}>
-            <FilterIcon size={16} style={{ color: "white" }} />
-          </div>
-        )}
-      </Popover>
+      {item.FilterComponent && <item.FilterComponent />}
     </StyledHeaderItem>
   );
 };
+
+const Filter = ({
+  children,
+  active,
+}: {
+  children: ReactNode;
+  active?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Popover
+      arrow={false}
+      overlayInnerStyle={{
+        borderRadius: 10,
+        padding: 10,
+        background: "#38242B",
+      }}
+      content={children}
+      trigger="click"
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      placement="bottom"
+    >
+      <div style={{ cursor: "pointer" }}>
+        <FilterIcon
+          size={16}
+          style={{ color: "white", fill: active ? "white" : "" }}
+        />
+      </div>
+    </Popover>
+  );
+};
+
+
+
+const FilterElement = ({label, children}:{label: string, children: ReactNode}) =>{
+  return <ColumnFlex $alignItems='flex-start' $gap={5}>
+  <Filter.Label  text={label} />
+  {children}
+  </ColumnFlex>
+}
+
 
 function Item<T>({
   item,
@@ -316,15 +337,6 @@ function DesktopRow({ children }: { children: ReactNode }) {
   return <ListSessionContainer>{children}</ListSessionContainer>;
 }
 
-const Filter = ({ children }: { children: ReactNode }) => {
-  return <StyledListFilter>{children}</StyledListFilter>;
-};
-
-const StyledListFilter = styled(ColumnFlex)({
-  gap: 5,
-  alignItems: "flex-start",
-});
-
 const FilterLabel = ({ text }: { text: string }) => {
   return <StyledFilterLabel>{text}</StyledFilterLabel>;
 };
@@ -367,7 +379,7 @@ const StyledListFilterInput = styled(StyledInput)({
 
 Filter.Input = FilterInput;
 Filter.Label = FilterLabel;
-
+Filter.Element = FilterElement;
 DesktopRowElement.Text = DesktopRowElementText;
 DesktopRow.Element = DesktopRowElement;
 List.DesktopRow = DesktopRow;

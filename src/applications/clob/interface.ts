@@ -9,13 +9,6 @@ const nameModifier = (name?: string) => {
   return name || "";
 };
 
-
-const getUsdValue = (amount?: string, usd?: number | string) => {
-  
-  if (!amount || !usd) return "0";
-  const res = BN(usd).dividedBy(amount);
-  return res.gt(0) ? res.toString() : undefined;
-};
 export class LiquidityHubSwap {
   feeOutAmount: number;
   amountIn: number;
@@ -48,12 +41,9 @@ export class LiquidityHubSwap {
   dexSimulateOutAmount: string;
   dexRouteData: any;
   dexRouteTo: string;
-  feesUsd: number;
 
   constructor(rawSwap: any) {
     const slippage = rawSwap.slippage;
-    const outTokenUSD = getUsdValue(rawSwap?.amountOut, rawSwap.dollarValue) || 0;
-
     this.feeOutAmount = rawSwap.feeOutAmount;
     this.amountIn = rawSwap.amountIn;
     this.chainId = rawSwap.chainId;
@@ -85,12 +75,10 @@ export class LiquidityHubSwap {
       .toFixed();
     this.blockNumber = rawSwap.blockNumber;
     this.amountInUsd = rawSwap.amountInUSD;
-    this.feeOutAmountUsd = rawSwap.feeOutAmountUsd;
+    this.feeOutAmountUsd = rawSwap.feeOutAmountUsd && rawSwap.feeOutAmountUsd > 0 ? rawSwap.feeOutAmountUsd : 0;
     this.dexSimulateOutAmount = handleZeroValue(rawSwap.dexSimulateOutAmount);
     this.dexRouteData = rawSwap.dexRouteData;
     this.dexRouteTo = rawSwap.dexRouteTo;
-    this.feesUsd = rawSwap.feeOutAmountUsd || BN(rawSwap.feeOutAmount || 0).multipliedBy(outTokenUSD).toNumber();
-    this.feesUsd = this.feesUsd > 0 ? this.feesUsd : 0;
   }
 }
 

@@ -9,8 +9,10 @@ import { ROUTES, TWAP_ROUTER_PATHS } from "config";
 
 const Navbar = () => {
   const pathname = useLocation().pathname;
+  console.log(_.last(pathname.split('/')));
+  
   const hideFilters = useMemo(() => {
-    if (pathname.includes(TWAP_ROUTER_PATHS.order)) {
+    if (_.last(pathname.split('/')) === TWAP_ROUTER_PATHS.order) {
       return true;
     }
   
