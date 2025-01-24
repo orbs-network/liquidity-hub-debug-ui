@@ -43,6 +43,13 @@ export class Partner {
 }
 
 export const partners: { [key: string]: Partner } = {
+  swapx: new Partner(
+    "https://swapx.fi",
+    "https://s2.coinmarketcap.com/static/img/coins/64x64/34753.png",
+    "SwapX",
+    "swapx",
+    [networks.sonic.id]
+  ),
   quickswap: new Partner(
     "https://quickswap.exchange/",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",
@@ -55,7 +62,7 @@ export const partners: { [key: string]: Partner } = {
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png",
     "Spookyswap",
     "spookyswap",
-    [networks.ftm.id]
+    [networks.ftm.id, networks.sonic.id]
   ),
   lynex: new Partner(
     "https://www.lynex.fi/",

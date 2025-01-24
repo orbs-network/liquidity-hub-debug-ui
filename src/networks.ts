@@ -5,6 +5,26 @@ import {
 
 import Linea from "assets/linea.svg";
 export const networks = {
+  sonic: {
+    id: 146,
+    name: "Sonic",
+    shortname: "sonic",
+    native: {
+      address: zeroAddress,
+      symbol: "S",
+      decimals: 18,
+      logoUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/32684.png",
+    },
+    wToken: {
+      address:'0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38',
+      symbol: "WS",
+      decimals: 18,
+      logoUrl:'https://s2.coinmarketcap.com/static/img/coins/64x64/34753.png'
+    },
+    publicRpcUrl: "https://rpc.soniclabs.com",
+    logoUrl: "https://s3.coinmarketcap.com/static-gravity/image/0ebcb9758aa240218c456774b44934b6.jpg",
+    explorer: "https://sonicscan.org",
+  },
   eth: {
     id: 1,
     name: "Ethereum",
