@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@defi.org/web3-candies": "^4.20.12",
+    "@defi.org/web3-candies": "^5.0.6",
     "@orbs-network/twap-sdk": "^2.0.53",
     "@tanstack/react-query": "^5.17.19",
     "@tanstack/react-query-devtools": "^5.17.21",

@@ -84,13 +84,14 @@ export const ChainSelect = () => {
       >
         <StyledList>
           {filteredChains?.map((network) => {
+            
             return (
               <StyledListItem
                 $selected={selectedChain?.id === network.id}
                 key={network.id}
                 onClick={() => onSelect(network.id)}
               >
-                <Avatar src={network.logoUrl} alt={network.name} size={25} />
+                <Avatar src={network.native.logoUrl} alt={network.name} size={25} />
                 <Typography>{network.name}</Typography>
               </StyledListItem>
             );

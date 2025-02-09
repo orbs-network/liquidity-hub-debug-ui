@@ -357,7 +357,6 @@ const FilterInput = ({
   const [value, setValue] = useState(initialValue);
   const debounedValue = useDebounce(value, 500);
 
-  console.log(initialValue);
 
   useEffect(() => {
     onChange(debounedValue);

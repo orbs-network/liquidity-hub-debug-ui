@@ -125,7 +125,7 @@ export const partners: { [key: string]: Partner } = {
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png",
     "DragonSwap",
     "dragonswap",
-    []
+    [networks.sei.id]
   ),
   retro: new Partner(
     "https://retro.finance/",
@@ -141,4 +141,5 @@ export const partners: { [key: string]: Partner } = {
     "fenix",
     [networks.blast.id]
   ),
+
 };
