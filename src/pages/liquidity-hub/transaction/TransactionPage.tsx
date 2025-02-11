@@ -1,6 +1,5 @@
 import {
   DataDisplay,
-  FormattedAmount,
   Page,
   TxHashAddress,
   WalletAddress,
@@ -396,18 +395,19 @@ const Transfers = () => {
 
 const Transfer = ({ log }: { log: TransferLog }) => {
   const session = useLiquidityHubSession().data;
+  const value = useNumberFormatter({ value: log.value }).formatted?.toString()
   return (
     <StyledRow>
-      <Typography>
+      <Typography style={{ whiteSpace: "nowrap" }}>
         <strong>From </strong>
       </Typography>
       <WalletAddress chainId={session?.chainId} address={log.from} />{" "}
-      <Typography>
+      <Typography style={{ whiteSpace: "nowrap" }}>
         <strong> To </strong>
       </Typography>
       <WalletAddress chainId={session?.chainId} address={log.to} />{" "}
-      <Typography>
-        <strong>For</strong> <FormattedAmount value={log.value} />{" "}
+      <Typography style={{ whiteSpace: "nowrap" }}>
+        <strong>For</strong> {value}{" "}
       </Typography>
       <WalletAddress chainId={session?.chainId} address={log.token.address} />
     </StyledRow>

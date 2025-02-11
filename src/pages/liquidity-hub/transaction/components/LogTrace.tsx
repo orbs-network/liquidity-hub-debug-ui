@@ -49,7 +49,6 @@ export const LogTrace = () => {
     <DataDisplay.Row label="Log trace">
       <AceEditor
         mode="sh" // Set mode to shell script
-        theme="XCode" // Set theme to a terminal-like theme
         value={isLoading ? "Loading..." : error ? `Error: ${error}` : data}
         readOnly={true} // Make it read-only to resemble a terminal output
         width="100%" // Adjust width as needed

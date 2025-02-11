@@ -136,3 +136,17 @@ table {
 *::-webkit-scrollbar {
   display: none;
 }
+
+
+.ant-modal-content{
+  background-color: black!important;
+}
+.ant-modal-content *{
+  color: white!important;
+}
+.ant-modal-header {
+  background-color: black!important;
+}
+.ant-modal-header * {
+  color: white!important;
+}
