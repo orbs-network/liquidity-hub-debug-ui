@@ -1,9 +1,10 @@
-import { useChainConfig } from "hooks";
+
 import { useMemo } from "react";
 import { useGasCostUsd } from "../hooks";
 import BN from "bignumber.js";
-import { DataDisplay } from "components";
-import { useLiquidityHubSession } from "applications";
+import { DataDisplay } from "@/components";
+import { useLiquidityHubSession } from "@/applications";
+import { useNetwork } from "@/hooks/hooks";
 
 export const GasUsed = () => {
   const session = useLiquidityHubSession().data;
@@ -15,7 +16,7 @@ export const GasUsed = () => {
 
   const usd = useGasCostUsd();
 
-  const chainConfig = useChainConfig(session?.chainId);
+  const chainConfig = useNetwork(session?.chainId);
 
   return (
     <DataDisplay.Row label="Gas Used">

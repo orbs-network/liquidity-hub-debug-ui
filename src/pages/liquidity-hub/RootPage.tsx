@@ -1,10 +1,10 @@
-import _ from "lodash";
+
 import { Outlet, useLocation } from "react-router-dom";
 import { useMemo } from "react";
-import { Page } from "components";
-import { Filters } from "components/Filters";
-import { RowFlex } from "styles";
-import { LIQUIDITY_HUB_ROUTER_PATHS, ROUTES } from "config";
+import { Page } from "@/components";
+import { Filters } from "@/components/Filters";
+import { RowFlex } from "@/styles";
+import { LIQUIDITY_HUB_ROUTER_PATHS, ROUTES } from "@/config";
 import { LiquidityHubSearchInput } from "./components/LiquidityHubSearchInput";
 
 export const Navbar = () => {

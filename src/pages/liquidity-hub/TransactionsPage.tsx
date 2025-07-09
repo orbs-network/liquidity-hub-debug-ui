@@ -1,11 +1,11 @@
-import _ from "lodash";
+
 import { useCallback, useMemo, useState } from "react";
-import { Page, TransactionsList } from "components";
-import { ColumnFlex } from "styles";
+import { Page, TransactionsList } from "@/components";
+import { ColumnFlex } from "@/styles";
 import { Button, Input, Typography } from "antd";
-import { useLiquidityHubSwaps } from "applications";
+import { useLiquidityHubSwaps } from "@/applications";
 import { styled } from "styled-components";
-import { MOBILE } from "consts";
+import { MOBILE } from "@/consts";
 
 export const TransactionsPage = () => {
   const [password, setPassword] = useState(localStorage.getItem("password"));
@@ -49,7 +49,7 @@ const Password = ({ onSubmit }: { onSubmit: (value: string) => void }) => {
   const [value, setValue] = useState("");
 
   const onKeyDown = useCallback(
-    (e: any) => {
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
         onSubmit(value);
       }

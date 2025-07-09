@@ -1,14 +1,14 @@
 import _ from "lodash";
-import { fetchElastic } from "helpers";
+import { fetchElastic } from "@/helpers";
 import { queries } from "../elastic";
-import { isValidTxHash } from "utils";
+import { isValidTxHash } from "@/utils";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
-import { useAppParams } from "hooks";
+import { useAppParams } from "@/hooks";
 import {
   LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
   LIQUIDITY_HUB_ELASTIC_SERVER_URL,
-} from "config";
+} from "@/config";
 import { LiquidityHubSession, LiquidityHubSwap } from "./interface";
 
 export const getSwapByTimestamp = async (

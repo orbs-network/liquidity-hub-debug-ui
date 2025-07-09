@@ -2,21 +2,78 @@ import { useCallback, useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 import { StringParam, useQueryParams, NumberParam } from "use-query-params";
 import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
-import {
-  amountUiV2,
-  getChainConfig,
-  getRpcUrl,
-  getTokenDetails,
-} from "./helpers";
+import { getChain, toAmountUI } from "./helpers";
 import BN from "bignumber.js";
-import Web3 from "web3";
 import { notification } from "antd";
 
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getConfigByTwapAddress, getMinDecimalScaleForLeadingZero, getPartnerById } from "@/utils";
+import { MOBILE, URL_QUERY_KEYS } from "@/consts";
+import { useLocation, useNavigate } from "react-router";
+import { priceUsdService } from "@/services/price-usd";
 import {
-  eqIgnoreCase,
+  getNetwork,
   isNativeAddress,
   zeroAddress,
-} from "@defi.org/web3-candies";
+} from "@orbs-network/twap-sdk";
+import { erc20Abi } from "viem";
+import { getPublicClient } from "@/lib";
+
+export const useToken = (
+  tokenAddress?: string,
+  chainId?: number,
+  disabled = false
+) => {
+  return useQuery({
+    queryKey: ["useToken", tokenAddress, chainId],
+    queryFn: async () => {
+      const publicClient = getPublicClient(chainId!);
+      const chain = getChain(chainId);
+
+      if (isNativeAddress(tokenAddress!)) {
+        return {
+          address: tokenAddress!,
+          name: chain?.nativeCurrency.symbol as string,
+          symbol: chain?.nativeCurrency.symbol as string,
+          decimals: chain?.nativeCurrency.decimals as number,
+        };
+      }
+      if (!publicClient) {
+        throw new Error("Public client not found");
+      }
+      const [name, symbol, decimals] = await publicClient.multicall({
+        contracts: [
+          {
+            address: tokenAddress as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "name",
+          },
+          {
+            address: tokenAddress as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "symbol",
+          },
+          {
+            address: tokenAddress as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "decimals",
+          },
+        ],
+        allowFailure: false, // or true if you want individual calls to continue on failure
+      });
+      return {
+        address: tokenAddress!,
+        name: name as string,
+        symbol: symbol as string,
+        decimals: decimals as number,
+      };
+    },
+    enabled: !!tokenAddress && !!chainId && !disabled,
+    staleTime: Infinity,
+
+  });
+};
 
 export const useAppParams = () => {
   const [query, setQuery] = useQueryParams(
@@ -29,6 +86,10 @@ export const useAppParams = () => {
       inToken: StringParam,
       outToken: StringParam,
       feeOutAmountUsd: NumberParam,
+      [URL_QUERY_KEYS.USER]: StringParam,
+      [URL_QUERY_KEYS.TWAP_ORDER_TX_HASH]: StringParam,
+      [URL_QUERY_KEYS.ORDER_ID]: StringParam,
+      [URL_QUERY_KEYS.TWAP_ADDRESS]: StringParam,
     },
     {
       updateType: "pushIn",
@@ -45,18 +106,13 @@ export const useAppParams = () => {
       inToken: query.inToken as string | undefined,
       outToken: query.outToken as string | undefined,
       feeOutAmountUsd: query.feeOutAmountUsd as number | undefined,
+      user: query[URL_QUERY_KEYS.USER] as string | undefined,
+      orderTxHash: query[URL_QUERY_KEYS.TWAP_ORDER_TX_HASH] as string | undefined,
+      orderId: query[URL_QUERY_KEYS.ORDER_ID] as string | undefined,
+      twapAddress: query[URL_QUERY_KEYS.TWAP_ADDRESS] as string | undefined,
     },
     setQuery,
   };
-};
-
-export const useWeb3 = (chainId?: number) => {
-  const rpc = getRpcUrl(chainId);
-  return useMemo(() => {
-    if (!rpc) return;
-
-    return new Web3(new Web3.providers.HttpProvider(rpc));
-  }, [chainId]);
 };
 
 function shortenNumber(amount?: number | string | null, decimalScale = 2) {
@@ -96,12 +152,12 @@ function shortenNumber(amount?: number | string | null, decimalScale = 2) {
   return undefined;
 }
 
-export const useTokenValueFromatter = ({
+export const useTokenValueFormatter = ({
   value,
   tokenDecimals,
   decimalScale,
 }: {
-  value?: any;
+  value?: string | number;
   tokenDecimals?: number;
   decimalScale?: number;
 }) => {
@@ -128,8 +184,6 @@ export const useNumberFormatter = ({
     return !res ? decimalScale : res > 5 ? 0 : decimalScale;
   }, [value, decimalScale]);
 
-  
-
   const formatted = useNumericFormat({
     value,
     decimalScale: decimals,
@@ -138,7 +192,7 @@ export const useNumberFormatter = ({
 
   const short = useMemo(() => {
     return shortenNumber(value, 2);
-  }, [value, decimals]);
+  }, [value]);
 
   return {
     formatted,
@@ -172,20 +226,13 @@ export const useTokenAmountUsd = (
   return useMemo(() => {
     if (!amount || !price) return "";
     return BN(amount).multipliedBy(price).toString();
-  }, [price, tokenAddress, amount]);
-};
-
-export const useChainConfig = (chainId?: number) => {
-  return useMemo(() => {
-    return getChainConfig(chainId);
-  }, [chainId]);
+  }, [price, amount]);
 };
 
 export const useExplorerUrl = (chainId?: number) => {
-  const chainConfig = useChainConfig(chainId);
   return useMemo(() => {
-    return chainConfig?.explorer;
-  }, [chainConfig]);
+    return getChain(chainId)?.blockExplorers?.default?.url || "";
+  }, [chainId]);
 };
 
 type CopyFn = (text: string) => Promise<boolean>; // Return success
@@ -217,47 +264,6 @@ export function useCopyToClipboard(): CopyFn {
   return copy;
 }
 
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Partner, partners } from "partners";
-import _ from "lodash";
-import {
-  getMinDecimalScaleForLeadingZero,
-  getPartnerWithExchangeAddress,
-} from "utils";
-import { MOBILE } from "consts";
-import { Configs } from "@orbs-network/twap-sdk";
-import { useLocation, useNavigate } from "react-router";
-import { priceUsdService } from "services/price-usd";
-
-export const useResizeObserver = (elementRef: any) => {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    const element = elementRef.current;
-
-    if (!element) return;
-
-    // Create a ResizeObserver instance to observe element's size changes
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        setDimensions({ width, height });
-      }
-    });
-
-    // Observe the element
-    resizeObserver.observe(element);
-
-    // Cleanup observer on unmount
-    return () => {
-      resizeObserver.unobserve(element);
-    };
-  }, [elementRef]); // Depend on the elementRef to re-run if the element changes
-
-  return dimensions; // Return the current dimensions (width and height)
-};
-
 export const useHeight = () => {
   const [height, setHeight] = useState(window.innerHeight);
 
@@ -288,74 +294,14 @@ export const useIsMobile = () => {
   return isMobile;
 };
 
-export const useToken = (tokenAddress?: string, chainId?: number) => {
-  const w3 = useWeb3(chainId);
-  const chainConfig = useChainConfig(chainId);
-
-  return useQuery({
-    queryKey: ["useGetToken", tokenAddress, chainId],
-    queryFn: async () => {
-      if (isNativeAddress(tokenAddress!)) {
-        return {
-          address: tokenAddress!,
-          name: chainConfig?.native.symbol,
-          symbol: chainConfig?.native?.symbol,
-          decimals: chainConfig?.native?.decimals,
-        };
-      }
-      return getTokenDetails(tokenAddress!, w3!, chainId!);
-    },
-    enabled: !!tokenAddress && !!chainId && !!w3,
-    staleTime: Infinity,
-  }).data;
-};
-
 export const useAmountUI = (
   decimals?: number,
   value?: string | BN | number
 ) => {
   return useMemo(
-    () => amountUiV2(decimals, value),
-    [decimals, value?.toString()]
+    () => toAmountUI(value?.toString() || "", decimals || 0),
+    [decimals, value]
   );
-};
-
-export const usePartnerFromName = (name?: string): Partner | undefined => {
-  return useMemo(() => {
-    return partners[name?.toLowerCase() as keyof typeof partners];
-  }, [name]);
-};
-
-export const useLiquidityHubPartner = (dex?: string) => {
-  return useMemo(() => {
-    if (!dex) return;
-    return partners[dex.toLowerCase() as keyof typeof partners];
-  }, [dex]);
-};
-
-export const useTwapPartner = (exchangeAddress?: string) => {
-  return useMemo(() => {
-    if (!exchangeAddress) return;
-    return getPartnerWithExchangeAddress(exchangeAddress);
-  }, [exchangeAddress]);
-};
-
-export const usePartnerByName = (name?: string) => {
-  return useMemo(() => {
-    if (!name) return;
-    return Object.values(partners).find(
-      (partner) => partner.name.toLowerCase() === name.toLowerCase()
-    );
-  }, [name]);
-};
-
-export const useTwapConfigByExchange = (exchangeAddress?: string) => {
-  return useMemo(() => {
-    if (!exchangeAddress) return;
-    return Object.values(Configs).find((config) =>
-      eqIgnoreCase(config.exchangeAddress, exchangeAddress)
-    );
-  }, [exchangeAddress]);
 };
 
 export const useNavigateWithParams = () => {
@@ -363,8 +309,8 @@ export const useNavigateWithParams = () => {
   const navigate = useNavigate();
 
   return useCallback(
-    (route: string) => {
-      navigate(`${route}${search}`);
+    (route: string, params?: Record<string, string>) => {
+      navigate(`${route}${params ? `?${new URLSearchParams(params).toString()}` : search}`);
     },
     [navigate, search]
   );
@@ -376,7 +322,7 @@ export const useUSDPrice = (address?: string, chainId?: number) => {
       if (!chainId || !address) return 0;
 
       if (isNativeAddress(address)) {
-        const wToken = getChainConfig(chainId)?.wToken.address;
+        const wToken = getNetwork(chainId)?.wToken.address;
         if (!wToken) return 0;
         return priceUsdService.getPrice(wToken, chainId);
       }
@@ -404,3 +350,25 @@ export function useDebounce(value?: string, delay = 5_00) {
 
   return debouncedValue;
 }
+
+export const useAppType = () => {
+  const location = useLocation();
+
+  return useMemo(() => {
+    if (location.pathname.includes("liquidity-hub")) {
+      return "lh";
+    }
+    if (location.pathname.includes("twap")) {
+      return "twap";
+    }
+  }, [location.pathname]);
+};
+
+
+export const usePartnerWithId = (id?: string) => {
+  return useMemo(() => id ? getPartnerById(id) : undefined, [id]);
+};
+
+export const useConfigByTwapAddress = (twapAddress?: string, chainId?: number) => {
+  return useMemo(() => twapAddress && chainId ? getConfigByTwapAddress(twapAddress, chainId) : undefined, [twapAddress, chainId]);
+};

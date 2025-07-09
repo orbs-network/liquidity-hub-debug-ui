@@ -1,4 +1,4 @@
-import { swapStatusText } from "helpers";
+import { swapStatusText } from "@/helpers";
 import { styled } from "styled-components";
 import { Check, X } from "react-feather";
 import { Typography } from "antd";

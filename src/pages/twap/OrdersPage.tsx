@@ -1,20 +1,11 @@
-import { useTwapOrders } from "applications/twap";
-import { Page } from "components";
-
-import { useAppParams } from "hooks";
+import { Page } from "@/components";
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
 import { TwapOrdersList } from "./components/twap-orders-list";
+import { useTwapOrdersQuery } from "@/lib/queries/use-twap-orders-query";
 
 export function OrdersPage() {
-  const { query } = useAppParams();
-  const { maker } = useParams();
 
-  const { data, isLoading, isFetchingNextPage, fetchNextPage } = useTwapOrders(
-    query.chainId,
-    query.partner,
-    maker
-  );
+  const { data, isLoading, isFetchingNextPage, fetchNextPage } = useTwapOrdersQuery();
   const orders = useMemo(() => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);

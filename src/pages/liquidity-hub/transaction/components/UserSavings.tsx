@@ -1,13 +1,13 @@
-import { useLiquidityHubSession } from "applications";
-import { DataDisplay } from "components";
-import { useAmountUI, useToken } from "hooks";
+import { useLiquidityHubSession } from "@/applications";
+import { DataDisplay } from "@/components";
+import { useAmountUI, useToken } from "@/hooks";
 import { useOutTokenUsd } from "../hooks";
 
 
 
 export const UserSavings = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId)?.data;
   const savings = session?.userSavings
     
   const amount = useAmountUI(outToken?.decimals, savings);

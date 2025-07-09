@@ -1,7 +1,7 @@
-import { SearchInput } from "components/SearchInput";
+import { SearchInput } from "@/components/SearchInput";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { isValidWalletAddress, navigation } from "utils";
+import { isValidWalletAddress, navigation } from "@/utils";
 
 export function LiquidityHubSearchInput({
   className = "",

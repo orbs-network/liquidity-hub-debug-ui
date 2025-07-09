@@ -1,9 +1,9 @@
-import { App } from "App";
+import { App } from "@/App";
 import {
   LiquidityHubPages,
   TwapPages,
   MainPage,
-} from "pages";
+} from "@/pages";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "./config";
 
@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.twap.root,
-        element: <TwapPages.RootPage />,
+        element: <TwapPages.Main />,
         children: [
           {
             index: true,

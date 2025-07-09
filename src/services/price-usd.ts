@@ -1,7 +1,5 @@
-import _ from "lodash";
+import { getNetwork, isNativeAddress } from "@orbs-network/twap-sdk";
 import BN from "bignumber.js";
-import { isNativeAddress } from "@defi.org/web3-candies";
-import { getChainConfig } from "helpers";
 
 
 
@@ -59,7 +57,7 @@ export async function fetchLLMAPrice(token: string, chainId: number) {
     const chainName = chainIdToName[chainId] || "Unknown Chain";
 
     if (isNativeAddress(token)) {
-      const wToken = getChainConfig(chainId)?.wToken;
+      const wToken = getNetwork(chainId)?.wToken;
       if (!wToken) return;
       token = wToken.address;
     }

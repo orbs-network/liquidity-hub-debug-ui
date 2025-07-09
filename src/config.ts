@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 
 export const LIQUIDITY_HUB_ROUTER_PATHS = {
   tx: 'tx',

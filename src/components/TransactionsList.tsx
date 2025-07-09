@@ -1,12 +1,10 @@
 import styled from "styled-components";
 import { RowFlex } from "../styles";
 import { Link, useNavigate } from "react-router-dom";
-import _ from "lodash";
 import {
   useAppParams,
-  useChainConfig,
-  useLiquidityHubPartner,
   useNumberFormatter,
+  usePartnerWithId,
 } from "../hooks";
 import { makeElipsisAddress, swapStatusText } from "../helpers";
 import { TokenAddress } from "./AddressLink";
@@ -16,9 +14,10 @@ import { StatusBadge } from "./StatusBadge";
 import { Avatar } from "antd";
 import { ChevronRight } from "react-feather";
 import { List } from "./List";
-import { LiquidityHubSwap } from "applications/clob/interface";
-import { colors } from "consts";
-import { navigation } from "utils";
+import { LiquidityHubSwap } from "@/applications/clob/interface";
+import { colors } from "@/consts";
+import { navigation } from "@/utils";
+import { useNetwork } from "@/hooks/hooks";
 
 export const TransactionsList = ({
   sessions = [],
@@ -86,7 +85,7 @@ const Timestamp = ({ item }: { item: LiquidityHubSwap }) => {
 };
 
 const Dex = ({ item }: { item: LiquidityHubSwap }) => {
-  const chainConfig = useChainConfig(item.chainId);
+  const chainConfig = useNetwork(item.chainId);
   return (
     <RowFlex style={{ gap: 6 }}>
       <List.DesktopRow.Element.Text text={item.dex} />
@@ -334,7 +333,7 @@ const headerLabels = desktopRows.map((it) => {
 });
 
 const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
-  const partner = useLiquidityHubPartner(item.dex);
+  const partner = usePartnerWithId(item.dex);
   const navigate = useNavigate();
   const onClick = useCallback(() => {
     navigate(navigation.liquidityHub.tx(item.id));

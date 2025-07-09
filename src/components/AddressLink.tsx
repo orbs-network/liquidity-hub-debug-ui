@@ -1,10 +1,10 @@
 import styled from "styled-components";
-import { useCopyToClipboard, useExplorerUrl } from "hooks";
 import { Copy , Check} from "react-feather";
 import { Tooltip, Typography } from "antd";
-import { colors } from "consts";
 import TextOverflow from "react-text-overflow";
 import { useState } from "react";
+import { useCopyToClipboard, useExplorerUrl } from "@/hooks";
+import { colors } from "@/consts";
 const { Link } = Typography;
 
 export function AddressLink({
@@ -19,7 +19,7 @@ export function AddressLink({
   const [success, setSuccess] = useState(false);
 
   const copy = useCopyToClipboard();
-  const onCopy = (e: any) => {
+  const onCopy = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (success) return;
     e.preventDefault();
     copy(address!);

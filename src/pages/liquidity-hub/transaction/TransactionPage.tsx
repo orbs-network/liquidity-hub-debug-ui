@@ -1,31 +1,25 @@
-import {
-  DataDisplay,
-  Page,
-  TxHashAddress,
-  WalletAddress,
-} from "components";
-import { ColumnFlex, RowFlex } from "styles";
+import { DataDisplay, Page, TxHashAddress, WalletAddress } from "@/components";
+import { ColumnFlex, RowFlex } from "@/styles";
 import styled from "styled-components";
-import _ from "lodash";
 import { Avatar, Typography } from "antd";
 import { useOutTokenUsd, useTransfers } from "./hooks";
 import {
   useAmountUI,
-  useChainConfig,
-  useLiquidityHubPartner,
   useNumberFormatter,
+  usePartnerWithId,
   useToken,
-} from "hooks";
-import { TransferLog } from "types";
+} from "@/hooks";
+import { TransferLog } from "@/types";
 import { SessionLogs } from "./components/Logs";
 import { DebugComponent } from "./components/DebugComponent";
 import moment from "moment";
-import { StatusBadge } from "components/StatusBadge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { LogTrace } from "./components/LogTrace";
 import { UserSavings } from "./components/UserSavings";
-import { MOBILE } from "consts";
-import { useLiquidityHubSession } from "applications";
+import { MOBILE } from "@/consts";
+import { useLiquidityHubSession } from "@/applications";
 import { useQuery } from "@tanstack/react-query";
+import { useNetwork } from "@/hooks/hooks";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useLiquidityHubSession();
@@ -67,9 +61,9 @@ const SessionId = () => {
 
 const Network = () => {
   const session = useLiquidityHubSession().data;
-  const config = useChainConfig(session?.chainId);
-  const networkName = config?.name;
-  const logo = config?.logoUrl;
+  const network = useNetwork(session?.chainId);
+  const networkName = network?.name;
+  const logo = network?.logoUrl;
   return (
     <DataDisplay.Row label="Network">
       <Avatar src={logo} style={{ width: "20px", height: "20px" }} />
@@ -129,7 +123,7 @@ const Slippage = () => {
 
 const Dex = () => {
   const session = useLiquidityHubSession().data;
-  const partner = useLiquidityHubPartner(session?.dex);
+  const partner = usePartnerWithId(session?.dex);
 
   return (
     <DataDisplay.Row label="Dex">
@@ -176,7 +170,7 @@ const Timestamp = () => {
 
 const InTokenAmount = () => {
   const session = useLiquidityHubSession().data;
-  const token = useToken(session?.tokenInAddress, session?.chainId);
+  const token = useToken(session?.tokenInAddress, session?.chainId).data;
   const amount = useAmountUI(token?.decimals, session?.amountIn);
   return (
     <DataDisplay.Row label="Amount In">
@@ -210,7 +204,7 @@ const TxHash = () => {
 
 const ExpectedToReceiveLH = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
 
   const amount = session?.lhAmountOutExpected;
   const amountF = useAmountUI(outToken?.decimals, amount);
@@ -230,7 +224,7 @@ const ExpectedToReceiveLH = () => {
 
 const DexAmountOut = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
 
   const dexAmountOut = useAmountUI(
     outToken?.decimals,
@@ -270,7 +264,7 @@ const DexAmountOut = () => {
 
 const Fees = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
   const fee = useAmountUI(outToken?.decimals, session?.feeOutAmount);
 
   return (
@@ -278,7 +272,7 @@ const Fees = () => {
       <DataDisplay.TokenAmount
         address={outToken?.address}
         amount={fee as string}
-        usd={session?.feeOutAmountUsd || '' as string}
+        usd={session?.feeOutAmountUsd || ("" as string)}
         chainId={session?.chainId}
       />
     </DataDisplay.Row>
@@ -287,7 +281,7 @@ const Fees = () => {
 
 const ExactAmountReceivedPreDeductions = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
   const amount = useAmountUI(
     outToken?.decimals,
     session?.lhExactOutAmountPreDeduction
@@ -308,7 +302,7 @@ const ExactAmountReceivedPreDeductions = () => {
 
 const ExactAmountReceivedPostDeductions = () => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const outToken = useToken(session?.tokenOutAddress, session?.chainId).data;
   const amount = useAmountUI(outToken?.decimals, session?.exactOutAmount);
   const usd = useOutTokenUsd(amount);
 
@@ -326,7 +320,7 @@ const ExactAmountReceivedPostDeductions = () => {
 
 const ExactAmountOut = () => {
   const session = useLiquidityHubSession().data;
-  const token = useToken(session?.tokenOutAddress, session?.chainId);
+  const token = useToken(session?.tokenOutAddress, session?.chainId).data;
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
     <DataDisplay.Row label="Exact Amount Out">
@@ -359,7 +353,7 @@ const DexRouteTo = () => {
 
 const DucthPrice = () => {
   const session = useLiquidityHubSession().data;
-  const token = useToken(session?.tokenOutAddress, session?.chainId);
+  const token = useToken(session?.tokenOutAddress, session?.chainId).data;
   const amount = useAmountUI(token?.decimals, session?.dutchPrice);
   return (
     <DataDisplay.Row label="Dutch price">
@@ -395,7 +389,7 @@ const Transfers = () => {
 
 const Transfer = ({ log }: { log: TransferLog }) => {
   const session = useLiquidityHubSession().data;
-  const value = useNumberFormatter({ value: log.value }).formatted?.toString()
+  const value = useNumberFormatter({ value: log.value }).formatted?.toString();
   return (
     <StyledRow>
       <Typography style={{ whiteSpace: "nowrap" }}>
@@ -409,7 +403,7 @@ const Transfer = ({ log }: { log: TransferLog }) => {
       <Typography style={{ whiteSpace: "nowrap" }}>
         <strong>For</strong> {value}{" "}
       </Typography>
-      <WalletAddress chainId={session?.chainId} address={log.token.address} />
+      <WalletAddress chainId={session?.chainId} address={log.tokenAddress} />
     </StyledRow>
   );
 };

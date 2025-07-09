@@ -1,11 +1,11 @@
 import _ from "lodash";
-import { useAppParams, useNavigateWithParams } from "hooks";
+import { useNavigateWithParams } from "@/hooks";
 import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useMemo } from "react";
-import { Page } from "components";
-import { RowFlex } from "styles";
-import { Filters } from "components/Filters";
-import { ROUTES, TWAP_ROUTER_PATHS } from "config";
+import { useMemo } from "react";
+import { Page } from "@/components";
+import { RowFlex } from "@/styles";
+import { Filters } from "@/components/Filters";
+import { ROUTES, TWAP_ROUTER_PATHS } from "@/config";
 import { Typography } from "antd";
 import { styled } from "styled-components";
 const isDebug = localStorage.getItem("debug");
@@ -55,14 +55,7 @@ const Navbar = () => {
   );
 };
 
-export const RootPage = () => {
-  const { query, setQuery } = useAppParams();
-
-  useEffect(() => {
-    if (!query.chainId) {
-      setQuery({ chainId: 1 });
-    }
-  }, [query.chainId]);
+export const MainPage = () => {
 
   return (
     <>

@@ -1,25 +1,26 @@
 import styled from "styled-components";
 import TextOverflow from "react-text-overflow";
-import _ from "lodash";
 import { useCallback } from "react";
 import moment from "moment";
 import { Button, Typography, Avatar } from "antd";
 import { ChevronRight } from "react-feather";
-import { RowFlex } from "styles";
-import { DataDisplay, List, TokenAddress } from "components";
+import { RowFlex } from "@/styles";
+import { DataDisplay, List, TokenAddress } from "@/components";
 import BN from "bignumber.js";
 import {
   useNumberFormatter,
-  useTwapPartner,
-  useTwapConfigByExchange,
   useNavigateWithParams,
   useToken,
   useAmountUI,
-} from "hooks";
+} from "@/hooks";
 import { Order, OrderType as IOrderType } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
-import { colors } from "consts";
-import { navigation } from "utils";
+import { colors } from "@/consts";
+import { navigation } from "@/utils";
+import {
+  useTwapConfigByExchange,
+  useTwapPartnerByExchange,
+} from "@/hooks/twap-hooks";
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
@@ -99,7 +100,7 @@ const Timestamp = ({ order }: { order: Order }) => {
 };
 
 const Dex = ({ order }: { order: Order }) => {
-  const partner = useTwapPartner(order.exchange);
+  const partner = useTwapPartnerByExchange(order.exchange, order.chainId);
   return (
     <StyledItem>
       <Avatar src={partner?.logoUrl} size={25} />
@@ -110,7 +111,7 @@ const Dex = ({ order }: { order: Order }) => {
 
 const TradeAmount = ({ order }: { order: Order }) => {
   const amount = useNumberFormatter({
-    value: order.dollarValueIn,
+    value: order.tradeDollarValueIn,
   }).short;
 
   return (
@@ -125,17 +126,20 @@ const TradeAmount = ({ order }: { order: Order }) => {
 };
 
 const DexFee = ({ order }: { order: Order }) => {
-
   return (
     <StyledItem>
-      {BN(order.dexFee || 0).gt(0) ? <DexFeeAmount order={order} /> : <RowText text="-" />}
+      {BN(order.filledFee || 0).gt(0) ? (
+        <DexFeeAmount order={order} />
+      ) : (
+        <RowText text="-" />
+      )}
     </StyledItem>
   );
 };
 const DexFeeAmount = ({ order }: { order: Order }) => {
-  const config = useTwapConfigByExchange(order.exchange);
-  const token = useToken(order.dstTokenAddress, config?.chainId);
-  const amount = useAmountUI(token?.decimals, order.dexFee);
+  const config = useTwapConfigByExchange(order.exchange, order.chainId);
+  const { data: token } = useToken(order.dstTokenAddress, order.chainId);
+  const amount = useAmountUI(token?.decimals, order.filledFee);
 
   return (
     <DataDisplay.TokenAmount
@@ -147,15 +151,13 @@ const DexFeeAmount = ({ order }: { order: Order }) => {
 };
 
 const Tokens = ({ order }: { order: Order }) => {
-  const config = useTwapConfigByExchange(order.exchange);
-
-  const { srcTokenAddress, dstTokenAddress, srcTokenSymbol, dstTokenSymbol } =
+  const { srcTokenSymbol, dstTokenSymbol, srcTokenAddress, dstTokenAddress } =
     order;
 
   return (
     <StyledTokens $gap={2}>
       <TokenAddress
-        chainId={config?.chainId}
+        chainId={order.chainId}
         address={srcTokenAddress}
         symbol={srcTokenSymbol}
       />
@@ -164,7 +166,7 @@ const Tokens = ({ order }: { order: Order }) => {
 
       <TokenAddress
         symbol={dstTokenSymbol}
-        chainId={config?.chainId}
+        chainId={order.chainId}
         address={dstTokenAddress}
       />
     </StyledTokens>
@@ -240,22 +242,23 @@ const Status = ({ order }: { order: Order }) => {
 const OrderType = ({ order }: { order: Order }) => {
   return (
     <StyledItem>
-      <RowText text={parseOrderType(order.orderType as IOrderType)} />
+      <RowText text={parseOrderType(order.type as IOrderType)} />
     </StyledItem>
   );
 };
 
 const desktopRows = [
   {
-    Component: Dex,
-    label: "Dex",
-    width: 15,
-  },
-  {
     Component: OrderId,
     label: "ID",
     width: 10,
   },
+  {
+    Component: Dex,
+    label: "Partner",
+    width: 15,
+  },
+ 
 
   {
     Component: OrderType,
@@ -298,8 +301,9 @@ const desktopRows = [
 ];
 
 const MobileComponent = ({ item: order }: { item: Order }) => {
-  const partner = useTwapPartner(order.exchange);
-  const config = partner?.getTwapConfigByExchange(order.exchange);
+  const config = useTwapConfigByExchange(order.exchange, order.chainId);
+  const { data: srcToken } = useToken(order.srcTokenAddress, order.chainId);
+  const { data: dstToken } = useToken(order.dstTokenAddress, order.chainId);
   const navigate = useNavigateWithParams();
   const onClick = useCallback(() => {
     navigate(navigation.twap.order(order.id.toString()));
@@ -308,10 +312,10 @@ const MobileComponent = ({ item: order }: { item: Order }) => {
   return (
     <MobileContainer onClick={onClick}>
       <List.MobileRow
-        partner={partner?.name || order.dex}
+        partner={config?.name}
         chainId={config?.chainId}
-        inToken={order?.srcTokenSymbol}
-        outToken={order?.dstTokenSymbol}
+        inToken={srcToken?.symbol}
+        outToken={dstToken?.symbol}
         timestamp={order.createdAt}
         status={order.status}
         statusColor={"#F0AD4E"}

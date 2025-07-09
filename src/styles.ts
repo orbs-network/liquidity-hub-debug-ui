@@ -1,4 +1,4 @@
-import { colors } from "consts";
+import { colors } from "@/consts";
 import styled from "styled-components";
 export const RowFlex = styled.div<{
   $gap?: number;

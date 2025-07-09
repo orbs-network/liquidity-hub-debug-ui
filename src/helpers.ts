@@ -1,12 +1,10 @@
-import { erc20abi,  isNativeAddress, parsebn, zero } from "@defi.org/web3-candies";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import _ from "lodash";
 import moment, { Moment } from "moment";
-import Web3 from "web3";
-import BN from "bignumber.js";
-import { ethers } from "ethers";
-import { Token, TransferLog } from "types";
-import { networks } from "networks";
 import axios from "axios";
+import * as chains from "viem/chains";
+import { formatUnits, parseUnits } from "viem";
+
 export const getValueFromSessionLogs = (data?: any, key?: string) => {
   const arr = _.flatten(data);
   if (!key || !data) return undefined;
@@ -45,11 +43,11 @@ export const getExplorer = (chainId?: number) => {
     case 56:
       return "https://bscscan.com";
     case 59144:
-      return "https://lineascan.build"
+      return "https://lineascan.build";
     case 8453:
-      return "https://sepolia.scrollscan.com"
+      return "https://sepolia.scrollscan.com";
     case 250:
-      return "https://ftmscan.com"
+      return "https://ftmscan.com";
     default:
       break;
   }
@@ -63,22 +61,18 @@ export const getLogo = (chainId?: number) => {
     case 56:
       return "https://bscscan.com";
   }
-}
+};
 
 export const getRpcUrl = (chainId?: number) => {
   if (!chainId) return undefined;
   return `https://rpcman.orbs.network/rpc?chainId=${chainId}&appId=liquidity-hub-debug-tool`;
 };
 
-export const getWeb3 = (chainId?: number) => {
-  const rpc = getRpcUrl(chainId);
-  if (!rpc) return undefined;
-  return new Web3(new Web3.providers.HttpProvider(rpc));
-};
-
 export const getIdsFromSessions = (sessions: any[]) => {
-  return _.uniq(_.map(sessions, (session) => session.sessionId).filter(
-    (id) => id !== undefined)
+  return _.uniq(
+    _.map(sessions, (session) => session.sessionId).filter(
+      (id) => id !== undefined
+    )
   ) as string[];
 };
 
@@ -113,10 +107,6 @@ export const swapStatusText = (status?: string) => {
   }
 };
 
-export const getContract = (web3: Web3, address: string) => {
-  return new web3.eth.Contract(erc20abi as any, address);
-}
-
 export function convertScientificStringToDecimal(
   scientificString: string,
   decimals: number
@@ -124,7 +114,7 @@ export function convertScientificStringToDecimal(
   // Check if the input string is in scientific notation
   if (isScientificStringToDecimal(scientificString)) {
     // Convert scientific notation string to decimal string
-    let decimalString = parseFloat(scientificString).toFixed(decimals);
+    const decimalString = parseFloat(scientificString).toFixed(decimals);
     return decimalString;
   } else {
     // If not in scientific notation, return the original string
@@ -143,9 +133,9 @@ export const isScientificStringToDecimal = (scientificString: string) => {
 
 export const isTxHash = (value?: string) => value?.startsWith("0x");
 
-export const getChainConfig = (chainId?: number) => {
+export const getChain = (chainId?: number) => {
   if (!chainId) return undefined;
-  return Object.values(networks).find((network) => network.id === chainId);
+  return Object.values(chains).find((network) => network.id === chainId);
 };
 
 export const datesDiff = (date: Moment) => {
@@ -177,113 +167,32 @@ export const datesDiff = (date: Moment) => {
   }
 };
 
-const ERC20_TRANSFER_EVENT_TOPIC = ethers.id(
-  "Transfer(address,address,uint256)"
-);
-
-export async function getTokenDetails(
-  tokenAddress: string,
-  web3: Web3,
-  chainId: number
-): Promise<Token> {
-  const config = getChainConfig(chainId);
-  if (isNativeAddress(tokenAddress)) {
-    return config?.native as any as Token;
-  }
-
-  if (isNativeAddress(tokenAddress)) {
-    return getChainConfig(chainId)?.native as any as Token;
-  }
-
-  const contract = new web3.eth.Contract(erc20abi as any, tokenAddress);
-
-  const [name, symbol, decimals] = await Promise.all([
-    contract.methods.name().call(),
-    contract.methods.symbol().call(),
-    contract.methods.decimals().call(),
-  ]);
-
-  return {
-    name: name as any as string,
-    symbol: symbol as any as string,
-    decimals: parseInt((decimals as any).toString()),
-    address: tokenAddress,
-  };
-}
-
-export const getERC20Transfers = async (
-  web3: Web3,
-  logs: any[],
-  chainId: number
-): Promise<TransferLog[]> => {
-  const iface = new ethers.Interface(erc20abi as any);
-  const transferLogs = logs.filter(
-    (log) => log.topics[0] === ERC20_TRANSFER_EVENT_TOPIC
-  );
-
-  const transfersP = transferLogs.map(async (log) => {
-    return {
-      parsed: iface.parseLog(log),
-      address: log.address,
-      token: await getTokenDetails(log.address, web3, chainId),
-    };
-  });
-
-  const transfers = await Promise.all(transfersP);
-  const result = transfers.map((transfer) => {
-    if (!transfer.parsed) return undefined;
-    const decimals = transfer.token?.decimals
-      ? new BN(transfer.token?.decimals as any).toNumber()
-      : undefined;
-
-    return {
-      from: transfer.parsed.args.from,
-      to: transfer.parsed.args.to,
-      value: amountUi(decimals, new BN(transfer.parsed.args.value)),
-      token: transfer.token,
-      rawValue: transfer.parsed.args.value.toString(),
-    };
-  });
-
-  return _.compact(result);
-};
 
 
-export const amountBN = (decimals?: number, amount?: string | number) => {
-  if (!decimals || !amount) return zero;
-
-  return parsebn(amount).times(new BN(10).pow(decimals || 0));
-};
-
-export const amountUi = (decimals?: number, amount?: BN) => {
+export const toAmountUI = (amount?: string, decimals?: number) => {
   if (!decimals || !amount) return "";
-  const percision = new BN(10).pow(decimals || 0);
-  return convertScientificStringToDecimal(
-    amount.times(percision).idiv(percision).div(percision).toString(),
-    decimals
-  );
+  try {
+    return formatUnits(BigInt(amount), decimals);
+  } catch (error) {
+    return "0";
+  }
 };
 
-export const amountUiV2 = (decimals?: number, amount?: string | BN | number) => {
-  amount = amount?.toString()
-  
-    
-  if (!decimals || !amount) return "";
-  const percision = new BN(10).pow(decimals || 0);
-  return BN(amount).times(percision).idiv(percision).div(percision).toFixed();
+export const toAmountWei = (amount?: string, decimals?: number) => {
+  if (!decimals || !amount) return "0";
+
+  try {
+    return parseUnits(amount, decimals).toString();
+  } catch (error) {
+    return "0";
+  }
 };
 
-
-export const amountBNV2 = (decimals?: number, amount?: string | number) => {
-  if (!decimals || !amount) return '0';
-
-  return parsebn(amount).times(new BN(10).pow(decimals || 0)).decimalPlaces(0).toFixed();
-};
-
-
-
-
-export const fetchElastic = async (url: string, data: any, signal?: AbortSignal) => {
+export const fetchElastic = async (
+  url: string,
+  data: any,
+  signal?: AbortSignal
+) => {
   const response = await axios.post(`${url}/_search`, { ...data }, { signal });
 
   return normalizeSessions(

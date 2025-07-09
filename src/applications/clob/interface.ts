@@ -1,7 +1,7 @@
 import _ from "lodash";
 import moment from "moment";
 import BN from "bignumber.js";
-import { addSlippage, handleZeroValue } from "utils";
+import { addSlippage, handleZeroValue } from "@/utils";
 
 const nameModifier = (name?: string) => {
   if (name?.toLowerCase() === "matic") return "POL";

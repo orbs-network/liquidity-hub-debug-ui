@@ -1,22 +1,17 @@
-import { Order } from "@orbs-network/twap-sdk";
-import { Avatar, Modal, Typography } from "antd";
-import { useTwapClientLogs, useTwapOrder } from "applications/twap";
-import { DataDisplay, Page, TxHashAddress, WalletAddress } from "components";
-import {
-  useAmountUI,
-  useAppParams,
-  useChainConfig,
-  useNumberFormatter,
-  useToken,
-  useTwapConfigByExchange,
-  useTwapPartner,
-} from "hooks";
+import { getOrderExcecutionRate, getOrderFillDelayMillis, getOrderLimitPriceRate, Order } from "@orbs-network/twap-sdk";
+import { Avatar, Typography } from "antd";
+import { DataDisplay, Page, TxHashAddress, WalletAddress } from "@/components";
+import { useAmountUI, useAppParams, useNumberFormatter, useToken } from "@/hooks";
 import moment from "moment";
-import { createContext, useContext, useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { LightButton, RowFlex } from "styles";
-import { MillisToDuration } from "utils";
+import { createContext, useContext, useMemo } from "react";
+import { MillisToDuration } from "@/utils";
 import { parseOrderType } from "./utils";
+import {
+  useTwapConfigByExchange,
+  useTwapPartnerByExchange,
+} from "@/hooks/twap-hooks";
+import { useNetwork } from "@/hooks/hooks";
+import { useTwapOrderQuery } from "@/lib/queries/use-twap-orders-query";
 
 interface ContextType {
   order?: Order;
@@ -27,106 +22,48 @@ const useOrderContext = () => {
   return useContext(Context);
 };
 export function OrderPage() {
-  const orderIdOrTxHash = useParams().orderIdOrTxHash;
-  const chainId = useAppParams().query.chainId;
-  const { data: order, isLoading } = useTwapOrder(orderIdOrTxHash, chainId);
-
-  
+  const { data: order, isLoading } = useTwapOrderQuery();
 
   return (
     <Context.Provider value={{ order }}>
-   
-        <Page.Layout isLoading={isLoading}>
-          <DataDisplay>
-            <ID />
-            <ChainId />
-            <Dex />
-            <CreatedAt />
-            <Deadline />
-            <DataDisplay.Divider />
-            <Status />
-            <TxHash />
-            <Type />
-            <SrcAmount />
-            <SrcToken />
-            <DstToken />
-            <DstMinAmount />
-            <SrcChunkAmount />
-            <Chunks />
-            <FillDelay />
-            <MinChunkSizeUsd />
-            <DataDisplay.Divider />
+      <Page.Layout isLoading={isLoading}>
+        <DataDisplay>
+          <ID />
+          <ChainId />
+          <Dex />
+          <CreatedAt />
+          <Deadline />
+          <DataDisplay.Divider />
+          <Status />
+          <TxHash />
+          <Type />
+          <SrcAmount />
+          <SrcToken />
+          <DstToken />
+          <DstMinAmount />
+          <SrcChunkAmount />
+          <Chunks />
+          <FillDelay />
+          <MinChunkSizeUsd />
+          <DataDisplay.Divider />
 
-            <Progress />
-            <SrcFilledAmount />
-            <DstFilledAmount />
-            <ExecutionPrice />
-            <LimitPrice />
-            <DataDisplay.Divider />
-            <Exchange />
-            <TwapAddress />
-            <TwapVersion />
-            <Logs />
-          </DataDisplay>
-        </Page.Layout>
+          <Progress />
+          <SrcFilledAmount />
+          <DstFilledAmount />
+          <ExecutionPrice />
+          <LimitPrice />
+          <DataDisplay.Divider />
+          <Exchange />
+          <TwapAddress />
+          <TwapVersion />
+
+        </DataDisplay>
+      </Page.Layout>
     </Context.Provider>
   );
 }
 
-const Logs = () => {
-  const { order } = useOrderContext();
-  const chainId = useTwapConfigByExchange(order?.exchange)?.chainId;
-  const { data: logs } = useTwapClientLogs(order?.id, chainId);
 
-  return (
-    <DataDisplay.Row label="Client logs">
-      {!logs ? (
-        <Typography>-</Typography>
-      ) : (
-        <RowFlex>
-          {logs.map((log, index) => {
-            return <Log key={index} index={index} log={log} />;
-          })}
-        </RowFlex>
-      )}
-    </DataDisplay.Row>
-  );
-};
-
-const Log = ({ log, index }: { log: any; index: number }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const onClose = () => {
-    setIsModalOpen(false);
-  };
-
-  const title = `Log #${index + 1}`;
-
-  return (
-    <>
-      <LightButton style={{ padding: "5px 10px" }} onClick={showModal}>
-        <Typography>{title}</Typography>
-      </LightButton>
-      <Modal
-        onCancel={() => onClose()}
-        title={title}
-        open={isModalOpen}
-        okButtonProps={{
-          style: { display: "none" },
-        }}
-        cancelButtonProps={{
-          style: { display: "none" },
-        }}
-      >
-        {JSON.stringify(log)}
-      </Modal>
-    </>
-  );
-};
 
 const ID = () => {
   const { order } = useOrderContext();
@@ -141,7 +78,7 @@ const ID = () => {
 const Dex = () => {
   const { order } = useOrderContext();
 
-  const partner = useTwapPartner(order?.exchange);
+  const partner = useTwapPartnerByExchange(order?.exchange, order?.chainId);
 
   return (
     <DataDisplay.Row label="Partner">
@@ -156,8 +93,8 @@ const Type = () => {
 
   return (
     <DataDisplay.Row label="Type">
-      <Typography style={{textTransform:'uppercase'}}>
-        {parseOrderType(order?.orderType)}
+      <Typography style={{ textTransform: "uppercase" }}>
+        {parseOrderType(order?.type)}
       </Typography>
     </DataDisplay.Row>
   );
@@ -168,9 +105,7 @@ const CreatedAt = () => {
 
   return (
     <DataDisplay.Row label="Created at">
-      <Typography>
-        {moment(order?.createdAt).format("lll")}
-      </Typography>
+      <Typography>{moment(order?.createdAt).format("lll")}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -180,9 +115,7 @@ const Deadline = () => {
 
   return (
     <DataDisplay.Row label="Deadline">
-      <Typography>
-        {moment(order?.deadline).format("lll")}
-      </Typography>
+      <Typography>{moment(order?.deadline).format("lll")}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -190,9 +123,9 @@ const Deadline = () => {
 const DstFilledAmount = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.dstTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.dstFilledAmount);
-  const usd = order?.dstFilledAmountUsd;
+  const { data: token } = useToken(order?.dstTokenAddress, chainId);
+  const amount = useAmountUI(token?.decimals, order?.filledDstAmount);
+  const usd = order?.filledDollarValueOut;
 
   return (
     <DataDisplay.Row label="Destination Filled Amount">
@@ -209,9 +142,9 @@ const DstFilledAmount = () => {
 const SrcFilledAmount = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.srcTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.srcFilledAmount);
-  const usd = order?.srcFilledAmountUsd;
+  const { data: token } = useToken(order?.srcTokenAddress, chainId);
+  const amount = useAmountUI(token?.decimals, order?.filledSrcAmount);
+  const usd = order?.filledDollarValueIn;
 
   return (
     <DataDisplay.Row label="Source Filled Amount">
@@ -228,7 +161,7 @@ const SrcFilledAmount = () => {
 const SrcToken = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.srcTokenAddress, chainId);
+  const { data: token } = useToken(order?.srcTokenAddress, chainId);
 
   return (
     <DataDisplay.Row label="Source Token">
@@ -240,7 +173,7 @@ const SrcToken = () => {
 const DstToken = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.dstTokenAddress, chainId);
+  const { data: token } = useToken(order?.dstTokenAddress, chainId);
 
   return (
     <DataDisplay.Row label="Destination Token">
@@ -252,11 +185,11 @@ const DstToken = () => {
 const DstMinAmount = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.dstTokenAddress, chainId);
+  const { data: token } = useToken(order?.dstTokenAddress, chainId);
   const amount = useAmountUI(token?.decimals, order?.dstMinAmount);
 
   return (
-    <DataDisplay.Row label="Destination Minumum Amount">
+    <DataDisplay.Row label="Destination Minimum Amount">
       <DataDisplay.TokenAmount
         amount={amount}
         address={order?.dstTokenAddress}
@@ -268,12 +201,13 @@ const DstMinAmount = () => {
 
 const FillDelay = () => {
   const { order } = useOrderContext();
-  const config = useTwapConfigByExchange(order?.exchange);
+  const config = useTwapConfigByExchange(order?.exchange, order?.chainId);
 
+  if (!order || !config) return null;
   return (
     <DataDisplay.Row label="Fill Delay">
       <Typography>
-        {config && MillisToDuration(order?.getFillDelay(config))}
+        {config && MillisToDuration(getOrderFillDelayMillis(order, config))}
       </Typography>
     </DataDisplay.Row>
   );
@@ -281,7 +215,10 @@ const FillDelay = () => {
 
 const Progress = () => {
   const { order } = useOrderContext();
-  const value = useNumberFormatter({value: order?.progress, decimalScale: 2}).formatted
+  const value = useNumberFormatter({
+    value: order?.progress,
+    decimalScale: 2,
+  }).formatted;
 
   return (
     <DataDisplay.Row label="Progress">
@@ -293,7 +230,7 @@ const Progress = () => {
 const SrcAmount = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.srcTokenAddress, chainId);
+  const { data: token } = useToken(order?.srcTokenAddress, chainId);
   const amount = useAmountUI(token?.decimals, order?.srcAmount);
 
   return (
@@ -310,8 +247,8 @@ const SrcAmount = () => {
 const SrcChunkAmount = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const token = useToken(order?.srcTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.srcBidAmount);
+  const { data: token } = useToken(order?.srcTokenAddress, chainId);
+  const amount = useAmountUI(token?.decimals, order?.srcAmountPerChunk);
 
   return (
     <DataDisplay.Row label="Src Chunk Amount">
@@ -329,8 +266,8 @@ const Status = () => {
 
   return (
     <DataDisplay.Row label="Status">
-      <Typography style={{textTransform:'uppercase'}}>
-       {order?.status}
+      <Typography style={{ textTransform: "uppercase" }}>
+        {order?.status}
       </Typography>
     </DataDisplay.Row>
   );
@@ -342,10 +279,7 @@ const TxHash = () => {
 
   return (
     <DataDisplay.Row label="Tx Hash">
-      <TxHashAddress
-        chainId={chainId}
-        address={order?.txHash}
-      />
+      <TxHashAddress chainId={chainId} address={order?.txHash} />
     </DataDisplay.Row>
   );
 };
@@ -356,10 +290,7 @@ const Exchange = () => {
 
   return (
     <DataDisplay.Row label="Exchange Address">
-      <WalletAddress
-        chainId={chainId}
-        address={order?.exchange}
-      />
+      <WalletAddress chainId={chainId} address={order?.exchange} />
     </DataDisplay.Row>
   );
 };
@@ -382,10 +313,7 @@ const TwapAddress = () => {
 
   return (
     <DataDisplay.Row label="Twap Address">
-      <WalletAddress
-        chainId={chainId}
-        address={config?.twapAddress}
-      />
+      <WalletAddress chainId={chainId} address={config?.twapAddress} />
     </DataDisplay.Row>
   );
 };
@@ -406,7 +334,7 @@ const Chunks = () => {
 
   return (
     <DataDisplay.Row label="Chunks">
-      <Typography>{order?.totalChunks}</Typography>
+      <Typography>{order?.chunks}</Typography>
     </DataDisplay.Row>
   );
 };
@@ -414,7 +342,7 @@ const Chunks = () => {
 const ChainId = () => {
   const { order } = useOrderContext();
   const config = useTwapConfigByExchange(order?.exchange);
-  const network = useChainConfig(config?.chainId);
+  const network = useNetwork(config?.chainId);
 
   return (
     <DataDisplay.Row label="Chain">
@@ -427,12 +355,12 @@ const ChainId = () => {
 const ExecutionPrice = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const srcToken = useToken(order?.srcTokenAddress, chainId);
-  const dstToken = useToken(order?.dstTokenAddress, chainId);
+  const {data: srcToken} = useToken(order?.srcTokenAddress, chainId);
+  const {data: dstToken} = useToken(order?.dstTokenAddress, chainId);
 
   const price = useMemo(() => {
     if (!order || !srcToken?.decimals || !dstToken?.decimals) return;
-    return order?.getExcecutionPrice(srcToken?.decimals, dstToken?.decimals);
+    return getOrderExcecutionRate(order, srcToken?.decimals, dstToken?.decimals);
   }, [order, srcToken, dstToken]);
 
   const priceF = useNumberFormatter({ value: price }).formatted;
@@ -449,12 +377,12 @@ const ExecutionPrice = () => {
 const LimitPrice = () => {
   const { order } = useOrderContext();
   const chainId = useAppParams().query.chainId;
-  const srcToken = useToken(order?.srcTokenAddress, chainId);
-  const dstToken = useToken(order?.dstTokenAddress, chainId);
+  const {data: srcToken} = useToken(order?.srcTokenAddress, chainId);
+  const {data: dstToken} = useToken(order?.dstTokenAddress, chainId);
 
   const price = useMemo(() => {
     if (!order || !srcToken?.decimals || !dstToken?.decimals) return;
-    return order?.getLimitPrice(srcToken?.decimals, dstToken?.decimals);
+    return getOrderLimitPriceRate(order, srcToken?.decimals, dstToken?.decimals);
   }, [order, srcToken, dstToken]);
 
   const priceF = useNumberFormatter({ value: price }).formatted;

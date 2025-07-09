@@ -3,9 +3,9 @@ import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-xcode";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { TX_TRACE_SERVER } from "config";
-import { DataDisplay } from "components";
-import { useLiquidityHubSession } from "applications";
+import { TX_TRACE_SERVER } from "@/config";
+import { DataDisplay } from "@/components";
+import { useLiquidityHubSession } from "@/applications";
 
 export const useLogTrace = () => {
   const session = useLiquidityHubSession().data;

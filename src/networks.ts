@@ -1,6 +1,4 @@
-import {
-  networks as _networks,
-} from "@defi.org/web3-candies";
+import { networks as _networks } from "@orbs-network/twap-sdk";
 
 export const networks = {
   ..._networks,

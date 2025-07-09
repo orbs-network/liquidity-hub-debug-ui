@@ -1,52 +1,42 @@
-import { eqIgnoreCase } from "@defi.org/web3-candies";
-import { Config, Configs } from "@orbs-network/twap-sdk";
+import { Config, Configs, networks } from "@orbs-network/twap-sdk";
 import _ from "lodash";
-import { networks } from "networks";
-
-const getExchange = (partner: string) => {
-  return (
-    _.filter(
-      Configs,
-      (config) => _.last(config.partner.split(":"))?.toLowerCase() === partner
-    ) || []
-  );
-};
 
 export class Partner {
-  configs: Config[];
-  twapChains: number[];
+  public twapPartner: string;
   constructor(
     public website: string,
     public logoUrl: string,
     public name: string,
-    exchangesKey: string,
+    public twapConfigs: Config[],
+    public id: string,
     public liquidityHubChains: number[]
   ) {
-    this.configs = getExchange(exchangesKey);
-    this.twapChains = this.configs.map((config) => config.chainId);
+    this.twapPartner = twapConfigs.length > 0 ? twapConfigs[0].partner : "";
   }
-  supportsTwap(chainId?: number) {
-    return !chainId ? false : this.twapChains.includes(chainId);
+  isSupportedTwap(chainId?: number) {
+    if (!chainId) return false;
+    return this.twapConfigs.some((config) => config.chainId === chainId);
   }
-  supportsLiquidityHub(chainId?: number) {
-    return !chainId ? false : this.liquidityHubChains.includes(chainId);
-  }
-
-  getTwapConfigByExchange(exchangeAddress = "") {
-    return this.configs.find((config) =>
-      eqIgnoreCase(config.exchangeAddress, exchangeAddress)
-    );
-  }
-  getTwapConfigByChainId(chainId?: number) {
-    return this.configs.find((config) => config.chainId === chainId);
+  isSupportedLH(chainId?: number) {
+    if (!chainId) return false;
+    return this.liquidityHubChains.includes(chainId);
   }
 }
 
-export const partners: { [key: string]: Partner } = {
+
+const groupedConfigsByName = _.groupBy(
+  Object.values(Configs),
+  "partner"
+) as Record<string, Config[]>;
+const getTwapConfigs = (partner: string): Config[] => {
+  return groupedConfigsByName[partner] || [];
+};
+export const partners: Record<string, Partner> = {
   swapx: new Partner(
     "https://swapx.fi",
     "https://s2.coinmarketcap.com/static/img/coins/64x64/34753.png",
     "SwapX",
+    getTwapConfigs(Configs.SwapX.partner),
     "swapx",
     [networks.sonic.id]
   ),
@@ -54,6 +44,7 @@ export const partners: { [key: string]: Partner } = {
     "https://quickswap.exchange/",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",
     "Quickswap",
+    getTwapConfigs(Configs.QuickSwap.partner),
     "quickswap",
     [networks.poly.id, networks.eth.id]
   ),
@@ -61,6 +52,7 @@ export const partners: { [key: string]: Partner } = {
     "https://spooky.fi/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png",
     "Spookyswap",
+    getTwapConfigs(Configs.SpookySwap.partner),
     "spookyswap",
     [networks.ftm.id, networks.sonic.id]
   ),
@@ -68,6 +60,7 @@ export const partners: { [key: string]: Partner } = {
     "https://www.lynex.fi/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7957.png",
     "Lynex",
+    getTwapConfigs(Configs.Lynex.partner),
     "lynex",
     [networks.linea.id]
   ),
@@ -75,6 +68,7 @@ export const partners: { [key: string]: Partner } = {
     "https://thena.fi/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/5803.png",
     "Thena",
+    getTwapConfigs(Configs.Thena.partner),
     "thena",
     [networks.bsc.id]
   ),
@@ -82,20 +76,16 @@ export const partners: { [key: string]: Partner } = {
     "https://arbidex.fi/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/6506.png",
     "Arbidex",
+    getTwapConfigs(Configs.Arbidex.partner),
     "arbidex",
     [networks.arb.id]
   ),
-  pangolin: new Partner(
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/8422.png",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1340.png",
-    "Pangolin",
-    "pangolin",
-    []
-  ),
+
   chronos: new Partner(
     "https://chronos.exchange/",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/24158.png",
     "Chronos",
+    getTwapConfigs(Configs.Chronos.partner),  
     "chronos",
     []
   ),
@@ -103,6 +93,7 @@ export const partners: { [key: string]: Partner } = {
     "https://baseswap.fi/",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/27764.png",
     "Baseswap",
+    getTwapConfigs(Configs.BaseSwap.partner),
     "baseswap",
     []
   ),
@@ -110,6 +101,7 @@ export const partners: { [key: string]: Partner } = {
     "https://baseswap.fi/",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/7186.png",
     "PancakeSwap",
+    getTwapConfigs(Configs.PancakeSwap.partner),
     "pancakeswap",
     []
   ),
@@ -117,13 +109,15 @@ export const partners: { [key: string]: Partner } = {
     "https://www.sushi.com",
     "https://s2.coinmarketcap.com/static/img/coins/128x128/6758.png",
     "SushiSwap",
-    "sushi",
+    getTwapConfigs(Configs.SushiBase.partner),
+    "sushiswap",
     []
   ),
   dragonswap: new Partner(
     "https://dragonswap.app",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png",
     "DragonSwap",
+    getTwapConfigs(Configs.DragonSwap.partner),
     "dragonswap",
     [networks.sei.id]
   ),
@@ -131,6 +125,7 @@ export const partners: { [key: string]: Partner } = {
     "https://retro.finance/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
     "Retro",
+    getTwapConfigs(Configs.Retro.partner),
     "retro",
     []
   ),
@@ -138,8 +133,10 @@ export const partners: { [key: string]: Partner } = {
     "https://fenix.finance/",
     "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
     "Fenix",
+    [],
     "fenix",
     [networks.blast.id]
   ),
-
 };
+
+

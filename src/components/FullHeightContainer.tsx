@@ -1,4 +1,4 @@
-import { useHeight } from "hooks";
+import { useHeight } from "@/hooks";
 import { ReactNode } from "react";
 
 export function FullHeightContainer({children, className  =''}:{children: ReactNode, className?: string}) {

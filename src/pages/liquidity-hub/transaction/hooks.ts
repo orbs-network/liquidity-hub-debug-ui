@@ -1,36 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import _ from "lodash";
-import { amountUiV2, getERC20Transfers } from "helpers";
-import { useToken, useTokenAmountUsd, useUSDPrice, useWeb3 } from "hooks";
+import { useToken, useTokenAmountUsd, useUSDPrice } from "@/hooks";
 import { useMemo } from "react";
 import BN from "bignumber.js";
-import { zeroAddress } from "@defi.org/web3-candies";
-import { useLiquidityHubSession } from "applications";
-
+import { useLiquidityHubSession } from "@/applications";
+import { zeroAddress } from "@orbs-network/twap-sdk";
+import { getERC20Transfers, getPublicClient } from "@/lib";
+import { toAmountUI } from "@/helpers";
 
 export const useTransfers = () => {
   const session = useLiquidityHubSession().data;
-  const web3 = useWeb3(session?.chainId);
   return useQuery({
-    queryKey: ['useTransfers', session?.txHash],
+    queryKey: ["useTransfers", session?.txHash],
     queryFn: async () => {
       if (!session) return null;
+      const publicClient = getPublicClient(session?.chainId);
 
-      const receipt = await web3?.eth.getTransactionReceipt(session.txHash!);
+      const receipt = await publicClient?.getTransactionReceipt({
+        hash: session.txHash! as `0x${string}`,
+      });
 
-      const logs = receipt?.logs;
-      if (!logs) return null;
+      if (!receipt) return null;
 
-      return getERC20Transfers(web3!, logs!, session.chainId!);
+      return getERC20Transfers(receipt);
     },
     staleTime: Infinity,
-    enabled: !!session?.txHash && !!web3 && !!session?.chainId,
+    enabled: !!session?.txHash && !!session?.chainId,
   });
 };
 
 export const useOutTokenUsd = (amount = "1") => {
   const session = useLiquidityHubSession().data;
-  const outToken = useToken(session?.tokenOutAddress, session?.chainId);
+  const { data: outToken } = useToken(
+    session?.tokenOutAddress,
+    session?.chainId
+  );
   const currentUsd = useUSDPrice(outToken?.address, session?.chainId).data;
 
   return useMemo(() => {
@@ -38,7 +41,7 @@ export const useOutTokenUsd = (amount = "1") => {
 
     const getUsdValue = (amount?: string, usd?: number | string) => {
       if (!amount || !usd) return "0";
-      const res = BN(usd).dividedBy(amountUiV2(outToken?.decimals, amount));
+      const res = BN(usd).dividedBy(toAmountUI(amount, outToken?.decimals));
       return res.gt(0) ? res.toString() : undefined;
     };
 

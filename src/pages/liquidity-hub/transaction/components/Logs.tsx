@@ -1,7 +1,7 @@
-import { useLiquidityHubSession } from "applications";
-import { DataDisplay, LogModal } from "components";
+import { useLiquidityHubSession } from "@/applications";
+import { DataDisplay, LogModal } from "@/components";
 import { styled } from "styled-components";
-import { RowFlex } from "styles";
+import { RowFlex } from "@/styles";
 
 export const SessionLogs = () => {
   const session = useLiquidityHubSession().data;

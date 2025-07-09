@@ -1,9 +1,9 @@
-import _ from "lodash";
+
 import styled from "styled-components";
-import { ColumnFlex } from "styles";
+import { ColumnFlex } from "@/styles";
 import { Typography } from "antd";
-import { MOBILE } from "consts";
-import { Page } from "components";
+import { MOBILE } from "@/consts";
+import { Page } from "@/components";
 import { LiquidityHubSearchInput } from "./components/LiquidityHubSearchInput";
 
 export const SearchPage = () => {

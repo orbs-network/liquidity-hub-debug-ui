@@ -1,27 +1,22 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
-import _ from "lodash";
-import { networks } from "networks";
-import {
-  useAppParams,
-  useChainConfig,
-  useIsMobile,
-  usePartnerFromName,
-} from "hooks";
+import { useAppParams, useIsMobile, usePartnerWithId } from "@/hooks";
 import { Avatar, Drawer, Typography } from "antd";
 import { styled } from "styled-components";
-import { ColumnFlex, LightButton, RowFlex } from "styles";
+import { ColumnFlex, LightButton, RowFlex } from "@/styles";
 import { ChevronDown } from "react-feather";
-import { partners } from "partners";
-import { colors, MOBILE } from "consts";
-import { ROUTES } from "config";
+import { partners } from "@/partners";
+import { colors, MOBILE } from "@/consts";
+import { ROUTES } from "@/config";
 import { useLocation } from "react-router-dom";
+import { networks } from "@/networks";
+import { useNetwork } from "@/hooks/hooks";
 
 export const ChainSelect = () => {
   const isTwap = useLocation().pathname.includes(ROUTES.twap.root);
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useAppParams();
-  const selectedChain = useChainConfig(query.chainId);
-  const selectedPartner = usePartnerFromName(query.partner);
+  const selectedChain = useNetwork(query.chainId);
+  const selectedPartner = usePartnerWithId(query.partner);
 
   const onOpen = useCallback(() => setOpen(true), []);
 
@@ -42,30 +37,30 @@ export const ChainSelect = () => {
   const filteredChains = useMemo(() => {
     if (selectedPartner && !isTwap) {
       return Object.values(networks).filter((it) =>
-        selectedPartner.supportsLiquidityHub(it.id)
+        selectedPartner.isSupportedLH(it.id)
       );
     }
     if (selectedPartner && isTwap) {
       return Object.values(networks).filter((it) =>
-        selectedPartner.supportsTwap(it.id)
+        selectedPartner.isSupportedTwap(it.id)
       );
     }
     if (!isTwap) {
       return Object.values(networks).filter((it) => {
         return Object.values(partners).some((partner) =>
-          partner.supportsLiquidityHub(it.id)
+          partner.isSupportedLH(it.id)
         );
       });
     }
     if (isTwap) {
       return Object.values(networks).filter((it) => {
         return Object.values(partners).some((partner) =>
-          partner.supportsTwap(it.id)
+          partner.isSupportedTwap(it.id)
         );
       });
     }
     return [];
-  }, [selectedPartner, isTwap, query.chainId]);
+  }, [selectedPartner, isTwap]);
 
   return (
     <>
@@ -84,14 +79,17 @@ export const ChainSelect = () => {
       >
         <StyledList>
           {filteredChains?.map((network) => {
-            
             return (
               <StyledListItem
                 $selected={selectedChain?.id === network.id}
                 key={network.id}
                 onClick={() => onSelect(network.id)}
               >
-                <Avatar src={network.native.logoUrl} alt={network.name} size={25} />
+                <Avatar
+                  src={network.native.logoUrl}
+                  alt={network.name}
+                  size={25}
+                />
                 <Typography>{network.name}</Typography>
               </StyledListItem>
             );
@@ -105,7 +103,7 @@ export const ChainSelect = () => {
 export const PartnerSelect = () => {
   const [open, setOpen] = useState(false);
   const { query, setQuery } = useAppParams();
-  const selectedPartner = usePartnerFromName(query.partner);
+  const selectedPartner = usePartnerWithId(query.partner);
   const isTwap = useLocation().pathname.includes(ROUTES.twap.root);
 
   const onOpen = useCallback(() => setOpen(true), []);
@@ -127,18 +125,18 @@ export const PartnerSelect = () => {
   const filteredPartners = useMemo(() => {
     if (query.chainId && !isTwap) {
       return Object.values(partners).filter((it) =>
-        it.supportsLiquidityHub(query.chainId)
+        it.isSupportedLH(query.chainId)
       );
     }
     if (query.chainId && isTwap) {
       return Object.values(partners).filter((it) =>
-        it.supportsTwap(query.chainId)
+        it.isSupportedTwap(query.chainId)
       );
     }
     if (!isTwap) {
       return Object.values(partners).filter((partner) => {
         return Object.values(networks).some((network) =>
-          partner.supportsLiquidityHub(network.id)
+          partner.isSupportedLH(network.id)
         );
       });
     }
@@ -146,12 +144,12 @@ export const PartnerSelect = () => {
     if (isTwap) {
       return Object.values(partners).filter((partner) => {
         return Object.values(networks).some((network) =>
-          partner.supportsTwap(network.id)
+          partner.isSupportedTwap(network.id)
         );
       });
     }
     return [];
-  }, [selectedPartner, isTwap, query.chainId]);
+  }, [isTwap, query.chainId]);
 
   return (
     <>
@@ -235,9 +233,11 @@ const FilterDrawer = ({
       open={isOpen}
       height={isMobile ? "96%" : "100%"}
       extra={
-        showReset ? <StyledReset onClick={reset}>
-          <Typography>Reset</Typography>
-        </StyledReset> : null
+        showReset ? (
+          <StyledReset onClick={reset}>
+            <Typography>Reset</Typography>
+          </StyledReset>
+        ) : null
       }
     >
       {children}
@@ -246,19 +246,11 @@ const FilterDrawer = ({
 };
 
 const CustomDrawer = styled(Drawer)`
-  .ant-drawer-title {
-    color: ${colors.dark.textMain}}; 
-  }
-  .ant-drawer-close {
-    * {
-      color: ${colors.dark.textMain};
-    }
-  }
+
 `;
 
-
 const StyledReset = styled(LightButton)({
-  padding: "4px 12px",
+  padding: "4px 12px"
 });
 
 const Trigger = ({
@@ -292,8 +284,8 @@ const Trigger = ({
 };
 
 const StyledFilterButton = styled(LightButton)({
-  height: 34
-})
+  height: 34,
+});
 
 const StyledTriggerEmpty = styled(StyledFilterButton)({
   borderRadius: 20,
@@ -325,9 +317,10 @@ const StyledListItem = styled(RowFlex)<{ $selected?: boolean }>`
   padding: 8px 20px 8px 5px;
   cursor: pointer;
   transition: background 0.3s;
-  background: ${(props) => (props.$selected ? colors.dark.inputBg : "transparent")};
+  background: ${(props) =>
+    props.$selected ? colors.dark.inputBg : "transparent"};
 
   &:hover {
-    background: ${colors.dark.inputBg };
+    background: ${colors.dark.inputBg};
   }
 `;

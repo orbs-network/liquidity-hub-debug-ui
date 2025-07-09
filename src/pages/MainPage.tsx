@@ -1,12 +1,13 @@
-import { Page } from "components/Page";
-import _ from "lodash";
+import { Page } from "@/components/Page";
 import styled from "styled-components";
-import { RowFlex } from "styles";
+import { RowFlex } from "@/styles";
 import { Typography } from "antd";
-import { useNavigateWithParams } from "hooks";
-import { ROUTES } from "config";
+import { useNavigateWithParams } from "@/hooks";
+import { ROUTES } from "@/config";
 
 const Navbar = () => {
+
+  
   return (
     <Page.Navbar>
       <Page.Navbar.Logo text="ORBS Explorer" />
@@ -15,6 +16,7 @@ const Navbar = () => {
 };
 
 export const MainPage = () => {
+
   return (
     <Page navbar={<Navbar />}>
       <Page.Layout>

@@ -4,17 +4,17 @@ import { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Typography, Spin, Skeleton, Avatar, Popover } from "antd";
 import {
-  useChainConfig,
   useDebounce,
   useIsMobile,
   useNumberFormatter,
-} from "hooks";
-import { ColumnFlex, RowFlex, StyledInput } from "styles";
+} from "@/hooks";
+import { ColumnFlex, RowFlex, StyledInput } from "@/styles";
 import TextOverflow from "react-text-overflow";
 import { DesktopRowComponent, MobileRowComponent } from "./types";
 import { ChevronRight, Filter as FilterIcon } from "react-feather";
 import moment from "moment";
-import { colors } from "consts";
+import { colors } from "@/consts";
+import { useNetwork } from "@/hooks/hooks";
 
 type HeaderLabel = {
   label: string;
@@ -220,7 +220,7 @@ const MobileRow = ({
   status?: string;
   statusColor?: string;
 }) => {
-  const chainIdConfig = useChainConfig(chainId);
+  const chainIdConfig = useNetwork(chainId);
   const usdF = useNumberFormatter({ value: usd }).short;
   return (
     <StyledMobileRow>

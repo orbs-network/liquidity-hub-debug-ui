@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import styled from "styled-components";
-import { LightButton, RowFlex, StyledInput } from "styles";
+import { LightButton, RowFlex, StyledInput } from "@/styles";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
-import { colors } from "consts";
-import { useIsMobile } from "hooks";
+import { colors } from "@/consts";
+import { useIsMobile } from "@/hooks";
 
 export function SearchInput({
   className = "",

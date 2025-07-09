@@ -1,14 +1,14 @@
 import { styled } from "styled-components";
-import { Card, ColumnFlex, LightButton } from "styles";
+import { Card, ColumnFlex, LightButton } from "@/styles";
 import { Link } from "react-router-dom";
 import { Skeleton, Typography } from "antd";
 import { ReactNode, useState } from "react";
-import orbsLogo from "assets/orbs.svg";
-import { useHeight, useIsMobile } from "hooks";
-import { colors, MAX_LAYOUT_WIDTH, MOBILE } from "consts";
+import orbsLogo from "@/assets/orbs.svg";
+import { useHeight, useIsMobile } from "@/hooks";
+import { colors, MAX_LAYOUT_WIDTH, MOBILE } from "@/consts";
 import { Search } from "react-feather";
 import { Popover } from "antd";
-import { ROUTES } from "config";
+import { ROUTES } from "@/config";
 
 export function Loader({ className = "" }: { className?: string }) {
   return (

@@ -1,10 +1,10 @@
-import _ from "lodash";
+
 import { useMemo } from "react";
-import { TransactionsList } from "components";
-import { Page } from "components/Page";
-import { useLiquidityHubSwaps } from "applications";
+import { TransactionsList } from "@/components";
+import { Page } from "@/components/Page";
+import { useLiquidityHubSwaps } from "@/applications";
 import { useParams } from "react-router";
-import { MOBILE } from "consts";
+import { MOBILE } from "@/consts";
 import { styled } from "styled-components";
 
 export const UserTransactionsPage = () => {

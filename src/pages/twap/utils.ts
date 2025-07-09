@@ -1,6 +1,6 @@
 import { OrderType } from "@orbs-network/twap-sdk";
 
-export const parseOrderType = (orderType?: string) => {
+export const parseOrderType = (orderType?: OrderType) => {
   switch (orderType) {
     case OrderType.LIMIT:
       return "Limit";

@@ -9,7 +9,6 @@ export type Token = {
 export interface TransferLog {
   from: string;
   to: string;
+  tokenAddress: string;
   value: string;
-  token: Token;
-  rawValue: string;
 }

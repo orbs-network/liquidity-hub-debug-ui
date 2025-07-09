@@ -3,8 +3,8 @@ import { QueryParamProvider } from "use-query-params";
 import { ReactRouter6Adapter } from "use-query-params/adapters/react-router-6";
 import { ConfigProvider, ThemeConfig } from "antd";
 import { styled, createGlobalStyle } from "styled-components";
-import { useHeight } from "hooks";
-import { colors } from "consts";
+import { useHeight } from "@/hooks";
+import { colors } from "@/consts";
 
 const GlobalStyle = createGlobalStyle`
   .ant-tooltip-inner {
@@ -37,7 +37,7 @@ export function App() {
     <ConfigProvider theme={theme}>
       <GlobalStyle />
       <QueryParamProvider adapter={ReactRouter6Adapter}>
-        <Container style={{ minHeight: height }}>
+      <Container style={{ minHeight: height }}>
           <Outlet />
         </Container>
       </QueryParamProvider>

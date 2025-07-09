@@ -1,10 +1,10 @@
-import _ from "lodash";
+
 import styled from "styled-components";
-import { ColumnFlex } from "styles";
+import { ColumnFlex } from "@/styles";
 import { Typography } from "antd";
-import { MOBILE } from "consts";
-import { TwapSearchInput } from "./components/TwapSearchInput";
-import { Page } from "components";
+import { MOBILE } from "@/consts";
+import { TwapSearchInput } from "./components/search-input";
+import { Page } from "@/components";
 
 export const TwapSearchPage = () => {
   return (

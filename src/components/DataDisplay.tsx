@@ -1,15 +1,15 @@
 import { Tooltip, Typography } from "antd";
-import { QuestionHelper } from "components/QuestionHelper";
-import { colors, MOBILE } from "consts";
+import { QuestionHelper } from "@/components/QuestionHelper";
+import { colors, MOBILE } from "@/consts";
 import {
   useIsMobile,
   useNumberFormatter,
   useToken,
-  useTokenValueFromatter,
-} from "hooks";
+  useTokenValueFormatter,
+} from "@/hooks";
 import { ReactNode } from "react";
 import { styled } from "styled-components";
-import { ColumnFlex, RowFlex } from "styles";
+import { ColumnFlex, RowFlex } from "@/styles";
 import { TokenAddress } from "./AddressLink";
 
 const MainContainer = styled(ColumnFlex)`
@@ -114,9 +114,9 @@ export const TokenAmount = ({
   chainId?: number;
   tooltipContent?: ReactNode;
 }) => {
-  const token = useToken(address, chainId);
+  const token = useToken(address, chainId).data;
 
-  const amountF = useTokenValueFromatter({
+  const amountF = useTokenValueFormatter({
     value: amount,
     tokenDecimals: token?.decimals,
   });
