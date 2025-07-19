@@ -22,12 +22,10 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <LiquidityHubPages.SearchPage />,
-          },
-          {
-            path: ROUTES.liquidityHub.transactions,
+            path: ROUTES.liquidityHub.root,
             element: <LiquidityHubPages.TransactionsPage />,
           },
+
           {
             path: ROUTES.liquidityHub.tx,
             element: <LiquidityHubPages.TransactionPage />,
@@ -42,22 +40,20 @@ export const router = createBrowserRouter([
         path: ROUTES.twap.root,
         element: <TwapPages.Main />,
         children: [
+        
           {
             index: true,
-            element: <TwapPages.SearchPage />,
-          },
-          {
-            path: ROUTES.twap.orders,
-            element: <TwapPages.OrdersPage />,
-          },
-          {
-            path: ROUTES.twap.maker,
             element: <TwapPages.OrdersPage />,
           },
           {
             path: ROUTES.twap.order,
             element: <TwapPages.OrderPage />,
           },
+          {
+            path: ROUTES.twap.overview,
+            element: <TwapPages.OverviewPage />,
+          },
+
         ],
       },
 

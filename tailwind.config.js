@@ -1,15 +1,42 @@
+/* eslint-disable no-undef */
 /** @type {import('tailwindcss').Config} */
 export const darkMode = ["class"];
 export const content = ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"];
 export const theme = {
   extend: {
+    keyframes: {
+      'dialog-in-center': {
+        '0%': {
+          opacity: '0',
+          transform: 'translate(-50%, -40%) scale(0.95)',
+        },
+        '100%': {
+          opacity: '1',
+          transform: 'translate(-50%, -50%) scale(1)',
+        },
+      },
+      'dialog-out-center': {
+        '0%': {
+          opacity: '1',
+          transform: 'translate(-50%, -50%) scale(1)',
+        },
+        '100%': {
+          opacity: '0',
+          transform: 'translate(-50%, -40%) scale(0.95)',
+        },
+      },
+    },
+    animation: {
+      'dialog-in': 'dialog-in-center 200ms ease-out forwards',
+      'dialog-out': 'dialog-out-center 200ms ease-in forwards',
+    },
     borderRadius: {
       lg: 'var(--radius)',
       md: 'calc(var(--radius) - 2px)',
       sm: 'calc(var(--radius) - 4px)'
     },
     colors: {
-      background: 'hsl(var(--background))',
+      background: 'var(--background)',
       foreground: 'hsl(var(--foreground))',
       card: {
         DEFAULT: 'hsl(var(--card))',
@@ -21,11 +48,11 @@ export const theme = {
       },
       primary: {
         DEFAULT: 'var(--primary)',
-        foreground: 'hsl(var(--primary-foreground))'
+        foreground: 'var(--primary-foreground)'
       },
       secondary: {
         DEFAULT: 'var(--secondary)',
-        foreground: 'var(--secondary-foreground)'
+        foreground: 'hsl(var(--secondary-foreground))'
       },
       muted: {
         DEFAULT: 'var(--muted)',
@@ -51,9 +78,11 @@ export const theme = {
         '3': 'hsl(var(--chart-3))',
         '4': 'hsl(var(--chart-4))',
         '5': 'hsl(var(--chart-5))'
-      }
+      },
+      success: 'hsl(var(--success))'
     }
   }
 };
-// eslint-disable-next-line no-undef
-export const plugins = [require("tailwindcss-animate")];
+export const plugins = [
+  require("tailwindcss-animate"), // required by shadcn UI
+];

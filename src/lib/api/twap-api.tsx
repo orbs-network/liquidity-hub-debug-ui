@@ -1,54 +1,34 @@
+import { networks } from "@/networks";
 import {
-  Config,
   getOrders as getOrdersSdk,
   Order,
+  GetOrdersFilters,
+  eqIgnoreCase,
 } from "@orbs-network/twap-sdk";
 import _ from "lodash";
-import { networks } from "@/networks";
 
 const getOrders = async ({
-  chainId,
-  config,
+  chainIds,
   signal,
   page,
   limit = 200,
-  partner,
-  user,
-  orderId,
-  orderTxHash,
+  filters,
 }: {
-  chainId?: number;
-  config?: Config;
+  chainIds: number[];
   signal?: AbortSignal;
   page?: number;
   limit?: number;
-  partner?: string;
-  user?: string;
-  orderId?: number;
-  orderTxHash?: string;
+  filters: GetOrdersFilters;
 }): Promise<Order[]> => {
-  const filters = {
-    account: user,
-    orderId: orderId ? Number(orderId) : undefined,
-    txHash: orderTxHash,
-  };
   try {
-    if (chainId) {
-      const results = await getOrdersSdk({
-        signal,
-        chainId,
-        filters: { config, ...filters },
-        page,
-        limit,
-      });
+   
 
-      return results.sort((a, b) => b.createdAt - a.createdAt);
-    }
+    const chains = chainIds.length ? chainIds : Object.values(networks).map((network) => network.id)
 
     const results = await Promise.allSettled(
-      Object.values(networks).map((network) => {
+      chains.map((chain) => {
         return getOrdersSdk({
-          chainId: network.id,
+          chainId: chain,
           filters,
           signal,
           page,
@@ -60,9 +40,12 @@ const getOrders = async ({
     const res = results.map((result) =>
       result.status === "fulfilled" ? result.value : null
     );
-    return _.flatten(res)
+
+    const orders = _.flatten(res)
       .filter(Boolean)
       .sort((a, b) => b!.createdAt - a!.createdAt) as Order[];
+
+    return orders;
   } catch (error) {
     console.error(error);
     return [];
@@ -71,19 +54,20 @@ const getOrders = async ({
 
 const getOrder = async (
   orderId: number,
-  config: Config,
+  chainId: number,
+  twapAddress: string,
   signal?: AbortSignal
 ) => {
   const results = await getOrdersSdk({
     signal,
-    chainId: config.chainId,
-    filters: { config, orderId },
+    chainId,
+    filters: { orderIds: [orderId] },
   });
 
-  return results[0];
+  return results.find((order) => eqIgnoreCase(order.twapAddress, twapAddress));
 };
 
 export const twapApi = {
   getOrders,
-  getOrder
+  getOrder,
 };

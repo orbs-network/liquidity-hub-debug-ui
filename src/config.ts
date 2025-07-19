@@ -8,7 +8,7 @@ export const LIQUIDITY_HUB_ROUTER_PATHS = {
 export const TWAP_ROUTER_PATHS = {
   order: 'order',
   orders: 'orders',
-  maker: 'maker',
+  overview: 'overview',
 }
 
 export const ROUTES = {
@@ -22,8 +22,8 @@ export const ROUTES = {
   twap: {
     root: `/twap`,
     orders: `/twap/${TWAP_ROUTER_PATHS.orders}`,
-    maker: `/twap/${TWAP_ROUTER_PATHS.maker}/:maker`,
-    order: `/twap/${TWAP_ROUTER_PATHS.order}/:orderIdOrTxHash`,
+    order: `/twap/${TWAP_ROUTER_PATHS.order}/:orderId/:twapAddress/:chainId`,
+    overview: `/twap/${TWAP_ROUTER_PATHS.overview}`,
   },
 };
 

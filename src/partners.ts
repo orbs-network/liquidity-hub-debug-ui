@@ -1,142 +1,138 @@
-import { Config, Configs, networks } from "@orbs-network/twap-sdk";
-import _ from "lodash";
-
-export class Partner {
-  public twapPartner: string;
-  constructor(
-    public website: string,
-    public logoUrl: string,
-    public name: string,
-    public twapConfigs: Config[],
-    public id: string,
-    public liquidityHubChains: number[]
-  ) {
-    this.twapPartner = twapConfigs.length > 0 ? twapConfigs[0].partner : "";
-  }
-  isSupportedTwap(chainId?: number) {
-    if (!chainId) return false;
-    return this.twapConfigs.some((config) => config.chainId === chainId);
-  }
-  isSupportedLH(chainId?: number) {
-    if (!chainId) return false;
-    return this.liquidityHubChains.includes(chainId);
-  }
-}
+import { Configs } from "@orbs-network/twap-sdk";
+import { networks } from "./networks";
+import { Partner } from "./types";
 
 
-const groupedConfigsByName = _.groupBy(
-  Object.values(Configs),
-  "partner"
-) as Record<string, Config[]>;
-const getTwapConfigs = (partner: string): Config[] => {
-  return groupedConfigsByName[partner] || [];
-};
-export const partners: Record<string, Partner> = {
-  swapx: new Partner(
-    "https://swapx.fi",
-    "https://s2.coinmarketcap.com/static/img/coins/64x64/34753.png",
-    "SwapX",
-    getTwapConfigs(Configs.SwapX.partner),
-    "swapx",
-    [networks.sonic.id]
-  ),
-  quickswap: new Partner(
-    "https://quickswap.exchange/",
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",
-    "Quickswap",
-    getTwapConfigs(Configs.QuickSwap.partner),
-    "quickswap",
-    [networks.poly.id, networks.eth.id]
-  ),
-  spookyswap: new Partner(
-    "https://spooky.fi/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png",
-    "Spookyswap",
-    getTwapConfigs(Configs.SpookySwap.partner),
-    "spookyswap",
-    [networks.ftm.id, networks.sonic.id]
-  ),
-  lynex: new Partner(
-    "https://www.lynex.fi/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7957.png",
-    "Lynex",
-    getTwapConfigs(Configs.Lynex.partner),
-    "lynex",
-    [networks.linea.id]
-  ),
-  thena: new Partner(
-    "https://thena.fi/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/5803.png",
-    "Thena",
-    getTwapConfigs(Configs.Thena.partner),
-    "thena",
-    [networks.bsc.id]
-  ),
-  arbidex: new Partner(
-    "https://arbidex.fi/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/6506.png",
-    "Arbidex",
-    getTwapConfigs(Configs.Arbidex.partner),
-    "arbidex",
-    [networks.arb.id]
-  ),
 
-  chronos: new Partner(
-    "https://chronos.exchange/",
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/24158.png",
-    "Chronos",
-    getTwapConfigs(Configs.Chronos.partner),  
-    "chronos",
-    []
-  ),
-  baseswap: new Partner(
-    "https://baseswap.fi/",
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/27764.png",
-    "Baseswap",
-    getTwapConfigs(Configs.BaseSwap.partner),
-    "baseswap",
-    []
-  ),
-  pancakeswap: new Partner(
-    "https://baseswap.fi/",
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/7186.png",
-    "PancakeSwap",
-    getTwapConfigs(Configs.PancakeSwap.partner),
-    "pancakeswap",
-    []
-  ),
-  sushiswap: new Partner(
-    "https://www.sushi.com",
-    "https://s2.coinmarketcap.com/static/img/coins/128x128/6758.png",
-    "SushiSwap",
-    getTwapConfigs(Configs.SushiBase.partner),
-    "sushiswap",
-    []
-  ),
-  dragonswap: new Partner(
-    "https://dragonswap.app",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png",
-    "DragonSwap",
-    getTwapConfigs(Configs.DragonSwap.partner),
-    "dragonswap",
-    [networks.sei.id]
-  ),
-  retro: new Partner(
-    "https://retro.finance/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
-    "Retro",
-    getTwapConfigs(Configs.Retro.partner),
-    "retro",
-    []
-  ),
-  fenix: new Partner(
-    "https://fenix.finance/",
-    "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
-    "Fenix",
-    [],
-    "fenix",
-    [networks.blast.id]
-  ),
-};
+export const PARTNERS: Partner[] = [
+  {
+    id: "swapx",
+    website: "https://swapx.fi",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/34753.png",
+    name: "SwapX",
+    twapId: Configs?.SwapX.partner,
+    liquidityHubChains: [networks.sonic.id],
+  },
+  {
+    id: "quickswap",
+    website: "https://quickswap.exchange/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",
+    name: "Quickswap",
+    twapId: Configs?.QuickSwap.partner,
+    liquidityHubChains: [networks.poly.id, networks.eth.id],
+  },
+  {
+    id: "spookyswap",
+    website: "https://spooky.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/1455.png",
+    name: "Spookyswap",
+    twapId: Configs?.SpookySwap.partner,
+    liquidityHubChains: [networks.ftm.id, networks.sonic.id],
+  },
+  {
+    id: "lynex",
+    website: "https://www.lynex.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7957.png",
+    name: "Lynex",
+    twapId: Configs?.Lynex.partner,
+    liquidityHubChains: [networks.linea.id],
+  },
+  {
+    id: "thena",
+    website: "https://thena.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/5803.png",
+    name: "Thena",
+    twapId: Configs?.Thena.partner,
+    liquidityHubChains: [networks.bsc.id],
+  },
+  {
+    id: "arbidex",
+    website: "https://arbidex.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/6506.png",
+    name: "Arbidex",
+    twapId: Configs?.Arbidex.partner,
+    liquidityHubChains: [networks.arb.id],
+  },
+  {
+    id: "chronos",
+    website: "https://chronos.exchange/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/24158.png",
+    name: "Chronos",
+    twapId: Configs?.Chronos.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "baseswap",
+    website: "https://baseswap.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/27764.png",
+    name: "Baseswap",
+    twapId: Configs?.BaseSwap.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "pancakeswap",
+    website: "https://baseswap.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/7186.png",
+    name: "PancakeSwap",
+    twapId: Configs?.PancakeSwap.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "sushiswap",
+    website: "https://www.sushi.com",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/6758.png",
+    name: "SushiSwap",
+    twapId: Configs?.SushiBase.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "dragonswap",
+    website: "https://dragonswap.app",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/10363.png",
+    name: "DragonSwap",
+    twapId: Configs?.DragonSwap.partner,
+    liquidityHubChains: [networks.sei.id],
+  },
+  {
+    id: "retro",
+    website: "https://retro.finance/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
+    name: "Retro",
+    twapId: Configs?.Retro.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "fenix",
+    website: "https://fenix.finance/",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
+    name: "Fenix",
+    twapId: '',
+    liquidityHubChains: [networks.blast.id],
+  },
+  {
+    id: "teafi",
+    website: "https://app.tea-fi.com/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/33924.png",
+    name: "Teafi",
+    twapId: Configs?.TeaFi.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "sparkdex",
+    website: "https://sparkdex.ai/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/36569.png",
+    name: "SparkDEX",
+    twapId: Configs?.SparkDEX.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "ramses",
+    website: "https://ramses.exchange/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/23858.png",
+    name: "Ramses",
+    twapId: Configs?.Ramses.partner,
+    liquidityHubChains: [],
+  },
+];
 
 

@@ -1,14 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
-import { StringParam, useQueryParams, NumberParam } from "use-query-params";
-import { DEFAULT_SESSIONS_TIME_RANGE } from "./config";
+import {
+  StringParam,
+  useQueryParams,
+  ArrayParam,
+} from "use-query-params";
 import { getChain, toAmountUI } from "./helpers";
 import BN from "bignumber.js";
 import { notification } from "antd";
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getConfigByTwapAddress, getMinDecimalScaleForLeadingZero, getPartnerById } from "@/utils";
+import {
+  getConfigByTwapAddress,
+  getMinDecimalScaleForLeadingZero,
+  getPartnersById,
+} from "@/utils";
 import { MOBILE, URL_QUERY_KEYS } from "@/consts";
 import { useLocation, useNavigate } from "react-router";
 import { priceUsdService } from "@/services/price-usd";
@@ -71,7 +79,6 @@ export const useToken = (
     },
     enabled: !!tokenAddress && !!chainId && !disabled,
     staleTime: Infinity,
-
   });
 };
 
@@ -80,39 +87,56 @@ export const useAppParams = () => {
     {
       timeRange: StringParam,
       sessionType: StringParam,
-      chainId: NumberParam,
-      partner: StringParam,
-      minDollarValue: NumberParam,
-      inToken: StringParam,
-      outToken: StringParam,
-      feeOutAmountUsd: NumberParam,
-      [URL_QUERY_KEYS.USER]: StringParam,
-      [URL_QUERY_KEYS.TWAP_ORDER_TX_HASH]: StringParam,
-      [URL_QUERY_KEYS.ORDER_ID]: StringParam,
+      [URL_QUERY_KEYS.FEE_OUT_AMOUNT_USD]: StringParam,
+      [URL_QUERY_KEYS.USER]: ArrayParam,
+      [URL_QUERY_KEYS.TX_HASH]: StringParam,
+      [URL_QUERY_KEYS.ORDER_ID]: ArrayParam,
       [URL_QUERY_KEYS.TWAP_ADDRESS]: StringParam,
+      [URL_QUERY_KEYS.IN_TOKEN]: ArrayParam,
+      [URL_QUERY_KEYS.OUT_TOKEN]: ArrayParam,
+      [URL_QUERY_KEYS.PARTNER_ID]: ArrayParam,
+      [URL_QUERY_KEYS.CHAIN_ID]: ArrayParam,
+      [URL_QUERY_KEYS.MIN_DOLLAR_VALUE]: StringParam,
+      [URL_QUERY_KEYS.ORDER_STATUS]: ArrayParam,
+      [URL_QUERY_KEYS.TIMESTAMP]: StringParam,
+      [URL_QUERY_KEYS.ORDER_TYPE]: StringParam,
     },
     {
       updateType: "pushIn",
     }
   );
 
-  return {
-    query: {
-      timeRange: query.timeRange || DEFAULT_SESSIONS_TIME_RANGE,
-      sessionType: query.sessionType,
-      chainId: query.chainId as number | undefined,
-      partner: query.partner as string | undefined,
-      minDollarValue: query.minDollarValue as number | undefined,
-      inToken: query.inToken as string | undefined,
-      outToken: query.outToken as string | undefined,
-      feeOutAmountUsd: query.feeOutAmountUsd as number | undefined,
-      user: query[URL_QUERY_KEYS.USER] as string | undefined,
-      orderTxHash: query[URL_QUERY_KEYS.TWAP_ORDER_TX_HASH] as string | undefined,
-      orderId: query[URL_QUERY_KEYS.ORDER_ID] as string | undefined,
-      twapAddress: query[URL_QUERY_KEYS.TWAP_ADDRESS] as string | undefined,
-    },
-    setQuery,
-  };
+  return useMemo(() => {
+   return  {
+      query: {
+        sessionType: query.sessionType,
+        [URL_QUERY_KEYS.MIN_DOLLAR_VALUE]: query[URL_QUERY_KEYS.MIN_DOLLAR_VALUE] as
+          | string
+          | undefined,
+        [URL_QUERY_KEYS.FEE_OUT_AMOUNT_USD]: query[URL_QUERY_KEYS.FEE_OUT_AMOUNT_USD] as string | undefined,
+        [URL_QUERY_KEYS.USER]: query[URL_QUERY_KEYS.USER] as string[] | undefined,
+        [URL_QUERY_KEYS.TX_HASH]: query[URL_QUERY_KEYS.TX_HASH] as string | undefined,
+        [URL_QUERY_KEYS.ORDER_ID]: query[URL_QUERY_KEYS.ORDER_ID] as string[] | undefined,
+        [URL_QUERY_KEYS.TWAP_ADDRESS]: query[URL_QUERY_KEYS.TWAP_ADDRESS] as string | undefined,
+        [URL_QUERY_KEYS.IN_TOKEN]: query[URL_QUERY_KEYS.IN_TOKEN] as string[] | undefined,
+        [URL_QUERY_KEYS.OUT_TOKEN]: query[URL_QUERY_KEYS.OUT_TOKEN] as string[] | undefined,
+        [URL_QUERY_KEYS.CHAIN_ID]: query[URL_QUERY_KEYS.CHAIN_ID] as string[] | undefined,
+        [URL_QUERY_KEYS.PARTNER_ID]: query[URL_QUERY_KEYS.PARTNER_ID] as string[] | undefined,
+        [URL_QUERY_KEYS.ORDER_STATUS]: query[URL_QUERY_KEYS.ORDER_STATUS] as string[] | undefined,
+        [URL_QUERY_KEYS.TIMESTAMP]: query[URL_QUERY_KEYS.TIMESTAMP] as string | undefined,
+        [URL_QUERY_KEYS.ORDER_TYPE]: query[URL_QUERY_KEYS.ORDER_TYPE] as string | undefined,
+      },
+      setQuery: {
+        updateQuery: (value:any) =>
+          setQuery(value),
+        resetQuery: () => {
+          Object.values(URL_QUERY_KEYS).forEach((key) => {
+            setQuery({ [key]: undefined });
+          });
+        },
+      },
+    };
+  }, [query, setQuery])
 };
 
 function shortenNumber(amount?: number | string | null, decimalScale = 2) {
@@ -309,8 +333,26 @@ export const useNavigateWithParams = () => {
   const navigate = useNavigate();
 
   return useCallback(
-    (route: string, params?: Record<string, string>) => {
-      navigate(`${route}${params ? `?${new URLSearchParams(params).toString()}` : search}`);
+    (
+      route: string,
+      params?: Record<string, string | number | (string | number)[] | undefined>
+    ) => {
+      const query = new URLSearchParams();
+
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((v) => query.append(key, v.toString()));
+          } else {
+            query.set(key, value?.toString() || "");
+          }
+        });
+      }
+
+      const queryString = query.toString();
+      const finalUrl = `${route}${queryString ? `?${queryString}` : search}`;
+
+      navigate(finalUrl, { replace: true });
     },
     [navigate, search]
   );
@@ -364,11 +406,23 @@ export const useAppType = () => {
   }, [location.pathname]);
 };
 
-
-export const usePartnerWithId = (id?: string) => {
-  return useMemo(() => id ? getPartnerById(id) : undefined, [id]);
+export const usePartnerWithIds = (ids?: string[]) => {
+  return useMemo(() => (ids ? getPartnersById(ids) : undefined), [ids]);
 };
 
-export const useConfigByTwapAddress = (twapAddress?: string, chainId?: number) => {
-  return useMemo(() => twapAddress && chainId ? getConfigByTwapAddress(twapAddress, chainId) : undefined, [twapAddress, chainId]);
+export const usePartnerWithId = (id?: string) => {
+  return useMemo(() => (id ? getPartnersById([id])?.[0] : undefined), [id]);
+};
+
+export const useConfigByTwapAddress = (
+  twapAddress?: string,
+  chainId?: number
+) => {
+  return useMemo(
+    () =>
+      twapAddress && chainId
+        ? getConfigByTwapAddress(twapAddress, chainId)
+        : undefined,
+    [twapAddress, chainId]
+  );
 };

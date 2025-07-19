@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useState } from "react";
 import styled from "styled-components";
 import { LightButton, RowFlex, StyledInput } from "@/styles";
@@ -23,6 +24,7 @@ export function SearchInput({
     if (!value) return;
     try {
       onSubmit(value);
+      setVale("");
     } catch (error) {
       api.error({
         showProgress: true,

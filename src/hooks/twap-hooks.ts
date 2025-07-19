@@ -1,23 +1,34 @@
-import { getConfigByExchange } from "@orbs-network/twap-sdk";
 import { useMemo } from "react";
-import { getPartnerByTwapExchange } from "@/utils";
+import { getConfigByExchange, getPartnerByTwapExchange } from "@/utils";
+import { useConfigs } from "@/lib/queries/use-configs";
+import { Partner } from "@/types";
 
 export const useTwapConfigByExchange = (
   exchange?: string,
   chainId?: number
 ) => {
+  const {data: configs} = useConfigs();
+
   return useMemo(() => {
     if (!exchange || !chainId) return;
-    return getConfigByExchange(exchange, chainId);
-  }, [exchange, chainId]);
+    return getConfigByExchange(configs || [], exchange, chainId);
+  }, [exchange, chainId, configs]);
+};
+
+export const usePartnerConfigs = (partner?: Partner) => {
+  const {data: configs} = useConfigs();
+  return useMemo(() => {
+    return configs?.filter((config) => config.partner === partner?.twapId);
+  }, [configs, partner]);
 };
 
 export const useTwapPartnerByExchange = (
   exchange?: string,
   chainId?: number
 ) => {
+  const {data: configs} = useConfigs();
   return useMemo(() => {
     if (!exchange || !chainId) return;
-    return getPartnerByTwapExchange(exchange, chainId);
-  }, [exchange, chainId]);
+    return getPartnerByTwapExchange(configs || [], exchange, chainId);
+  }, [exchange, chainId, configs]);
 };

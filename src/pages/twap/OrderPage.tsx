@@ -1,7 +1,11 @@
-import { getOrderExcecutionRate, getOrderFillDelayMillis, getOrderLimitPriceRate, Order } from "@orbs-network/twap-sdk";
-import { Avatar, Typography } from "antd";
-import { DataDisplay, Page, TxHashAddress, WalletAddress } from "@/components";
-import { useAmountUI, useAppParams, useNumberFormatter, useToken } from "@/hooks";
+import {
+  getOrderExcecutionRate,
+  getOrderFillDelayMillis,
+  getOrderLimitPriceRate,
+  Order,
+} from "@orbs-network/twap-sdk";
+import { DataDisplay, WalletAddress } from "@/components";
+import { useNumberFormatter, useToken } from "@/hooks";
 import moment from "moment";
 import { createContext, useContext, useMemo } from "react";
 import { MillisToDuration } from "@/utils";
@@ -12,10 +16,57 @@ import {
 } from "@/hooks/twap-hooks";
 import { useNetwork } from "@/hooks/hooks";
 import { useTwapOrderQuery } from "@/lib/queries/use-twap-orders-query";
+import { Card } from "@/components/card";
+import { cn } from "@/lib/utils";
+import { OrderStatusBadge } from "./components/components";
+import { ROUTES } from "@/config";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeftIcon } from "lucide-react";
+import { Progress } from "./components/progress";
+import { Address } from "@/components/Address";
+import { useFormatNumber } from "@/hooks/use-number-format";
+import { OrderFills } from "./components/fills";
 
 interface ContextType {
   order?: Order;
 }
+
+const Section = ({
+  children,
+  title,
+  className,
+}: {
+  children: React.ReactNode;
+  title: string;
+  className?: string;
+}) => {
+  return (
+    <div className="flex flex-col ">
+      <div
+        className={cn(
+          "font-bold text-lg border-b border-border pb-2",
+          className
+        )}
+      >
+        {title}
+      </div>
+      <div className="flex flex-col gap-2 pt-[10px] flex-1">{children}</div>
+    </div>
+  );
+};
+
+const BackButton = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      className="bg-slate-800/50 border border-border rounded-lg text-white p-2 hover:bg-slate-800/70 transition-all duration-300 w-fit flex flex-row items-center gap-2"
+      onClick={() => navigate(ROUTES.twap.root)}
+    >
+      <ArrowLeftIcon className="w-4 h-4" />
+      <p className="text-sm">Back</p>
+    </button>
+  );
+};
 
 const Context = createContext({} as ContextType);
 const useOrderContext = () => {
@@ -26,372 +77,268 @@ export function OrderPage() {
 
   return (
     <Context.Provider value={{ order }}>
-      <Page.Layout isLoading={isLoading}>
-        <DataDisplay>
-          <ID />
-          <ChainId />
-          <Dex />
-          <CreatedAt />
-          <Deadline />
-          <DataDisplay.Divider />
-          <Status />
-          <TxHash />
-          <Type />
-          <SrcAmount />
-          <SrcToken />
-          <DstToken />
-          <DstMinAmount />
-          <SrcChunkAmount />
-          <Chunks />
-          <FillDelay />
-          <MinChunkSizeUsd />
-          <DataDisplay.Divider />
-
-          <Progress />
-          <SrcFilledAmount />
-          <DstFilledAmount />
-          <ExecutionPrice />
-          <LimitPrice />
-          <DataDisplay.Divider />
-          <Exchange />
-          <TwapAddress />
-          <TwapVersion />
-
-        </DataDisplay>
-      </Page.Layout>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-row justify-between">
+          <BackButton />
+          {order && <OrderFills order={order} />}
+        </div>
+        <Card isLoading={isLoading}>
+          <Card.Header className="flex flex-row justify-between">
+            <p className="text-lg font-bold">Order Details</p>
+            <div className="flex flex-row gap-4 items-center">
+              {order && <OrderStatusBadge order={order} />}
+              <p className="text-sm text-secondary-foreground font-mono font-normal">
+                #{order?.id}
+              </p>
+            </div>
+          </Card.Header>
+          <Card.Content>
+            <div className="grid grid-cols-2 gap-8">
+              <BaseInformation className="col-span-1" />
+              <OrderConfig className="col-span-1" />
+            </div>
+            <ExcecutionProgress />
+          </Card.Content>
+        </Card>
+      </div>
     </Context.Provider>
   );
 }
 
-
-
-const ID = () => {
+const Chain = () => {
   const { order } = useOrderContext();
-
+  const network = useNetwork(order?.chainId);
   return (
-    <DataDisplay.Row label="Order ID">
-      <Typography>#{order?.id}</Typography>
+    <DataDisplay.Row label="Chain" className="items-center">
+      {network?.shortname}{" "}
+      <span className="text-secondary-foreground font-mono text-sm ml-2 ">
+        ({order?.chainId})
+      </span>
     </DataDisplay.Row>
   );
 };
 
-const Dex = () => {
+const Partner = () => {
   const { order } = useOrderContext();
-
   const partner = useTwapPartnerByExchange(order?.exchange, order?.chainId);
-
   return (
     <DataDisplay.Row label="Partner">
-      <Avatar src={partner?.logoUrl} size={20} />
-      <Typography>{partner?.name}</Typography>
+      <p>{partner?.name}</p>
     </DataDisplay.Row>
   );
 };
 
-const Type = () => {
+const BaseInformation = ({ className = "" }: { className?: string }) => {
   const { order } = useOrderContext();
 
   return (
-    <DataDisplay.Row label="Type">
-      <Typography style={{ textTransform: "uppercase" }}>
+    <Section title="Base Information" className={className}>
+      <DataDisplay.Row label="Order ID">
+        <p>#{order?.id}</p>
+      </DataDisplay.Row>
+      <Chain />
+      <Partner />
+      <DataDisplay.Row label="Type">
         {parseOrderType(order?.type)}
-      </Typography>
-    </DataDisplay.Row>
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Created at">
+        {moment(order?.createdAt).format("lll")}
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Deadline">
+        {moment(order?.deadline).format("lll")}
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Tx Hash">
+        <Address address={order?.txHash} chainId={order?.chainId} type="tx" />
+      </DataDisplay.Row>
+    </Section>
   );
 };
 
-const CreatedAt = () => {
-  const { order } = useOrderContext();
-
-  return (
-    <DataDisplay.Row label="Created at">
-      <Typography>{moment(order?.createdAt).format("lll")}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const Deadline = () => {
-  const { order } = useOrderContext();
-
-  return (
-    <DataDisplay.Row label="Deadline">
-      <Typography>{moment(order?.deadline).format("lll")}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const DstFilledAmount = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.dstTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.filledDstAmount);
-  const usd = order?.filledDollarValueOut;
-
-  return (
-    <DataDisplay.Row label="Destination Filled Amount">
-      <DataDisplay.TokenAmount
-        amount={amount}
-        address={order?.dstTokenAddress}
-        chainId={chainId}
-        usd={usd}
-      />
-    </DataDisplay.Row>
-  );
-};
-
-const SrcFilledAmount = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.srcTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.filledSrcAmount);
-  const usd = order?.filledDollarValueIn;
-
-  return (
-    <DataDisplay.Row label="Source Filled Amount">
-      <DataDisplay.TokenAmount
-        amount={amount}
-        address={order?.srcTokenAddress}
-        chainId={chainId}
-        usd={usd}
-      />
-    </DataDisplay.Row>
-  );
-};
-
-const SrcToken = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.srcTokenAddress, chainId);
-
-  return (
-    <DataDisplay.Row label="Source Token">
-      <Typography>{token?.symbol}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const DstToken = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.dstTokenAddress, chainId);
-
-  return (
-    <DataDisplay.Row label="Destination Token">
-      <Typography>{token?.symbol}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const DstMinAmount = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.dstTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.dstMinAmount);
-
-  return (
-    <DataDisplay.Row label="Destination Minimum Amount">
-      <DataDisplay.TokenAmount
-        amount={amount}
-        address={order?.dstTokenAddress}
-        chainId={chainId}
-      />
-    </DataDisplay.Row>
-  );
-};
-
-const FillDelay = () => {
+const OrderConfig = ({ className = "" }: { className?: string }) => {
   const { order } = useOrderContext();
   const config = useTwapConfigByExchange(order?.exchange, order?.chainId);
 
-  if (!order || !config) return null;
   return (
-    <DataDisplay.Row label="Fill Delay">
-      <Typography>
-        {config && MillisToDuration(getOrderFillDelayMillis(order, config))}
-      </Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const Progress = () => {
-  const { order } = useOrderContext();
-  const value = useNumberFormatter({
-    value: order?.progress,
-    decimalScale: 2,
-  }).formatted;
-
-  return (
-    <DataDisplay.Row label="Progress">
-      <Typography>{value}%</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const SrcAmount = () => {
-  const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.srcTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.srcAmount);
-
-  return (
-    <DataDisplay.Row label="Source Amount">
-      <DataDisplay.TokenAmount
-        amount={amount}
-        address={order?.srcTokenAddress}
-        chainId={chainId}
-      />
-    </DataDisplay.Row>
+    <Section title="Order Config" className={className}>
+      <DataDisplay.Row label="Source Amount">
+        <DataDisplay.FormattedTokenAmountFromWei
+          amount={order?.srcAmount}
+          address={order?.srcTokenAddress}
+          chainId={order?.chainId}
+          usd={order?.tradeDollarValueIn}
+        />
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Source Token">
+        {order?.srcTokenSymbol}
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Destination Token">
+        {order?.dstTokenSymbol}
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Destination Minimum Amount">
+        <DataDisplay.FormattedTokenAmountFromWei
+          amount={order?.dstMinAmount}
+          address={order?.dstTokenAddress}
+          chainId={order?.chainId}
+        />
+      </DataDisplay.Row>
+      <SrcChunkAmount />
+      <DataDisplay.Row label="Chunks">{order?.chunks}</DataDisplay.Row>
+      <DataDisplay.Row label="Fill Delay">
+        {config &&
+          order &&
+          MillisToDuration(getOrderFillDelayMillis(order, config))}
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Min Chunk Size Usd">
+        ${config?.minChunkSizeUsd}
+      </DataDisplay.Row>
+    </Section>
   );
 };
 
 const SrcChunkAmount = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const { data: token } = useToken(order?.srcTokenAddress, chainId);
-  const amount = useAmountUI(token?.decimals, order?.srcAmountPerChunk);
-
+  const usd = useMemo(() => {
+    const filledUsd = order?.filledDollarValueIn || "0";
+    const chunks = order?.chunks || 0;
+    return Number(filledUsd) / chunks;
+  }, [order]);
   return (
     <DataDisplay.Row label="Src Chunk Amount">
-      <DataDisplay.TokenAmount
-        amount={amount}
+      <DataDisplay.FormattedTokenAmountFromWei
+        amount={order?.srcAmountPerChunk}
         address={order?.srcTokenAddress}
-        chainId={chainId}
+        chainId={order?.chainId}
+        usd={usd}
       />
     </DataDisplay.Row>
   );
 };
 
-const Status = () => {
+const ProgressBar = () => {
   const { order } = useOrderContext();
-
+  const percentF = useNumberFormatter({
+    value: order?.progress,
+    decimalScale: 2,
+  }).formatted;
   return (
-    <DataDisplay.Row label="Status">
-      <Typography style={{ textTransform: "uppercase" }}>
-        {order?.status}
-      </Typography>
-    </DataDisplay.Row>
+    <div className="bg-card-foreground rounded-lg p-4 flex flex-col gap-2 mb-4">
+      <div className="flex flex-row justify-between">
+        <p className="text-sm text-secondary-foreground font-mono font-bold uppercase">
+          Progress
+        </p>
+        <p className="text-sm text-secondary-foreground font-mono">
+          {percentF}%
+        </p>
+      </div>
+      <Progress progress={order?.progress ?? 0} />
+    </div>
   );
 };
 
-const TxHash = () => {
+const ExcecutionProgress = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
 
   return (
-    <DataDisplay.Row label="Tx Hash">
-      <TxHashAddress chainId={chainId} address={order?.txHash} />
-    </DataDisplay.Row>
+    <Section title="Excecution Progress" className="mt-8">
+      <ProgressBar />
+      <DataDisplay.Row label="Source Filled Amount">
+        <DataDisplay.FormattedTokenAmountFromWei
+          amount={order?.filledSrcAmount}
+          address={order?.srcTokenAddress}
+          usd={order?.filledDollarValueIn}
+          chainId={order?.chainId}
+        />
+      </DataDisplay.Row>
+      <DataDisplay.Row label="Destination Filled Amount">
+        <DataDisplay.FormattedTokenAmountFromWei
+          amount={order?.filledDstAmount}
+          address={order?.dstTokenAddress}
+          chainId={order?.chainId}
+          usd={order?.filledDollarValueOut}
+        />
+      </DataDisplay.Row>
+      <ExecutionPrice />
+      <LimitPrice />
+      <Exchange />
+      <TwapAddress />
+      <MakerAddress />
+    </Section>
   );
 };
 
 const Exchange = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
 
   return (
     <DataDisplay.Row label="Exchange Address">
-      <WalletAddress chainId={chainId} address={order?.exchange} />
-    </DataDisplay.Row>
-  );
-};
-
-const MinChunkSizeUsd = () => {
-  const { order } = useOrderContext();
-  const config = useTwapConfigByExchange(order?.exchange);
-
-  return (
-    <DataDisplay.Row label="Min Chunk Size Usd">
-      <Typography>${config?.minChunkSizeUsd}</Typography>
+      <WalletAddress chainId={order?.chainId} address={order?.exchange} />
     </DataDisplay.Row>
   );
 };
 
 const TwapAddress = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const config = useTwapConfigByExchange(order?.exchange);
 
   return (
     <DataDisplay.Row label="Twap Address">
-      <WalletAddress chainId={chainId} address={config?.twapAddress} />
+      <Address address={order?.twapAddress} chainId={order?.chainId} />
     </DataDisplay.Row>
   );
 };
 
-const TwapVersion = () => {
-  const { order } = useOrderContext();
-  const config = useTwapConfigByExchange(order?.exchange);
-
-  return (
-    <DataDisplay.Row label="Twap Version">
-      <Typography>{config?.twapVersion}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const Chunks = () => {
+const MakerAddress = () => {
   const { order } = useOrderContext();
 
   return (
-    <DataDisplay.Row label="Chunks">
-      <Typography>{order?.chunks}</Typography>
-    </DataDisplay.Row>
-  );
-};
-
-const ChainId = () => {
-  const { order } = useOrderContext();
-  const config = useTwapConfigByExchange(order?.exchange);
-  const network = useNetwork(config?.chainId);
-
-  return (
-    <DataDisplay.Row label="Chain">
-      <Avatar size={20} src={network?.logoUrl} />
-      <Typography>{network?.name}</Typography>
+    <DataDisplay.Row label="Maker Address">
+      <Address address={order?.maker} chainId={order?.chainId} />
     </DataDisplay.Row>
   );
 };
 
 const ExecutionPrice = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const {data: srcToken} = useToken(order?.srcTokenAddress, chainId);
-  const {data: dstToken} = useToken(order?.dstTokenAddress, chainId);
+  const srcToken = useToken(order?.srcTokenAddress, order?.chainId).data;
+  const dstToken = useToken(order?.dstTokenAddress, order?.chainId).data;
 
   const price = useMemo(() => {
     if (!order || !srcToken?.decimals || !dstToken?.decimals) return;
-    return getOrderExcecutionRate(order, srcToken?.decimals, dstToken?.decimals);
+    return getOrderExcecutionRate(
+      order,
+      srcToken?.decimals,
+      dstToken?.decimals
+    );
   }, [order, srcToken, dstToken]);
 
-  const priceF = useNumberFormatter({ value: price }).formatted;
+  const priceF = useFormatNumber({ value: price });
 
   return (
     <DataDisplay.Row label="Excecution Price">
-      <Typography>
-        {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
-      </Typography>
+      {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
     </DataDisplay.Row>
   );
 };
 
 const LimitPrice = () => {
   const { order } = useOrderContext();
-  const chainId = useAppParams().query.chainId;
-  const {data: srcToken} = useToken(order?.srcTokenAddress, chainId);
-  const {data: dstToken} = useToken(order?.dstTokenAddress, chainId);
+  const srcToken = useToken(order?.srcTokenAddress, order?.chainId).data;
+  const dstToken = useToken(order?.dstTokenAddress, order?.chainId).data;
 
   const price = useMemo(() => {
     if (!order || !srcToken?.decimals || !dstToken?.decimals) return;
-    return getOrderLimitPriceRate(order, srcToken?.decimals, dstToken?.decimals);
+    return getOrderLimitPriceRate(
+      order,
+      srcToken?.decimals,
+      dstToken?.decimals
+    );
   }, [order, srcToken, dstToken]);
 
-  const priceF = useNumberFormatter({ value: price }).formatted;
+  const priceF = useFormatNumber({ value: price });
+  if (order?.isMarketOrder) return null;
 
   return (
     <DataDisplay.Row label="Limit Price">
-      <Typography>
-        {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
-      </Typography>
+      {!price ? "-" : `1 ${srcToken?.symbol} = ${priceF} ${dstToken?.symbol}`}
     </DataDisplay.Row>
   );
 };

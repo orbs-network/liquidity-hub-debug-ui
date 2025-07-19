@@ -1,7 +1,8 @@
-import { Tooltip, Typography } from "antd";
+import { Tooltip } from "antd";
 import { QuestionHelper } from "@/components/QuestionHelper";
-import { colors, MOBILE } from "@/consts";
+import { MOBILE } from "@/consts";
 import {
+  useAmountUI,
   useIsMobile,
   useNumberFormatter,
   useToken,
@@ -9,8 +10,10 @@ import {
 } from "@/hooks";
 import { ReactNode } from "react";
 import { styled } from "styled-components";
-import { ColumnFlex, RowFlex } from "@/styles";
+import { ColumnFlex } from "@/styles";
 import { TokenAddress } from "./AddressLink";
+import { cn } from "@/lib/utils";
+import { useFormatNumber } from "@/hooks/use-number-format";
 
 const MainContainer = styled(ColumnFlex)`
   width: 100%;
@@ -22,10 +25,12 @@ export const Row = ({
   label,
   children,
   tooltip,
+  className,
 }: {
   label: string;
   children?: ReactNode;
   tooltip?: string;
+  className?: string;
 }) => {
   const isMobile = useIsMobile();
 
@@ -33,30 +38,25 @@ export const Row = ({
     return (
       <StyledMobileListItem>
         <RowLabel tooltip={tooltip} label={label} />
-        <StyledRowChildren>{children}</StyledRowChildren>
+        <div>{children}</div>
       </StyledMobileListItem>
     );
   }
 
   return (
-    <StyledListItem>
+    <div
+      className={cn(
+        "flex flex-row justify-between w-full border-b border-border pb-2 mt-auto",
+        className
+      )}
+    >
       <RowLabel tooltip={tooltip} label={label} />
-      <StyledRowChildren>{children}</StyledRowChildren>
-    </StyledListItem>
+      <div className="flex flex-row w-fit text-sm font-mono items-center">
+        {children}
+      </div>
+    </div>
   );
 };
-
-const StyledListItem = styled(RowFlex)`
-  gap: 40px;
-  width: 100%;
-  font-size: 14px;
-  align-items: flex-start;
-  .ant-typography {
-    white-space: wrap;
-    line-break: anywhere;
-    font-size: 13px;
-  }
-`;
 
 const StyledMobileListItem = styled(ColumnFlex)({
   width: "100%",
@@ -65,21 +65,6 @@ const StyledMobileListItem = styled(ColumnFlex)({
   paddingBottom: 10,
   paddingTop: 5,
 });
-
-const StyledRowLabel = styled(Typography)`
-  width: 310px;
-  text-transform: uppercase;
-  @media (max-width: ${MOBILE}px) {
-    font-weight: 600;
-  }
-`;
-
-const StyledRowChildren = styled.div`
-  flex: 1;
-  justify-content: flex-start;
-  display: flex;
-  gap: 5px;
-`;
 
 export const StyledDivider = styled.div`
   width: 100%;
@@ -93,13 +78,13 @@ export const StyledDivider = styled.div`
 
 const RowLabel = ({ label, tooltip }: { label: string; tooltip?: string }) => {
   return (
-    <StyledRowLabel style={{ fontSize: 13 }}>
+    <p className="text-sm font-bold text-secondary-foreground font-mono uppercase">
       {`${label}:`} {tooltip && <QuestionHelper label={tooltip} />}
-    </StyledRowLabel>
+    </p>
   );
 };
 
-export const TokenAmount = ({
+export const FormattedTokenAmountFromWei = ({
   prefix,
   address,
   amount,
@@ -115,27 +100,18 @@ export const TokenAmount = ({
   tooltipContent?: ReactNode;
 }) => {
   const token = useToken(address, chainId).data;
+  const value = useAmountUI(token?.decimals, amount);
 
-  const amountF = useTokenValueFormatter({
-    value: amount,
-    tokenDecimals: token?.decimals,
+  const amountF = useFormatNumber({
+    value,
   });
-  const usdF = useNumberFormatter({ value: usd, decimalScale: 2 });
-  const fullValue = useNumberFormatter({
-    value: amount,
-    decimalScale: 8,
-  }).formatted;
+  const usdF = useFormatNumber({ value: usd, decimalScale: 2 });
 
   return (
-    <StyledTokenAmount>
-      <Tooltip
-        title={tooltipContent || `${fullValue} ${token?.symbol}`}
-        placement="right"
-      >
-        <Typography>
-          {prefix} {amountF.short || "0"}
-        </Typography>
-      </Tooltip>
+    <div className="flex flex-row gap-2">
+      <p>
+          {prefix} {amountF || "0"}
+        </p>
 
       <TokenAddress
         address={address}
@@ -143,26 +119,19 @@ export const TokenAmount = ({
         symbol={token?.symbol}
         chainId={chainId}
       />
-       <StyledUsd>{` ($${usdF.short || "0"})`}</StyledUsd>
-    </StyledTokenAmount>
+      <p className="text-sm text-secondary-foreground font-mono">{` ($${
+        usdF || "0"
+      })`}</p>
+    </div>
   );
 };
-
-const StyledUsd = styled(Typography)({
-  color: colors.dark.textSecondary,
-  fontSize: 12,
-});
-
-const StyledTokenAmount = styled(RowFlex)({
-  gap: 5,
-});
 
 const DataDisplay = ({ children }: { children: ReactNode }) => {
   return <MainContainer>{children}</MainContainer>;
 };
 
 DataDisplay.Row = Row;
-DataDisplay.TokenAmount = TokenAmount;
+DataDisplay.FormattedTokenAmountFromWei = FormattedTokenAmountFromWei;
 DataDisplay.Divider = StyledDivider;
 
 export { DataDisplay };

@@ -1,4 +1,4 @@
-import _ from "lodash";
+
 
 const transactionHash = (txHash: string) => {
   return {
@@ -101,50 +101,49 @@ const swaps = ({
   minDollarValue,
   inToken,
   outToken,
-  fromDate,
-  toDate,
-  feeOutAmountUsd
+
+  feeOutAmountUsd,
 }: {
-  chainId?: number;
+  chainId?: string[];
   page: number;
   limit: number;
-  walletAddress?: string;
-  dex?: string;
-  minDollarValue?: number;
-  inToken?: string;
-  outToken?: string;
-  fromDate?: number; // Timestamp (in seconds or milliseconds)
-  toDate?: number; // Timestamp (in seconds or milliseconds)
-  feeOutAmountUsd?: number;
+  walletAddress?: string[];
+  dex?: string[];
+  minDollarValue?: string;
+  inToken?: string[];
+  outToken?: string[];
+  feeOutAmountUsd?: string;
 }) => {
   return {
     ...queryInitialData,
     query: {
       bool: {
         filter: [
-          chainId && {
-            term: {
+          chainId?.length && {
+            terms: {
               chainId: chainId,
             },
           },
-          walletAddress && {
+          walletAddress?.length && {
             script: {
               script: {
-                source:
-                  "doc['user.keyword'].value.toLowerCase() == params.user.toLowerCase()",
+                source: `
+                  params.users.contains(doc['user.keyword'].value.toLowerCase())
+                `,
                 params: {
-                  user: walletAddress,
+                  users: walletAddress.map((a) => a.toLowerCase()),
                 },
               },
             },
           },
-          dex && {
+          dex?.length && {
             script: {
               script: {
-                source:
-                  "doc['dex.keyword'].value.toLowerCase() == params.dex.toLowerCase()",
+                source: `
+                  params.dexes.contains(doc['dex.keyword'].value.toLowerCase())
+                `,
                 params: {
-                  dex: dex,
+                  dexes: dex.map((d) => d.toLowerCase()),
                 },
               },
             },
@@ -154,24 +153,26 @@ const swaps = ({
               "type.keyword": "swap",
             },
           },
-          inToken && {
+          inToken?.length && {
             script: {
               script: {
-                source:
-                  "doc['tokenInName.keyword'].value.toLowerCase() == params.tokenInName.toLowerCase()",
+                source: `
+                  params.inTokens.contains(doc['tokenInName.keyword'].value.toLowerCase())
+                `,
                 params: {
-                  tokenInName: inToken,
+                  inTokens: inToken.map((t) => t.toLowerCase()),
                 },
               },
             },
           },
-          outToken && {
+          outToken?.length && {
             script: {
               script: {
-                source:
-                  "doc['tokenOutName.keyword'].value.toLowerCase() == params.tokenOutName.toLowerCase()",
+                source: `
+                  params.outTokens.contains(doc['tokenOutName.keyword'].value.toLowerCase())
+                `,
                 params: {
-                  tokenOutName: outToken,
+                  outTokens: outToken.map((t) => t.toLowerCase()),
                 },
               },
             },
@@ -200,14 +201,6 @@ const swaps = ({
               },
             },
           },
-          (fromDate || toDate) && {
-            range: {
-              timestamp: {
-                ...(fromDate && { gte: fromDate }), // Greater than or equal to `fromDate`
-                ...(toDate && { lte: toDate }), // Less than or equal to `toDate`
-              },
-            },
-          },
         ].filter(Boolean),
         must_not: [
           {
@@ -223,8 +216,8 @@ const swaps = ({
         ],
       },
     },
-    size: limit, // Number of results per page
-    from: page * limit, // Starting point (adjust for pagination, e.g., 0 for page 1, 100 for page 2, etc.)
+    size: limit,
+    from: page * limit,
     sort: [
       {
         timestamp: {
@@ -234,7 +227,6 @@ const swaps = ({
     ],
   };
 };
-
 const clientTrasactions = (ids: string[], page: number, limit: number) => {
   return {
     ...queryInitialData,

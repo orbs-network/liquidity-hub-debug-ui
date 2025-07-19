@@ -1,6 +1,4 @@
-import _ from "lodash";
 import { fetchElastic } from "@/helpers";
-import { queries } from "../elastic";
 import { isValidTxHash } from "@/utils";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
@@ -9,55 +7,33 @@ import {
   LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
   LIQUIDITY_HUB_ELASTIC_SERVER_URL,
 } from "@/config";
-import { LiquidityHubSession, LiquidityHubSwap } from "./interface";
+import { queries } from "@/applications/elastic";
+import { LiquidityHubSession, LiquidityHubSwap } from "@/applications/clob/interface";
 
-export const getSwapByTimestamp = async (
-  data: ReturnType<typeof queries.swaps>,
-  limit: number,
-  signal: AbortSignal
-) => {
-  let page = 0; // Start from the first page
-  let allLogs: any[] = []; // Array to collect all logs
 
-  while (true) {
-    // Prepare the query for the current page
-
-    // Fetch logs for the current page
-    const logs = await fetchElastic(
-      LIQUIDITY_HUB_ELASTIC_SERVER_URL,
-      data,
-      signal
-    );
-    allLogs = [...allLogs, ...logs];
-    // Map logs to LiquidityHubSwap instances and add them to the collection
-
-    // Break the loop if no more logs are returned
-    if (logs.length < limit) {
-      break;
-    }
-
-    // Increment page for the next loop iteration
-    page++;
-  }
-
-  return allLogs;
-};
-
-export const useLiquidityHubSwaps = (walletAddress?: string) => {
+export const useLiquidityHubSwaps = () => {
   const {
-    query: { chainId, partner, minDollarValue, inToken, outToken, feeOutAmountUsd },
+    query: {
+      chain_id,
+      partner_id,
+      min_dollar_value,
+      in_token,
+      out_token,
+      fee_out_amount_usd,
+      user,
+    },
   } = useAppParams();
 
   return useInfiniteQuery({
     queryKey: [
       "useLiquidityHubSwaps",
-      chainId,
-      walletAddress,
-      partner,
-      minDollarValue,
-      inToken,
-      outToken,
-      feeOutAmountUsd
+      chain_id,
+      user,
+      partner_id,
+      min_dollar_value,
+      in_token,
+      out_token,
+      fee_out_amount_usd,
     ],
     queryFn: async ({ signal, pageParam }) => {
       // const fromTimestamp = moment().subtract(4, "day").valueOf();
@@ -65,36 +41,21 @@ export const useLiquidityHubSwaps = (walletAddress?: string) => {
       // const limit = fromTimestamp && toTimestamp ? 1000 : 100;
       const data = queries.swaps({
         page: pageParam,
-        chainId,
+        chainId: chain_id,
         limit: 100,
-        walletAddress,
-        dex: partner?.toLowerCase(),
-        minDollarValue,
-        inToken,
-        outToken,
-        feeOutAmountUsd,
+        walletAddress: user,
+        dex: partner_id,
+        minDollarValue: min_dollar_value,
+        inToken: in_token,
+        outToken: out_token,
+        feeOutAmountUsd: fee_out_amount_usd,
         // fromDate: fromTimestamp,
         // toDate: toTimestamp,
       });
-     
-      let logs = [];
-      // if (fromTimestamp && toTimestamp) {
-      //   logs = await getSwapByTimestamp(data,limit, signal);
-      //   console.log({logs});
-        
-      // } else {
-      //   logs = await fetchElastic(
-      //     LIQUIDITY_HUB_ELASTIC_SERVER_URL,
-      //     data,
-      //     signal
-      //   );
-      // }
 
-      logs = await fetchElastic(
-        LIQUIDITY_HUB_ELASTIC_SERVER_URL,
-        data,
-        signal
-      );
+      let logs = [];
+
+      logs = await fetchElastic(LIQUIDITY_HUB_ELASTIC_SERVER_URL, data, signal);
 
       return logs.map((log) => {
         return new LiquidityHubSwap(log);

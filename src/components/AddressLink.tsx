@@ -1,11 +1,11 @@
 import styled from "styled-components";
-import { Copy , Check} from "react-feather";
-import { Tooltip, Typography } from "antd";
-import TextOverflow from "react-text-overflow";
+import { Copy, Check } from "react-feather";
+import { Tooltip } from "antd";
 import { useState } from "react";
 import { useCopyToClipboard, useExplorerUrl } from "@/hooks";
 import { colors } from "@/consts";
-const { Link } = Typography;
+import { shortenAddress } from "@/utils";
+import { Address } from "./Address";
 
 export function AddressLink({
   address,
@@ -31,21 +31,24 @@ export function AddressLink({
 
   return (
     <Container>
-      <Typography>
-        <StyledLink href={url} target="_blank">
-          <TextOverflow text={text || ""} />
-        </StyledLink>
-      </Typography>
-    {success && <StyledCopySuccess><Check /></StyledCopySuccess>}
-      {success ?  null  :address && (
-        <StyledCopy onClick={onCopy} className="copy-btn">
-          <Copy />
-        </StyledCopy>
+      <a href={url} target="_blank" className="text-sm  hover:underline">
+       {shortenAddress(text || "", 6)}
+      </a>
+      {success && (
+        <StyledCopySuccess>
+          <Check />
+        </StyledCopySuccess>
       )}
+      {success
+        ? null
+        : address && (
+            <StyledCopy onClick={onCopy} className="copy-btn">
+              <Copy />
+            </StyledCopy>
+          )}
     </Container>
   );
 }
-
 
 export const TokenAddress = ({
   chainId,
@@ -61,13 +64,7 @@ export const TokenAddress = ({
   const explorer = useExplorerUrl(chainId);
   return (
     <StyledTokenAddress href={`${explorer}/address/${address}`} target="_blank">
-      <Tooltip
-        placement="right"
-        title={!name ? undefined : `${name} (${symbol})`}
-      >
-        {" "}
-        <Typography>{symbol}</Typography>
-      </Tooltip>
+      <p>{symbol}</p>
     </StyledTokenAddress>
   );
 };
@@ -89,7 +86,7 @@ export const WalletAddress = ({
 }) => {
   const explorer = useExplorerUrl(chainId);
   return (
-    <AddressLink
+    <Address
       address={address}
       url={`${explorer}/address/${address}`}
       text={address}
@@ -114,17 +111,17 @@ export const TxHashAddress = ({
   );
 };
 
-
 const StyledCopySuccess = styled("span")`
-position: relative;
-top: 2px;
-svg {
-  width: 16px;
-  height: 16px;
-  color: ${colors.dark.link};
-}
-`
+  position: absolute;
+  top: 2px;
+  left: 0px;
 
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${colors.dark.link};
+  }
+`;
 
 const StyledCopy = styled("button")`
   color: black;
@@ -134,17 +131,19 @@ const StyledCopy = styled("button")`
   padding: 0;
   background: none;
   border: none;
-  position: relative;
+  position: absolute;
   top: 2px;
+  left: 0px;
   svg {
     width: 16px;
     height: 16px;
-    color: ${colors.dark.link};
+    color: white;
   }
 `;
 
 const Container = styled.div`
   display: flex;
+  padding-left: 20px;
   position: relative;
   align-items: center;
   gap: 5px;
@@ -153,18 +152,5 @@ const Container = styled.div`
       opacity: 1;
       pointer-events: all;
     }
-  }
-`;
-
-const StyledLink = styled(Link)`
-  font-weight: 500;
-  display: flex;
-  font-size: 14px;
-  text-decoration: none;
-  * {
-    color: ${colors.dark.link}!important;
-  }
-  &:hover {
-    text-decoration: underline;
   }
 `;

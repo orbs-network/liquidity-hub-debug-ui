@@ -1,7 +1,7 @@
-import { useLiquidityHubSession } from "@/applications";
 import { DataDisplay } from "@/components";
 import { useAmountUI, useToken } from "@/hooks";
 import { useOutTokenUsd } from "../hooks";
+import { useLiquidityHubSession } from "@/lib/queries/use-liquidity-hub-swaps";
 
 
 
@@ -16,7 +16,7 @@ export const UserSavings = () => {
 
   return (
     <DataDisplay.Row label="User Savings">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         amount={amount as string}
         usd={usd as string}
         address={outToken?.address}

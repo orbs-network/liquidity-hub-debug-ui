@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import styled from "styled-components";
-import _ from "lodash";
 import { ColumnFlex } from "@/styles";
 import { Tag, Modal, Typography } from "antd";
 import { useState } from "react";

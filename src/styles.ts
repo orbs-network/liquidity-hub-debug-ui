@@ -39,7 +39,6 @@ export const Card = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  background-color: ${colors.dark.cardBg};
 `;
 
 

@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useToken, useTokenAmountUsd, useUSDPrice } from "@/hooks";
 import { useMemo } from "react";
 import BN from "bignumber.js";
-import { useLiquidityHubSession } from "@/applications";
 import { zeroAddress } from "@orbs-network/twap-sdk";
 import { getERC20Transfers, getPublicClient } from "@/lib";
 import { toAmountUI } from "@/helpers";
+import { useLiquidityHubSession } from "@/lib/queries/use-liquidity-hub-swaps";
 
 export const useTransfers = () => {
   const session = useLiquidityHubSession().data;

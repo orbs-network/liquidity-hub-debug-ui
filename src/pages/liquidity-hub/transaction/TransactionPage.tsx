@@ -1,5 +1,3 @@
-import { DataDisplay, Page, TxHashAddress, WalletAddress } from "@/components";
-import { ColumnFlex, RowFlex } from "@/styles";
 import styled from "styled-components";
 import { Avatar, Typography } from "antd";
 import { useOutTokenUsd, useTransfers } from "./hooks";
@@ -16,10 +14,11 @@ import moment from "moment";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LogTrace } from "./components/LogTrace";
 import { UserSavings } from "./components/UserSavings";
-import { MOBILE } from "@/consts";
-import { useLiquidityHubSession } from "@/applications";
 import { useQuery } from "@tanstack/react-query";
 import { useNetwork } from "@/hooks/hooks";
+import { DataDisplay, Page, TxHashAddress, WalletAddress } from "@/components";
+import { ColumnFlex, RowFlex } from "@/styles";
+import { useLiquidityHubSession } from "@/lib/queries/use-liquidity-hub-swaps";
 
 export function TransactionPage() {
   const { data: session, isLoading: sessionLoading } = useLiquidityHubSession();
@@ -30,7 +29,7 @@ export function TransactionPage() {
   const isLoading = sessionLoading || !inToken || !outToken;
 
   return (
-    <StyledPageLayout isLoading={isLoading}>
+    <Page isLoading={isLoading}>
       {!session ? (
         <>
           <p>Session not found</p>
@@ -38,16 +37,11 @@ export function TransactionPage() {
       ) : (
         <Content />
       )}
-    </StyledPageLayout>
+    </Page>
   );
 }
 
-const StyledPageLayout = styled(Page.Layout)({
-  [`@media (max-width: ${MOBILE}px)`]: {
-    // background:'transparent',
-    // boxShadow: 'none',
-  },
-});
+
 
 const SessionId = () => {
   const session = useLiquidityHubSession().data;
@@ -123,7 +117,7 @@ const Slippage = () => {
 
 const Dex = () => {
   const session = useLiquidityHubSession().data;
-  const partner = usePartnerWithId(session?.dex);
+const partner = usePartnerWithId(session?.dex);
 
   return (
     <DataDisplay.Row label="Dex">
@@ -174,7 +168,7 @@ const InTokenAmount = () => {
   const amount = useAmountUI(token?.decimals, session?.amountIn);
   return (
     <DataDisplay.Row label="Amount In">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         amount={amount}
         address={session?.tokenInAddress}
         usd={session?.amountInUsd}
@@ -212,7 +206,7 @@ const ExpectedToReceiveLH = () => {
 
   return (
     <DataDisplay.Row label="LH Amount Out (estimate)">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         amount={amountF}
         address={session?.tokenOutAddress}
         usd={usd as string}
@@ -245,7 +239,7 @@ const DexAmountOut = () => {
       label="Dex Amount Out (minus gas)"
       tooltip="The amount user would received via dex"
     >
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         amount={dexAmountOut || "0"}
         address={session?.tokenOutAddress}
         usd={dexAmountOutUsd}
@@ -269,7 +263,7 @@ const Fees = () => {
 
   return (
     <DataDisplay.Row label="Fees">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         address={outToken?.address}
         amount={fee as string}
         usd={session?.feeOutAmountUsd || ("" as string)}
@@ -290,7 +284,7 @@ const ExactAmountReceivedPreDeductions = () => {
 
   return (
     <DataDisplay.Row label="LH Amount Out (actual pre deductions)">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         address={session?.tokenOutAddress}
         amount={amount as string}
         usd={usd as string}
@@ -308,7 +302,7 @@ const ExactAmountReceivedPostDeductions = () => {
 
   return (
     <DataDisplay.Row label="LH Amount Out (actual post deductions)">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         address={session?.tokenOutAddress}
         amount={amount as string}
         usd={usd as string}
@@ -324,7 +318,7 @@ const ExactAmountOut = () => {
   const amount = useAmountUI(token?.decimals, session?.exactOutAmount);
   return (
     <DataDisplay.Row label="Exact Amount Out">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         address={session?.tokenOutAddress}
         amount={amount}
         chainId={session?.chainId}
@@ -357,7 +351,7 @@ const DucthPrice = () => {
   const amount = useAmountUI(token?.decimals, session?.dutchPrice);
   return (
     <DataDisplay.Row label="Dutch price">
-      <DataDisplay.TokenAmount
+      <DataDisplay.FormattedTokenAmountFromWei
         address={session?.tokenOutAddress}
         amount={amount}
         chainId={session?.chainId}

@@ -1,67 +1,21 @@
 import styled from "styled-components";
-import { RowFlex } from "../styles";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  useAppParams,
-  useNumberFormatter,
-  usePartnerWithId,
-} from "../hooks";
-import { makeElipsisAddress, swapStatusText } from "../helpers";
+import { useNumberFormatter } from "../hooks";
+import { makeElipsisAddress } from "../helpers";
 import { TokenAddress } from "./AddressLink";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import moment from "moment";
-import { StatusBadge } from "./StatusBadge";
 import { Avatar } from "antd";
 import { ChevronRight } from "react-feather";
-import { List } from "./List";
 import { LiquidityHubSwap } from "@/applications/clob/interface";
 import { colors } from "@/consts";
 import { navigation } from "@/utils";
 import { useNetwork } from "@/hooks/hooks";
+import _ from "lodash";
+import { useLiquidityHubSwaps } from "@/lib/queries/use-liquidity-hub-swaps";
+import { VirtualTable } from "./virtual-table";
 
-export const TransactionsList = ({
-  sessions = [],
-  loadMore,
-  isFetchingNextPage,
-  isLoading,
-}: {
-  sessions?: LiquidityHubSwap[];
-  loadMore: () => void;
-  isLoading?: boolean;
-  isFetchingNextPage?: boolean;
-}) => {
-  return (
-    <>
-      <List<LiquidityHubSwap>
-        isLoading={isLoading}
-        loadMore={loadMore}
-        isFetchingNextPage={isFetchingNextPage}
-        items={sessions}
-        DesktopComponent={DesktopComponent}
-        MobileComponent={MobileComponent}
-        headerLabels={headerLabels}
-      />
-    </>
-  );
-};
 
-const DesktopComponent = ({ item }: { item: LiquidityHubSwap }) => {
-  return (
-    <List.DesktopRow>
-      {desktopRows.map((it) => {
-        return (
-          <List.DesktopRow.Element
-            key={it.label}
-            alignCenter={it.alignCenter}
-            width={it.width}
-          >
-            <it.Component item={item} />
-          </List.DesktopRow.Element>
-        );
-      })}
-    </List.DesktopRow>
-  );
-};
 
 const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   const navigate = useNavigate();
@@ -77,20 +31,16 @@ const GoButton = ({ item }: { item: LiquidityHubSwap }) => {
   );
 };
 const Timestamp = ({ item }: { item: LiquidityHubSwap }) => {
-  return (
-    <RowFlex>
-      <List.DesktopRow.Element.Text text={moment(item.timestamp).fromNow()} />
-    </RowFlex>
-  );
+  return <p>{moment(item.timestamp).fromNow()}</p>;
 };
 
 const Dex = ({ item }: { item: LiquidityHubSwap }) => {
   const chainConfig = useNetwork(item.chainId);
   return (
-    <RowFlex style={{ gap: 6 }}>
-      <List.DesktopRow.Element.Text text={item.dex} />
+    <div className="flex gap-1 items-center text-sm">
+      {item.dex}
       <Avatar src={chainConfig?.logoUrl} size={23} />
-    </RowFlex>
+    </div>
   );
 };
 
@@ -104,7 +54,7 @@ const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
   } = item;
 
   return (
-    <StyledTokens $gap={2}>
+    <div className="flex gap-1 items-center text-sm">
       <TokenAddress
         address={tokenInAddress}
         symbol={tokenInName}
@@ -116,15 +66,9 @@ const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
         symbol={tokenOutName}
         chainId={chainId}
       />
-    </StyledTokens>
+    </div>
   );
 };
-
-const StyledTokens = styled(RowFlex)({
-  svg: {
-    color: colors.dark.textMain,
-  },
-});
 
 const SessionId = ({ item }: { item: LiquidityHubSwap }) => {
   return (
@@ -132,7 +76,7 @@ const SessionId = ({ item }: { item: LiquidityHubSwap }) => {
       to={navigation.liquidityHub.tx(item.id)}
       style={{ textDecoration: "unset" }}
     >
-      <List.DesktopRow.Element.Text text={item.id} />
+      {item.id}
     </Link>
   );
 };
@@ -145,28 +89,24 @@ const TxHash = ({ item }: { item: LiquidityHubSwap }) => {
         to={navigation.liquidityHub.tx(txHash)}
         style={{ textDecoration: "unset" }}
       >
-        <List.DesktopRow.Element.Text text={makeElipsisAddress(txHash) || ""} />
+        {makeElipsisAddress(txHash) || ""}
       </Link>
     </>
   );
-};
-
-const SwapStatus = ({ item }: { item: LiquidityHubSwap }) => {
-  return <StatusBadge swapStatus={item.swapStatus} />;
 };
 
 const Usd = ({ item }: { item: LiquidityHubSwap }) => {
   const { dollarValue } = item;
   const result = useNumberFormatter({ value: dollarValue }).short;
 
-  return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
+  return result ? `$${result}` : "-";
 };
 
 const FeesUsd = ({ item }: { item: LiquidityHubSwap }) => {
   const { feeOutAmountUsd } = item;
   const result = useNumberFormatter({ value: feeOutAmountUsd || "" }).short;
 
-  return <List.DesktopRow.Element.Text text={result ? `$${result}` : "-"} />;
+  return result ? `$${result}` : "-";
 };
 
 const StyledButton = styled("button")`
@@ -192,174 +132,94 @@ const StyledButton = styled("button")`
   }
 `;
 
-const MinDollarValueFilter = () => {
-  const { setQuery, query } = useAppParams();
-
-  const onChange = useCallback(
-    (value?: string) => {
-      setQuery({
-        minDollarValue: value ? Number(value) : undefined,
-      });
-    },
-    [setQuery]
-  );
-
-  return (
-    <List.Filter active={Boolean(query.minDollarValue)}>
-      <List.Filter.Element label="Min USD value" >
-      <List.Filter.Input
-        placeholder="Enter value..."
-        onChange={onChange}
-        initialValue={query.minDollarValue?.toString()}
-      />
-      </List.Filter.Element>
-    </List.Filter>
-  );
-};
-const FeesFilter = () => {
-  const { setQuery, query } = useAppParams();
-
-  const onChange = useCallback(
-    (value?: string) => {
-      setQuery({
-        feeOutAmountUsd: value ? Number(value) : undefined,
-      });
-    },
-    [setQuery]
-  );
-
-  return (
-      <List.Filter active={Boolean(query.feeOutAmountUsd)}>
-        <List.Filter.Element label="Min Fee value">
-          <List.Filter.Input
-            placeholder="Enter value..."
-            onChange={onChange}
-            initialValue={query.feeOutAmountUsd?.toString()}
-          />
-        </List.Filter.Element>
-      </List.Filter>
-  );
-};
-
-const TokensFilter = () => {
-  const { setQuery, query } = useAppParams();
-
-
-  return (
-    <RowFlex>
-        <List.Filter active={Boolean(query.inToken || query.outToken)}>
-          <RowFlex>
-          <List.Filter.Element label="In Token">
-            <List.Filter.Input
-              placeholder="Enter value..."
-              onChange={(inToken) => setQuery({ inToken })}
-              initialValue={query.inToken}
-            />
-          </List.Filter.Element>
-          <List.Filter.Element label="Out Token">
-            <List.Filter.Input
-              placeholder="Enter value..."
-              onChange={(outToken) => setQuery({ outToken })}
-              initialValue={query.outToken}
-            />
-          </List.Filter.Element>
-          </RowFlex>
-        </List.Filter>
-
-    </RowFlex>
-  );
-};
-
 const desktopRows = [
   {
     Component: Dex,
-    label: "Dex",
-    width: 16,
+    text: "Dex",
   },
   {
     Component: SessionId,
-    label: "Session id",
-    width: 13,
-  },
+    text: "Session id",
+    },
   {
     Component: Timestamp,
-    label: "Time",
-    width: 16,
+    text: "Time",
   },
   {
     Component: Tokens,
-    label: "Tokens",
-    width: 15,
-    FilterComponent: TokensFilter,
+    text: "Tokens",
   },
   {
     Component: Usd,
-    label: "USD",
-    width: 10,
-    FilterComponent: MinDollarValueFilter,
+    text: "USD",
   },
   {
     Component: FeesUsd,
-    label: "Fees",
-    width: 10,
-    FilterComponent: FeesFilter,
+    text: "Fees",
   },
   {
     Component: TxHash,
-    label: "Tx hash",
-    width: 15,
+    text: "Tx hash",
   },
-  {
-    Component: SwapStatus,
-    label: "Status",
-    width: 12,
-    alignCenter: true,
-  },
+
   {
     Component: GoButton,
-    label: "Action",
-    width: 4,
-    alignCenter: true,
+    text: "Action",
   },
 ];
 
-const headerLabels = desktopRows.map((it) => {
-  return {
-    label: it.label,
-    width: it.width,
-    alignCenter: it.alignCenter,
-    FilterComponent: it.FilterComponent,
-  };
-});
+const headerLabels = _.map(desktopRows, (row) => ({
+  text: row.text,
+}));
 
-const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
-  const partner = usePartnerWithId(item.dex);
-  const navigate = useNavigate();
-  const onClick = useCallback(() => {
-    navigate(navigation.liquidityHub.tx(item.id));
-  }, [navigate, item.id]);
+export const TransactionsList = () => {
+  const { data, isLoading, fetchNextPage, isFetchingNextPage } =
+    useLiquidityHubSwaps();
+
+  const sessions = useMemo(() => {
+    return data?.pages.flatMap((page) => page) || [];
+  }, [data]);
 
   return (
-    <MobileContainer onClick={onClick}>
-      <List.MobileRow
-        partner={partner?.name || item.dex}
-        chainId={item.chainId}
-        inToken={item.tokenInName}
-        outToken={item.tokenOutName}
-        usd={item.dollarValue}
-        timestamp={item.timestamp}
-        status={swapStatusText(item.swapStatus)}
-        statusColor={
-          item.swapStatus === "success"
-            ? "#F0AD4E"
-            : item.swapStatus === "failed"
-            ? "red"
-            : undefined
-        }
-      />
-    </MobileContainer>
+    <VirtualTable<LiquidityHubSwap>
+      isLoading={isLoading}
+      isFetchingNextPage={isFetchingNextPage}
+      fetchNextPage={fetchNextPage}
+      tableItems={sessions}
+      headerLabels={headerLabels}
+      desktopRows={desktopRows}
+    />
   );
 };
+
+// const MobileComponent = ({ item }: { item: LiquidityHubSwap }) => {
+//   const partner = usePartnerWithId(item.dex);
+//   const navigate = useNavigate();
+//   const onClick = useCallback(() => {
+//     navigate(navigation.liquidityHub.tx(item.id));
+//   }, [navigate, item.id]);
+
+//   return (
+//     <MobileContainer onClick={onClick}>
+//       <List.MobileRow
+//         partner={partner?.name || item.dex}
+//         chainId={item.chainId}
+//         inToken={item.tokenInName}
+//         outToken={item.tokenOutName}
+//         usd={item.dollarValue}
+//         timestamp={item.timestamp}
+//         status={swapStatusText(item.swapStatus)}
+//         statusColor={
+//           item.swapStatus === "success"
+//             ? "#F0AD4E"
+//             : item.swapStatus === "failed"
+//             ? "red"
+//             : undefined
+//         }
+//       />
+//     </MobileContainer>
+//   );
+// };
 
 const MobileContainer = styled("div")({
   padding: "8px 0px",

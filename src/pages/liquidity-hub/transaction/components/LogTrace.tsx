@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { TX_TRACE_SERVER } from "@/config";
 import { DataDisplay } from "@/components";
-import { useLiquidityHubSession } from "@/applications";
+import { useLiquidityHubSession } from "@/lib/queries/use-liquidity-hub-swaps";
 
 export const useLogTrace = () => {
   const session = useLiquidityHubSession().data;

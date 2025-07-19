@@ -1,7 +1,8 @@
-import { useLiquidityHubSession } from "@/applications";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataDisplay, LogModal } from "@/components";
 import { styled } from "styled-components";
 import { RowFlex } from "@/styles";
+import { useLiquidityHubSession } from "@/lib/queries/use-liquidity-hub-swaps";
 
 export const SessionLogs = () => {
   const session = useLiquidityHubSession().data;

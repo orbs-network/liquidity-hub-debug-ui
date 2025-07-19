@@ -8,12 +8,12 @@ import { LiquidityHubSearchInput } from "./components/LiquidityHubSearchInput";
 
 export const SearchPage = () => {
   return (
-    <Page.Layout>
+    <Page>
       <Content>
         <StyledTitle>Search for transaction or user</StyledTitle>
         <StyledSearchSessionInput />
       </Content>
-    </Page.Layout>
+    </Page>
   );
 };
 
