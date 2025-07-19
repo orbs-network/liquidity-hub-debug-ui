@@ -14,6 +14,22 @@ export const PARTNERS: Partner[] = [
     liquidityHubChains: [networks.sonic.id],
   },
   {
+    id: "h2finance",
+    website: "https://h2finance.io",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/10545.png",
+    name: "H2Finance",
+    twapId: Configs?.H2Finance.partner,
+    liquidityHubChains: [],
+  },
+  {
+    id: "syncswap",
+    website: "https://syncswap.xyz",
+    logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/6813.png",
+    name: "SyncSwap",
+    twapId: Configs?.SyncSwap.partner,
+    liquidityHubChains: [],
+  },
+  {
     id: "quickswap",
     website: "https://quickswap.exchange/",
     logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/19966.png",

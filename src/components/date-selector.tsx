@@ -66,9 +66,9 @@ export function DateSelector({ custom = false }: { custom?: boolean }) {
       return undefined;
     }
     if (result.from && result.to) {
-      return `${moment(result.from).format("MM/DD/YYYY")} - ${moment(
+      return `${moment(result.from).format("DD/MM/YYYY")} - ${moment(
         result.to
-      ).format("MM/DD/YYYY")}`;
+      ).format("DD/MM/YYYY")}`;
     }
   }, [timestamp]);
 

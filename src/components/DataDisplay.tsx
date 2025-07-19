@@ -1,13 +1,6 @@
-import { Tooltip } from "antd";
 import { QuestionHelper } from "@/components/QuestionHelper";
 import { MOBILE } from "@/consts";
-import {
-  useAmountUI,
-  useIsMobile,
-  useNumberFormatter,
-  useToken,
-  useTokenValueFormatter,
-} from "@/hooks";
+import { useAmountUI, useIsMobile, useToken } from "@/hooks";
 import { ReactNode } from "react";
 import { styled } from "styled-components";
 import { ColumnFlex } from "@/styles";
@@ -110,8 +103,8 @@ export const FormattedTokenAmountFromWei = ({
   return (
     <div className="flex flex-row gap-2">
       <p>
-          {prefix} {amountF || "0"}
-        </p>
+        {prefix} {amountF || "0"}
+      </p>
 
       <TokenAddress
         address={address}

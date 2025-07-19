@@ -20,7 +20,11 @@ import {
   createContext,
 } from "react";
 import { Plus, X } from "react-feather";
-import { isValidWalletAddress, parseAppliedFilters, shortenAddress } from "@/utils";
+import {
+  isValidWalletAddress,
+  parseAppliedFilters,
+  shortenAddress,
+} from "@/utils";
 import { useLocation } from "react-router-dom";
 import {
   Drawer,
@@ -104,7 +108,7 @@ const BadgesFilter = ({
 
   const onSelect = useCallback(
     (option: FilterOption) => {
-      if(singleSelect) {
+      if (singleSelect) {
         onUpdate(queryKey, [option.value]);
         return;
       }
@@ -240,8 +244,6 @@ const InputWithBadgesFilter = ({
     },
     [onSelect, inputValue, setInputValue]
   );
-
-  
 
   return (
     <div className={cn("flex items-center gap-2 flex-col", className)}>
@@ -416,7 +418,7 @@ const MinDollarValueFilter = () => {
 const FiltersTrigger = () => {
   const { query } = useAppParams();
   const filtersCount = useMemo(() => {
-    const {[URL_QUERY_KEYS.TIMESTAMP]: timestamp, ...rest} = query;
+    const { [URL_QUERY_KEYS.TIMESTAMP]: timestamp, ...rest } = query;
     return _.size(Object.values(rest).flat().filter(Boolean));
   }, [query]);
 
@@ -433,7 +435,19 @@ const FiltersTrigger = () => {
   );
 };
 
-export const QueryFilters = ({ children }: { children?: ReactNode }) => {
+export const QueryFilters = ({
+  children,
+  filters,
+}: {
+  children?: ReactNode;
+  filters?: {
+    userFilter?: boolean;
+    minDollarValueFilter?: boolean;
+    chainIdFilter?: boolean;
+    partnerIdFilter?: boolean;
+    tokensFilter?: boolean;
+  };
+}) => {
   return (
     <FilterContextProvider>
       <Drawer direction="right">
@@ -449,18 +463,28 @@ export const QueryFilters = ({ children }: { children?: ReactNode }) => {
           </DrawerHeader>
 
           <div className="p-4 flex flex-col gap-4 h-full mb-[70px]">
-           <div className="flex flex-col gap-4">
-           <TokensFilter />
-            <UserFilter />
-            <MinDollarValueFilter />
-            {children}
-            <ChainIdFilter />
-            
-            <PartnerIdFilter />
-           </div>
+            <div className="flex flex-col gap-4">
+              {!filters ? (
+                <>
+                  <TokensFilter />
+                  <UserFilter />
+                  <MinDollarValueFilter />
+                  <ChainIdFilter />
+                  <PartnerIdFilter />
+                </>
+              ) : (
+                <>
+                  {filters.userFilter && <UserFilter />}
+                  {filters.minDollarValueFilter && <MinDollarValueFilter />}
+                  {filters.chainIdFilter && <ChainIdFilter />}
+                  {filters.partnerIdFilter && <PartnerIdFilter />}
+                  {filters.tokensFilter && <TokensFilter />}
+                </>
+              )}
+              {children}
+            </div>
             <FilterModalButton />
           </div>
-          
         </DrawerContent>
       </Drawer>
     </FilterContextProvider>
@@ -486,9 +510,6 @@ const ActiveBadge = ({
     </Badge>
   );
 };
-
-
-
 
 function ActiveQueryFilters() {
   const { query, setQuery } = useAppParams();
@@ -522,7 +543,6 @@ function ActiveQueryFilters() {
       </div>
       <div className="flex flex-wrap gap-2 flex-row justify-start items-center">
         {_.map(parseAppliedFilters(query), (item) => {
-          
           if (typeof item.value === "string") {
             return (
               <ActiveBadge

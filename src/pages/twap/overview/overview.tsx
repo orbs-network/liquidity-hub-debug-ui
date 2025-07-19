@@ -1,48 +1,72 @@
-import { Order, OrderStatus, OrderType } from "@orbs-network/twap-sdk";
-import _ from "lodash";
+import {
+  eqIgnoreCase,
+  Order,
+  OrderStatus,
+  OrderType,
+} from "@orbs-network/twap-sdk";
 import { useTwapOrders } from "@/lib/queries/use-twap-orders-query";
 import { useEffect, useMemo } from "react";
-import { abbreviate, getPartnerByTwapExchange } from "@/utils";
-import { useAppParams, usePartnerWithId } from "@/hooks";
+import { abbreviate, getPartnerByTwapConfig } from "@/utils";
+import { useAppParams } from "@/hooks";
 import moment from "moment";
 import { Card } from "@/components/card";
 import { useNetwork } from "@/hooks/hooks";
-import { Partner } from "@/types";
 import { useConfigs } from "@/lib/queries/use-configs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "../components/progress";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { OverviewHeader } from "./header";
 import { DateSelector } from "@/components/date-selector";
-
-type ExtendedOrder = Order & {
+import { Partner } from "@/types";
+import { QueryFilters } from "@/components/query-filters";
+import { Pie, PieChart, Label as RechartsLabel } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import COLORS from "@/colors.json";
+type Exchange = {
   partner: Partner;
+  chainId: number;
+  orders: Order[];
 };
 
-const useGroupByExchange = () => {
+const Percent = ({ value }: { value: number }) => {
+  return (
+    <small className="text-[13px] text-secondary-foreground">
+      {" "}
+      ({!value ? "0%" : `${Number(value.toFixed(2))}%`})
+    </small>
+  );
+};
+
+const useExchanges = () => {
   const { data: orders } = useTwapOrders();
   const { data: configs } = useConfigs();
 
-  return useMemo(() => {
-    if (!orders || !configs) return {};
-    const extendedOrders: ExtendedOrder[] = orders
-      .map((order) => {
-        const partner = getPartnerByTwapExchange(
-          configs,
-          order.exchange,
-          order.chainId
-        );
+  return useMemo((): Exchange[] => {
+    if (!orders || !configs) return [];
+
+    const result = configs
+      .map((config) => {
+        const partner = getPartnerByTwapConfig(config);
         if (!partner) return null;
         return {
-          ...order,
           partner,
+          chainId: config.chainId,
+          orders: orders.filter(
+            (order) =>
+              eqIgnoreCase(order.exchange, config.exchangeAddress) &&
+              order.chainId === config.chainId
+          ),
         };
       })
-      .filter((order) => order !== null);
-    return _.mapValues(
-      _.groupBy(extendedOrders, "partner.id"),
-      (exchangeGroup) => _.groupBy(exchangeGroup, "chainId")
-    );
+      .filter((exchange) => exchange !== null)
+      .sort((a, b) => b.orders.length - a.orders.length);
+
+    return result;
   }, [orders, configs]);
 };
 
@@ -66,31 +90,34 @@ export function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-4">
-    
       <div className="flex items-center gap-2 ml-auto">
+        <QueryFilters
+          filters={{
+            partnerIdFilter: true,
+            chainIdFilter: true,
+          }}
+        />
         <DateSelector />
       </div>
       <OverviewHeader />
+
       {isLoading ? <Loader /> : <Exchanges />}
     </div>
   );
 }
 
 const Exchanges = () => {
-  const groupedOrders = useGroupByExchange();
+  const exchanges = useExchanges();
+
   return (
     <div className="w-full grid grid-cols-2 gap-4">
-      {Object.entries(groupedOrders).map(([partnerId, exchanges]) => {
-        return Object.entries(exchanges).map(([chainId, orders]) => {
-          return (
-            <Exchange
-              key={`${chainId}-${partnerId}`}
-              orders={orders}
-              chainId={Number(chainId)}
-              partnerId={partnerId}
-            />
-          );
-        });
+      {exchanges.map((exchange) => {
+        return (
+          <Exchange
+            key={`${exchange.chainId}-${exchange.partner?.id}`}
+            exchange={exchange}
+          />
+        );
       })}
     </div>
   );
@@ -108,17 +135,8 @@ const Loader = () => {
 const Label = ({ children }: { children: React.ReactNode }) => {
   return <p className="text-secondary-foreground text-[14px]">{children}</p>;
 };
-const Exchange = ({
-  orders,
-  chainId,
-  partnerId,
-}: {
-  orders: Order[];
-  chainId: number;
-  partnerId: string;
-}) => {
-  const chain = useNetwork(chainId);
-  const partner = usePartnerWithId(partnerId);
+const Exchange = ({ exchange }: { exchange: Exchange }) => {
+  const chain = useNetwork(exchange.chainId);
 
   return (
     <Card>
@@ -126,9 +144,12 @@ const Exchange = ({
         <div className="flex items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
             <Avatar className="w-6 h-6">
-              <AvatarImage src={partner?.logo} className="object-cover" />
+              <AvatarImage
+                src={exchange.partner?.logo}
+                className="object-cover"
+              />
             </Avatar>
-            {partner?.name}
+            {exchange.partner?.name}
           </div>
           <Badge className="text-xs uppercase flex items-center gap-2">
             {chain?.shortname}
@@ -143,15 +164,15 @@ const Exchange = ({
           <Label>Total:</Label>
           <p className="font-bold text-white text-lg">
             {" "}
-            {abbreviate(orders.length.toString())}
+            {abbreviate(exchange.orders.length.toString())}
           </p>
         </div>
-        <CompletionRate orders={orders} />
-        <StatusesRates orders={orders} />
+        <CompletionRate orders={exchange.orders} />
+        <StatusesRates orders={exchange.orders} />
 
-        <OrderTypes orders={orders} />
-        <TotalUsd orders={orders} />
-        <FilledUsd orders={orders} />
+        <OrderTypes orders={exchange.orders} />
+        <TotalUsd orders={exchange.orders} />
+        <FilledUsd orders={exchange.orders} />
       </Card.Content>
     </Card>
   );
@@ -200,7 +221,11 @@ const CompletionRate = ({ orders }: { orders: Order[] }) => {
     <div className="w-full flex flex-col gap-2">
       <div className="flex items-center gap-2 justify-between">
         <Label>Completion Rate</Label>
-        <p className="text-sm">{Number(completed?.percent?.toFixed(2))}%</p>
+        <p className="text-sm">
+          {completed?.percent
+            ? `${Number(completed?.percent?.toFixed(2))}%`
+            : "0%"}
+        </p>
       </div>
       <Progress progress={completed?.percent || 0} className="w-full" />
     </div>
@@ -249,7 +274,6 @@ const TotalUsd = ({ orders }: { orders: Order[] }) => {
   );
 };
 
-
 const FilledUsd = ({ orders }: { orders: Order[] }) => {
   const filledUsd = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -295,16 +319,10 @@ const OrderTypes = ({ orders }: { orders: Order[] }) => {
       <Label>Order Types:</Label>
       <div className="flex items-center gap-2 justify-between">
         <p className="text-sm">
-          Limit: {limit.amount}{" "}
-          <small className="text-xs text-secondary-foreground">
-            ({Number(limit.percent.toFixed(2))}%)
-          </small>
+          Limit: {limit.amount} <Percent value={limit.percent} />
         </p>
         <p className="text-sm">
-          Market: {twapMarket.amount}{" "}
-          <small className="text-xs text-secondary-foreground">
-            ({Number(twapMarket.percent.toFixed(2))}%)
-          </small>
+          Market: {twapMarket.amount} <Percent value={twapMarket.percent} />
         </p>
       </div>
     </div>
@@ -325,12 +343,103 @@ const StatusRate = ({
       <Label>{text}</Label>
       <p className="text-sm">
         {abbreviate(amount.toString())}
-        <small className="text-xs text-secondary-foreground">
-          {" "}
-          ({Number(percent.toFixed(2))}%)
-        </small>
+        <Percent value={percent} />
       </p>
     </div>
   );
 };
 
+console.log({ COLORS });
+
+const OrdersChart = () => {
+  const exchanges = useExchanges();
+
+  const data = useMemo(() => {
+    return exchanges?.map((it, index) => ({
+      partner: it.partner.name,
+      orders: it.orders.length,
+      fill: COLORS[index % COLORS.length],
+    }));
+  }, [exchanges]);
+
+
+  const totalOrders = useMemo(() => {
+    return exchanges?.reduce((acc, it) => acc + it.orders.length, 0);
+  }, [exchanges]);
+
+  const chartConfig = {
+    orders: { label: "orders" },
+    ...data.reduce((config, item) => {
+      const key = item.partner.toLowerCase().replace(/\s+/g, "") + item.fill;
+      config[key] = {
+        label: item.partner,
+        color: item.fill,
+      };
+      return config;
+    }, {} as Record<string, { label: string; color: string }>),
+  } satisfies ChartConfig;
+
+  return (
+    <div className="flex flex-row gap-2 justify-start">
+      <ChartContainer
+        config={chartConfig}
+        className="aspect-square max-h-[250px]"
+      >
+        <PieChart>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Pie
+            data={data}
+            dataKey="orders"
+            nameKey="partner"
+            innerRadius={60}
+            strokeWidth={5}
+          >
+            <RechartsLabel
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        className="fill-white text-3xl font-bold"
+                      >
+                        {abbreviate(totalOrders.toString())}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground"
+                      >
+                        Orders
+                      </tspan>
+                    </text>
+                  );
+                }
+              }}
+            />
+          </Pie>
+        </PieChart>
+      </ChartContainer>
+      <div className="grid grid-cols-3 gap-2">
+        {data.map((item) => (
+          <div key={item.partner} className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: item.fill }}
+            />
+            <p>{item.partner}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
