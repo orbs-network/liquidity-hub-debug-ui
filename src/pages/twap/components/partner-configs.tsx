@@ -5,12 +5,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  usePartnerConfigs,
-  useTwapPartnerByExchange,
-} from "@/hooks/twap-hooks";
-import { Config } from "@/types";
-import { Order } from "@orbs-network/twap-sdk";
+import { usePartnerConfigs } from "@/hooks/twap-hooks";
+import { Config, Partner } from "@/types";
 import { ReactNode, useMemo } from "react";
 import { useNetwork } from "@/hooks/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,19 +19,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import { getNetwork } from "@orbs-network/twap-sdk";
 
 import { Address } from "@/components/Address";
 import { cn } from "@/lib/utils";
+import { getNetworkByChainId } from "@/utils";
 
-export const Partner = ({ item }: { item: Order }) => {
-  const partner = useTwapPartnerByExchange(item.exchange, item.chainId);
+export const PartnerConfigs = ({
+  partner,
+  initialChainId,
+  trigger,
+}: {
+  partner: Partner;
+  initialChainId?: number;
+  trigger?: ReactNode;
+}) => {
   const [selected, setSelected] = useState<Config | undefined>(undefined);
   const configs = usePartnerConfigs(partner);
 
   const selectedItem = useMemo(
-    () => selected || configs?.find((it) => it.chainId === item.chainId),
-    [configs, item, selected]
+    () => selected || configs?.find((it) => it.chainId === initialChainId),
+    [configs, initialChainId, selected]
   );
 
   const currentChain = useNetwork(selectedItem?.chainId);
@@ -43,16 +46,20 @@ export const Partner = ({ item }: { item: Order }) => {
   return (
     <Dialog>
       <DialogTrigger>
-        <Button
-          className="flex items-center gap-2 hover:bg-slate-900/50"
-          variant="ghost"
-        >
-          <Avatar className="w-5 h-5">
-            <AvatarImage src={partner?.logo} />
-            <AvatarFallback>{partner?.name.slice(0, 2)}</AvatarFallback>
-          </Avatar>
-          <p>{partner?.name}</p>
-        </Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button
+            className="flex items-center gap-2 hover:bg-slate-900/50"
+            variant="ghost"
+          >
+            <Avatar className="w-5 h-5">
+              <AvatarImage src={partner?.logo} />
+              <AvatarFallback>{partner?.name.slice(0, 2)}</AvatarFallback>
+            </Avatar>
+            <p>{partner?.name}</p>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="md:max-w-[600px] text-white">
         <DialogHeader>
@@ -68,7 +75,7 @@ export const Partner = ({ item }: { item: Order }) => {
                 <div className="flex items-center gap-2">
                   <Avatar className="w-5 h-5">
                     <AvatarImage src={currentChain?.logoUrl} />
-                    <AvatarFallback>{currentChain?.shortname}</AvatarFallback>
+                    <AvatarFallback>{currentChain?.shortname.slice(0, 2)}</AvatarFallback>
                   </Avatar>
                   <p>{currentChain?.shortname}</p>
                 </div>
@@ -79,7 +86,7 @@ export const Partner = ({ item }: { item: Order }) => {
               {configs
                 ?.filter((it) => it.chainId !== currentChain?.id)
                 .map((config, index) => {
-                  const chain = getNetwork(config.chainId);
+                  const chain = getNetworkByChainId(config.chainId);
                   return (
                     <DropdownMenuItem
                       key={index}

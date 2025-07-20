@@ -1,5 +1,5 @@
-import { OrdersPage } from "./OrdersPage";
-import { OrderPage } from "./OrderPage";
+import { OrdersPage } from "./orders";
+import { OrderPage } from "./order";
 import { MainPage } from "./main";
 import { OverviewPage } from "./overview/overview";
 

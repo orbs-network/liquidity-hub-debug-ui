@@ -1,6 +1,6 @@
 import { styled } from "styled-components";
 import { ColumnFlex } from "@/styles";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Skeleton } from "antd";
 import orbsLogo from "@/assets/orbs.svg";
 import { useHeight } from "@/hooks";
@@ -21,7 +21,12 @@ const StyledLoader = styled(ColumnFlex)({
   alignItems: "flex-start",
 });
 
-export const Navbar = ({ navigation }: { navigation?: { title: ReactNode; path: string; }[] }) => {
+export const Navbar = ({
+  navigation,
+}: {
+  navigation?: { title: ReactNode; path: string }[];
+}) => {
+  const { pathname } = useLocation();
   return (
     <div className="sticky top-0 z-20 bg-background w-full h-[70px] flex items-center justify-start">
       <Link to={ROUTES.root} className="flex items-center gap-2">
@@ -29,12 +34,22 @@ export const Navbar = ({ navigation }: { navigation?: { title: ReactNode; path: 
         <span className="text-[17px] font-semibold">Orbs Explorer</span>
       </Link>
       {navigation && (
-        <div className="flex items-center gap-2 ml-auto">
-          {navigation.map((item) => (
-            <Link key={item.path} to={item.path}>
-              {item.title}
-            </Link>
-          ))}
+        <div className="flex items-center gap-4 ml-auto">
+          {navigation.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "text-[15px] text-secondary-foreground hover:text-white flex flex-row gap-2 items-center",
+                  isActive && "text-white"
+                )}
+              >
+                {item.title}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
@@ -50,12 +65,15 @@ export function Page({
   children: React.ReactNode;
   className?: string;
   isLoading?: boolean;
+
   navigation?: {
     title: ReactNode;
     path: string;
   }[];
 }) {
   const height = useHeight();
+
+
 
   return (
     <div

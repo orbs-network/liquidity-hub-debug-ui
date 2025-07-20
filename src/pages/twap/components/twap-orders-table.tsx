@@ -19,13 +19,14 @@ import { OrderStatusBadge } from "./components";
 import { usePaginatedTwapOrders } from "@/lib/queries/use-twap-orders-query";
 import { VirtualTable } from "@/components/virtual-table";
 import { useNetwork } from "@/hooks/hooks";
-import { Partner } from "./partner";
+import { PartnerConfigs } from "./partner-configs";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTwapPartnerByExchange } from "@/hooks/twap-hooks";
 
 export const StyledRow = styled(RowFlex)`
   text-align: left;
@@ -106,7 +107,10 @@ const Timestamp = ({ item }: { item: Order }) => {
           <p>{moment(item.createdAt).fromNow()}</p>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{moment(item.createdAt).format("lll")} - {moment(item.deadline).format("lll")}</p>
+          <p>
+            {moment(item.createdAt).format("lll")} -{" "}
+            {moment(item.deadline).format("lll")}
+          </p>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -218,7 +222,9 @@ const Status = ({ item }: { item: Order }) => {
       </TooltipTrigger>
       <TooltipContent>
         <div className="flex flex-row gap-2 items-center">
-          <p>Filled {fills?.length}/{chunks}</p>
+          <p>
+            Filled {fills?.length}/{chunks}
+          </p>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -239,13 +245,18 @@ const ChainId = ({ item }: { item: Order }) => {
     <StyledItem>
       <Avatar className="w-5 h-5">
         <AvatarImage src={chain?.logoUrl} />
-        <AvatarFallback>
-          {chain?.shortname}
-        </AvatarFallback>
+        <AvatarFallback>{chain?.shortname}</AvatarFallback>
       </Avatar>
       <RowText text={chain?.shortname} />
     </StyledItem>
   );
+};
+
+const PartnerRow = ({ item }: { item: Order }) => {
+  const partner = useTwapPartnerByExchange(item.exchange, item.chainId);
+  if (!partner) return null;
+
+  return <PartnerConfigs partner={partner} initialChainId={item.chainId} />;
 };
 
 const desktopRows = [
@@ -256,7 +267,7 @@ const desktopRows = [
     Component: ChainId,
   },
   {
-    Component: Partner,
+    Component: PartnerRow,
   },
 
   {

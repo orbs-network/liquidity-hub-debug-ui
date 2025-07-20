@@ -198,10 +198,11 @@ const OrderConfig = ({ className = "" }: { className?: string }) => {
 const SrcChunkAmount = () => {
   const { order } = useOrderContext();
   const usd = useMemo(() => {
-    const filledUsd = order?.filledDollarValueIn || "0";
+    const tradeUsd = order?.tradeDollarValueIn || "0";
     const chunks = order?.chunks || 0;
-    return Number(filledUsd) / chunks;
+    return Number(tradeUsd) / chunks;
   }, [order]);
+  
   return (
     <DataDisplay.Row label="Src Chunk Amount">
       <DataDisplay.FormattedTokenAmountFromWei

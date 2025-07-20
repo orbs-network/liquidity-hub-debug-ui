@@ -18,15 +18,8 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { OverviewHeader } from "./header";
 import { DateSelector } from "@/components/date-selector";
 import { Partner } from "@/types";
-import { QueryFilters } from "@/components/query-filters";
-import { Pie, PieChart, Label as RechartsLabel } from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import COLORS from "@/colors.json";
+import { PartnerConfigs } from "../components/partner-configs";
+import { AuthWrapper } from "@/components/auth-wrapper";
 type Exchange = {
   partner: Partner;
   chainId: number;
@@ -89,20 +82,16 @@ export function OverviewPage() {
   useInitPage();
 
   return (
-    <div className="flex flex-col gap-4">
+   <AuthWrapper>
+     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2 ml-auto">
-        <QueryFilters
-          filters={{
-            partnerIdFilter: true,
-            chainIdFilter: true,
-          }}
-        />
         <DateSelector />
       </div>
       <OverviewHeader />
 
       {isLoading ? <Loader /> : <Exchanges />}
     </div>
+   </AuthWrapper>
   );
 }
 
@@ -136,45 +125,55 @@ const Label = ({ children }: { children: React.ReactNode }) => {
   return <p className="text-secondary-foreground text-[14px]">{children}</p>;
 };
 const Exchange = ({ exchange }: { exchange: Exchange }) => {
-  const chain = useNetwork(exchange.chainId);
-
   return (
     <Card>
       <Card.Header>
-        <div className="flex items-center gap-2 justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="w-6 h-6">
-              <AvatarImage
-                src={exchange.partner?.logo}
-                className="object-cover"
-              />
-            </Avatar>
-            {exchange.partner?.name}
-          </div>
-          <Badge className="text-xs uppercase flex items-center gap-2">
-            {chain?.shortname}
-            <Avatar className="w-5 h-5">
-              <AvatarImage src={chain?.logoUrl} className="object-cover" />
-            </Avatar>
-          </Badge>
-        </div>
+        <ExchangeHeader exchange={exchange} />
       </Card.Header>
       <Card.Content className="flex flex-col gap-[12px]">
-        <div className="flex items-center gap-2 justify-between">
-          <Label>Total:</Label>
-          <p className="font-bold text-white text-lg">
-            {" "}
-            {abbreviate(exchange.orders.length.toString())}
-          </p>
-        </div>
-        <CompletionRate orders={exchange.orders} />
+        <ExchangeTotalOrders orders={exchange.orders} />
         <StatusesRates orders={exchange.orders} />
-
+        <CompletionRate orders={exchange.orders} />
         <OrderTypes orders={exchange.orders} />
-        <TotalUsd orders={exchange.orders} />
-        <FilledUsd orders={exchange.orders} />
       </Card.Content>
     </Card>
+  );
+};
+
+const ExchangeHeader = ({ exchange }: { exchange: Exchange }) => {
+  const chain = useNetwork(exchange.chainId);
+
+  return (
+    <div className="flex items-center gap-2 justify-between">
+      <div className="flex items-center gap-2">
+        <Avatar className="w-6 h-6">
+          <AvatarImage src={exchange.partner?.logo} className="object-cover" />
+        </Avatar>
+        {exchange.partner?.name}
+      </div>
+      <PartnerConfigs partner={exchange.partner} initialChainId={exchange.chainId} trigger={
+          <Badge className="text-xs uppercase flex items-center gap-2 hover:bg-slate-700/60">
+          {chain?.shortname}
+          <Avatar className="w-5 h-5">
+            <AvatarImage src={chain?.logoUrl} className="object-cover" />
+          </Avatar>
+        </Badge>
+        } />
+    </div>
+  );
+};
+
+const ExchangeTotalOrders = ({ orders }: { orders: Order[] }) => {
+  const { data: allOrders } = useTwapOrders();
+  return (
+    <div className="flex items-center gap-2 justify-between">
+      <Label>Total:</Label>
+      <p className="font-bold text-white text-lg">
+        {" "}
+        {abbreviate(orders.length.toString())}
+        <Percent value={(orders.length / (allOrders?.length || 0)) * 100} />
+      </p>
+    </div>
   );
 };
 
@@ -259,35 +258,6 @@ const StatusesRates = ({ orders }: { orders: Order[] }) => {
   );
 };
 
-const TotalUsd = ({ orders }: { orders: Order[] }) => {
-  const totalUsd = useMemo(() => {
-    return orders.reduce((acc, order) => {
-      return acc + Number(order.tradeDollarValueIn);
-    }, 0);
-  }, [orders]);
-
-  return (
-    <div className="flex items-center gap-2 justify-between">
-      <Label>Total USD:</Label>
-      <p className="text-sm">${abbreviate(totalUsd.toString())}</p>
-    </div>
-  );
-};
-
-const FilledUsd = ({ orders }: { orders: Order[] }) => {
-  const filledUsd = useMemo(() => {
-    return orders.reduce((acc, order) => {
-      return acc + Number(order.filledDollarValueIn);
-    }, 0);
-  }, [orders]);
-
-  return (
-    <div className="flex items-center gap-2 justify-between">
-      <Label>Filled USD:</Label>
-      <p className="text-sm">${abbreviate(filledUsd.toString())}</p>
-    </div>
-  );
-};
 
 const OrderTypes = ({ orders }: { orders: Order[] }) => {
   const { limit, twapMarket } = useMemo(() => {
@@ -345,101 +315,6 @@ const StatusRate = ({
         {abbreviate(amount.toString())}
         <Percent value={percent} />
       </p>
-    </div>
-  );
-};
-
-console.log({ COLORS });
-
-const OrdersChart = () => {
-  const exchanges = useExchanges();
-
-  const data = useMemo(() => {
-    return exchanges?.map((it, index) => ({
-      partner: it.partner.name,
-      orders: it.orders.length,
-      fill: COLORS[index % COLORS.length],
-    }));
-  }, [exchanges]);
-
-
-  const totalOrders = useMemo(() => {
-    return exchanges?.reduce((acc, it) => acc + it.orders.length, 0);
-  }, [exchanges]);
-
-  const chartConfig = {
-    orders: { label: "orders" },
-    ...data.reduce((config, item) => {
-      const key = item.partner.toLowerCase().replace(/\s+/g, "") + item.fill;
-      config[key] = {
-        label: item.partner,
-        color: item.fill,
-      };
-      return config;
-    }, {} as Record<string, { label: string; color: string }>),
-  } satisfies ChartConfig;
-
-  return (
-    <div className="flex flex-row gap-2 justify-start">
-      <ChartContainer
-        config={chartConfig}
-        className="aspect-square max-h-[250px]"
-      >
-        <PieChart>
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent hideLabel />}
-          />
-          <Pie
-            data={data}
-            dataKey="orders"
-            nameKey="partner"
-            innerRadius={60}
-            strokeWidth={5}
-          >
-            <RechartsLabel
-              content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                  return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        className="fill-white text-3xl font-bold"
-                      >
-                        {abbreviate(totalOrders.toString())}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 24}
-                        className="fill-muted-foreground"
-                      >
-                        Orders
-                      </tspan>
-                    </text>
-                  );
-                }
-              }}
-            />
-          </Pie>
-        </PieChart>
-      </ChartContainer>
-      <div className="grid grid-cols-3 gap-2">
-        {data.map((item) => (
-          <div key={item.partner} className="flex items-center gap-2">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.fill }}
-            />
-            <p>{item.partner}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };

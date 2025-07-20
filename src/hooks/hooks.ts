@@ -1,9 +1,9 @@
-import { getNetwork } from "@orbs-network/twap-sdk";
+import { getNetworkByChainId } from "@/utils";
 import { useMemo } from "react";
 
 export const useNetwork = (chainId?: number) => {
   return useMemo(() => {
-    const config = getNetwork(chainId);
+    const config = getNetworkByChainId(chainId);
     return config;
   }, [chainId]);
 };

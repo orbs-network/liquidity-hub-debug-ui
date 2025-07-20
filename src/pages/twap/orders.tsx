@@ -4,6 +4,7 @@ import { useAppParams } from "@/hooks";
 import { useEffect } from "react";
 import { DateSelector } from "@/components/date-selector";
 import { QueryFilters } from "@/components/query-filters";
+import { AuthWrapper } from "@/components/auth-wrapper";
 
 export function OrdersPage() {
   const {
@@ -20,7 +21,8 @@ export function OrdersPage() {
   }, [partner_id, setQuery]);
 
   return (
-    <div className="flex flex-col gap-1">
+    <AuthWrapper>
+     <div className="flex flex-col gap-1">
       <>
         <div className="flex flex-col gap-2 w-full top-[70px] z-10 bg-background sticky">
           <div className="flex items-center gap-2 w-full justify-between mb-4">
@@ -35,5 +37,6 @@ export function OrdersPage() {
       </>
       <TwapOrdersTable />
     </div>
+    </AuthWrapper>
   );
 }

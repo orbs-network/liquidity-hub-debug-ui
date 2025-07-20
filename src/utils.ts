@@ -8,6 +8,7 @@ import { isHash } from "viem";
 import { useAppParams } from "./hooks";
 import { PARTNERS } from "./partners";
 import { Config } from "./types";
+import { networks } from "./networks";
 
 export const isDebug = !!localStorage.getItem("debug");
 
@@ -299,4 +300,9 @@ export const abbreviate = (num: string) => {
   if (abs >= 1e3) return (abs / 1e3).toFixed(2).replace(/\.0+$/, "") + "K";
   
   return String(formatDecimals(num, 2));
+};
+
+export const getNetworkByChainId = (chainId?: number) => {
+  if (!chainId) return;
+  return Object.values(networks).find((network) => network.id === chainId);
 };
