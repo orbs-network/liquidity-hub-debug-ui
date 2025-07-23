@@ -104,7 +104,7 @@ export function DateSelector({ custom = false }: { custom?: boolean }) {
             className="flex items-center gap-2 text-[14px]"
           >
             <CalendarIcon className="w-4 h-4" />
-            <p className="hidden md:block">Timestamp</p>
+            <p className="hidden md:block">{selectedTimestamp ? selectedTimestamp : "Timestamp"}</p>
             <ChevronDownIcon className="w-4 h-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -151,6 +151,7 @@ const CustomDateSelector = ({
       to: to ? new Date(to) : new Date(),
     };
   }, [query]);
+  
   const [selected, setSelected] = useState<DateRange>(initialSelected);
 
   useEffect(() => {
