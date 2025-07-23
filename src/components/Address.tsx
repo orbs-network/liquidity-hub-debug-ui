@@ -1,28 +1,48 @@
-
-import { useExplorerUrl } from "@/hooks";
+import { useNetwork } from "@/hooks/hooks";
 import { cn } from "@/lib/utils";
-import { shortenAddress } from "@/utils";
+import { shortenAddress } from "@/lib/utils";
 
 export function Address({
   address,
   chainId,
   type = "address",
   className,
+  children
 }: {
   address?: string;
-  chainId?: number;
+  chainId: number;
   type?: "address" | "tx";
   className?: string;
+  children?: React.ReactNode;
 }) {
-  const explorer = useExplorerUrl(chainId);
+  const explorer = useNetwork(chainId)?.explorer;
+
 
   return (
     <a
       href={`${explorer}/${type}/${address}`}
       target="_blank"
-      className={cn("text-sm  hover:underline", className)}
+      className={cn("text-sm  hover:underline font-mono", className)}
     >
-      {shortenAddress(address || "", 6)}
+      {children || shortenAddress(address || "", 6)}
     </a>
   );
 }
+
+
+export const TokenAddress = ({
+  chainId,
+  address,
+  symbol
+}: {
+  chainId?: number;
+  address?: string;
+  symbol?: string;
+}) => {
+  const explorer = useNetwork(chainId)?.explorer;
+  return (
+    <a href={`${explorer}/address/${address}`} target="_blank" className="text-sm hover:underline">
+      <p>{symbol}</p>
+    </a>
+  );
+};

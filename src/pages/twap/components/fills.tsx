@@ -9,18 +9,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { ListCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useToken } from "@/hooks";
 import { useFormatNumber } from "@/hooks/use-number-format";
 import { ReactNode } from "react";
 import moment from "moment";
 import { Address } from "@/components/Address";
-import { toAmountUI } from "@/helpers";
+import { toAmountUI } from "@/lib/utils";
+import { useToken } from "@/lib/queries/use-tokens-query";
 
 export const OrderFills = ({ order }: { order: Order }) => {
   return (
     <Dialog >
       <DialogTrigger>
-        <Button className="bg-slate-800/50 border border-border rounded-lg text-white p-2 hover:bg-slate-800/70 transition-all duration-300 w-fit flex flex-row items-center gap-2">
+        <Button className="bg-slate-800/50 border border-border rounded-lg text-white p-2 hover:bg-slate-800/70 transition-all duration-300 w-fit flex flex-row items-center gap-2 ml-auto">
           <p>Fills <small className="text-xs text-secondary-foreground font-mono">({order?.fills?.length}/{order?.chunks})</small></p>
           <ListCheck />
         </Button>
@@ -113,7 +113,7 @@ const FillCardCardAmount = ({
   label: string;
   usd?: string;
 }) => {
-  const token = useToken(address, chainId).data;
+  const token = useToken(address, chainId);
   const amountF = useFormatNumber({
     value: toAmountUI(amount, token?.decimals),
   });

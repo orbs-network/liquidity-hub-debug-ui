@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { URL_QUERY_KEYS } from "@/consts";
-import { useAppParams } from "@/hooks";
+import { QueryFilterParams, useQueryFilterParams } from "@/lib/hooks/use-query-filter-params";
 import { cn } from "@/lib/utils";
 import { networks } from "@orbs-network/twap-sdk";
 import _ from "lodash";
@@ -24,7 +24,7 @@ import {
   isValidWalletAddress,
   parseAppliedFilters,
   shortenAddress,
-} from "@/utils";
+} from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 import {
   Drawer,
@@ -44,15 +44,15 @@ type FilterOption = {
 type FilterContextType = {
   onUpdate: (key: string, value: string[] | string | undefined) => void;
   onSubmit: () => void;
-  data: ReturnType<typeof useAppParams>["query"];
+  data: QueryFilterParams;
 };
 
 const Context = createContext<FilterContextType>({} as FilterContextType);
 
 const FilterContextProvider = ({ children }: { children: ReactNode }) => {
-  const { setQuery, query } = useAppParams();
+  const { setQuery, query } = useQueryFilterParams();
   const [data, setData] = useState(
-    {} as ReturnType<typeof useAppParams>["query"]
+    {} as QueryFilterParams
   );
 
   const onUpdate = useCallback(
@@ -316,7 +316,7 @@ const TokensFilter = () => {
 const ChainIdFilter = () => {
   const options = useMemo(() => {
     return _.map(networks, (network) => ({
-      label: network.name,
+      label: network.shortname,
       value: network.id.toString(),
     }));
   }, []);
@@ -416,7 +416,7 @@ const MinDollarValueFilter = () => {
 };
 
 const FiltersTrigger = () => {
-  const { query } = useAppParams();
+  const { query } = useQueryFilterParams();
   const filtersCount = useMemo(() => {
     const { [URL_QUERY_KEYS.TIMESTAMP]: timestamp, ...rest } = query;
     return _.size(Object.values(rest).flat().filter(Boolean));
@@ -427,7 +427,7 @@ const FiltersTrigger = () => {
       <Button variant="outline">
         <div className="flex items-center gap-2 text-white">
           <Filter size={16} />
-          <p>Filters</p>
+          <p className="hidden sm:block">Filters</p>
           <Badge>{filtersCount}</Badge>
         </div>
       </Button>
@@ -462,7 +462,7 @@ export const QueryFilters = ({
             </div>
           </DrawerHeader>
 
-          <div className="p-4 flex flex-col gap-4 h-full mb-[70px]">
+          <div className="p-4 flex flex-col gap-4 h-full overflow-y-auto">
             <div className="flex flex-col gap-4">
               {!filters ? (
                 <>
@@ -512,7 +512,7 @@ const ActiveBadge = ({
 };
 
 function ActiveQueryFilters() {
-  const { query, setQuery } = useAppParams();
+  const { query, setQuery } = useQueryFilterParams();
   const location = useLocation();
 
   const onRemove = (key: string, value: string) => {

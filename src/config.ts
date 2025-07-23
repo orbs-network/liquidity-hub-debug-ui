@@ -1,8 +1,8 @@
 
 export const LIQUIDITY_HUB_ROUTER_PATHS = {
-  tx: 'tx',
-  user: 'user',
-  transactions: 'transactions',
+  swap: 'swap',
+  overview: 'overview',
+  swapPreview: 'swap-preview',
 }
 
 export const TWAP_ROUTER_PATHS = {
@@ -15,9 +15,9 @@ export const ROUTES = {
   root: "/",
   liquidityHub: {
     root: "/liquidity-hub",
-    transactions: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.transactions}`,
-    tx: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.tx}/:sessionIdOrTxHash`,
-    user: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.user}/:user`,
+    swap: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.swap}/:identifier`,
+    swapPreview: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.swapPreview}/:identifier`,
+    overview: `/liquidity-hub/${LIQUIDITY_HUB_ROUTER_PATHS.overview}`,
   },
   twap: {
     root: `/twap`,
@@ -29,7 +29,7 @@ export const ROUTES = {
 
 export const ELASTIC_ENDPOINT = "https://api.bi.orbs.network";
 export const TWAP_ELASTIC_CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-twap-ui*`;
-export const LIQUIDITY_HUB_ELASTIC_SERVER_URL = `${ELASTIC_ENDPOINT}/orbs-clob-poc10.*`;
+export const LIQUIDITY_HUB_ELASTIC_SERVER_URL = `${ELASTIC_ENDPOINT}/orbs-clob-poc10*`;
 export const LIQUIDITY_HUB_ELASTIC_CLIENT_URL = `${ELASTIC_ENDPOINT}/orbs-liquidity-hub-ui*`;
 
 export const DEFAULT_SESSIONS_TIME_RANGE = "30m";

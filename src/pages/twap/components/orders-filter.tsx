@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SearchInput } from "@/components/SearchInput";
 import { URL_QUERY_KEYS } from "@/consts";
-import { useAppParams } from "@/hooks";
+import { useQueryFilterParams } from "@/lib/hooks/use-query-filter-params";
 import { useCallback } from "react";
 import {
   resolveOrderIdentifier,
   validateOrderIdentifier,
-} from "@/utils";
+} from "@/lib/twap/utils";
 import { QueryFilters } from "@/components/query-filters";
 import { OrderStatus } from "@orbs-network/twap-sdk";
 
@@ -58,7 +58,7 @@ const OrderTypeFilter = () => {
 
 
 export function OrderSearchInput({ className = "" }: { className?: string }) {
-  const { setQuery, query } = useAppParams();
+  const { setQuery, query } = useQueryFilterParams();
 
   const onSubmit = useCallback(
     (orderIdentifier: string) => {

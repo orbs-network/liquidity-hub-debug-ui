@@ -1,8 +1,6 @@
-import { swapStatusText } from "@/helpers";
-import { styled } from "styled-components";
 import { Check, X } from "react-feather";
-import { Typography } from "antd";
 import { CSSProperties } from "react";
+import { swapStatusText } from "@/lib/utils";
 
 const getBg = (swapStatus?: string) => {
   if (swapStatus === "success") return "#55a66c";
@@ -20,9 +18,9 @@ export const StatusBadge = ({
   style?: CSSProperties;
 }) => {
   return (
-    <Container style={{ color: getBg(swapStatus), ...style }} className={className}>
+    <div style={{ color: getBg(swapStatus), ...style }} className={className}>
       {swapStatusText(swapStatus)}
-    </Container>
+    </div>
   );
 };
 
@@ -34,7 +32,7 @@ export const MobileStatusBadge = ({
   className?: string;
 }) => {
   return (
-    <MobileContainer
+    <div
       style={{ background: getBg(swapStatus) }}
       className={className}
     >
@@ -43,32 +41,7 @@ export const MobileStatusBadge = ({
       ) : swapStatus === "failed" ? (
         <X />
       ) : null}
-    </MobileContainer>
+    </div>
   );
 };
 
-const MobileContainer = styled("div")({
-  padding: "5px",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  svg: {
-    color: "white",
-    width: 14,
-    height: 14,
-  },
-});
-
-const Container = styled(Typography)({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  p: {
-    lineHeight: "normal",
-  },
-  span: {
-    color: "white",
-    fontSize: 12,
-  },
-});

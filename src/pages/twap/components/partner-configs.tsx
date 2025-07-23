@@ -6,7 +6,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { usePartnerConfigs } from "@/hooks/twap-hooks";
-import { Config, Partner } from "@/types";
+import { TwapConfig } from "@/lib/twap/types";
 import { ReactNode, useMemo } from "react";
 import { useNetwork } from "@/hooks/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +22,8 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { Address } from "@/components/Address";
 import { cn } from "@/lib/utils";
-import { getNetworkByChainId } from "@/utils";
+import { getNetworkByChainId } from "@/lib/utils";
+import { Partner } from "@/lib/types";
 
 export const PartnerConfigs = ({
   partner,
@@ -33,7 +34,7 @@ export const PartnerConfigs = ({
   initialChainId?: number;
   trigger?: ReactNode;
 }) => {
-  const [selected, setSelected] = useState<Config | undefined>(undefined);
+  const [selected, setSelected] = useState<TwapConfig | undefined>(undefined);
   const configs = usePartnerConfigs(partner);
 
   const selectedItem = useMemo(
@@ -135,7 +136,7 @@ const ConfigDetailsAddresses = ({
     </div>
   );
 };
-const ConfigDetails = ({ config }: { config?: Config }) => {
+const ConfigDetails = ({ config }: { config?: TwapConfig }) => {
   if (!config) return null;
 
   return (

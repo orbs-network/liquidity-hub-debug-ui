@@ -1,8 +1,6 @@
 import { Configs } from "@orbs-network/twap-sdk";
 import { networks } from "./networks";
-import { Partner } from "./types";
-
-
+import { Partner } from "./lib/types";
 
 export const PARTNERS: Partner[] = [
   {
@@ -12,6 +10,7 @@ export const PARTNERS: Partner[] = [
     name: "SwapX",
     twapId: Configs?.SwapX.partner,
     liquidityHubChains: [networks.sonic.id],
+    liquidityHubID: "swapx",
   },
   {
     id: "h2finance",
@@ -20,6 +19,7 @@ export const PARTNERS: Partner[] = [
     name: "H2Finance",
     twapId: Configs?.H2Finance.partner,
     liquidityHubChains: [],
+    liquidityHubID: "h2finance",
   },
   {
     id: "syncswap",
@@ -28,6 +28,7 @@ export const PARTNERS: Partner[] = [
     name: "SyncSwap",
     twapId: Configs?.SyncSwap.partner,
     liquidityHubChains: [],
+    liquidityHubID: "syncswap",
   },
   {
     id: "quickswap",
@@ -36,6 +37,7 @@ export const PARTNERS: Partner[] = [
     name: "Quickswap",
     twapId: Configs?.QuickSwap.partner,
     liquidityHubChains: [networks.poly.id, networks.eth.id],
+    liquidityHubID: "QuickSwap",
   },
   {
     id: "spookyswap",
@@ -44,6 +46,7 @@ export const PARTNERS: Partner[] = [
     name: "Spookyswap",
     twapId: Configs?.SpookySwap.partner,
     liquidityHubChains: [networks.ftm.id, networks.sonic.id],
+    liquidityHubID: "spookyswap",
   },
   {
     id: "lynex",
@@ -52,6 +55,7 @@ export const PARTNERS: Partner[] = [
     name: "Lynex",
     twapId: Configs?.Lynex.partner,
     liquidityHubChains: [networks.linea.id],
+    liquidityHubID: "lynex",
   },
   {
     id: "thena",
@@ -60,6 +64,7 @@ export const PARTNERS: Partner[] = [
     name: "Thena",
     twapId: Configs?.Thena.partner,
     liquidityHubChains: [networks.bsc.id],
+    liquidityHubID: "Thena",
   },
   {
     id: "arbidex",
@@ -68,6 +73,7 @@ export const PARTNERS: Partner[] = [
     name: "Arbidex",
     twapId: Configs?.Arbidex.partner,
     liquidityHubChains: [networks.arb.id],
+    liquidityHubID: "arbidex",
   },
   {
     id: "chronos",
@@ -76,6 +82,7 @@ export const PARTNERS: Partner[] = [
     name: "Chronos",
     twapId: Configs?.Chronos.partner,
     liquidityHubChains: [],
+    liquidityHubID: "chronos",
   },
   {
     id: "baseswap",
@@ -84,6 +91,7 @@ export const PARTNERS: Partner[] = [
     name: "Baseswap",
     twapId: Configs?.BaseSwap.partner,
     liquidityHubChains: [],
+    liquidityHubID: "baseswap",
   },
   {
     id: "pancakeswap",
@@ -92,6 +100,7 @@ export const PARTNERS: Partner[] = [
     name: "PancakeSwap",
     twapId: Configs?.PancakeSwap.partner,
     liquidityHubChains: [],
+    liquidityHubID: "pancakeswap",
   },
   {
     id: "sushiswap",
@@ -100,6 +109,7 @@ export const PARTNERS: Partner[] = [
     name: "SushiSwap",
     twapId: Configs?.SushiBase.partner,
     liquidityHubChains: [],
+    liquidityHubID: "sushiswap",
   },
   {
     id: "dragonswap",
@@ -108,6 +118,7 @@ export const PARTNERS: Partner[] = [
     name: "DragonSwap",
     twapId: Configs?.DragonSwap.partner,
     liquidityHubChains: [networks.sei.id],
+    liquidityHubID: "dragonswap",
   },
   {
     id: "retro",
@@ -116,14 +127,16 @@ export const PARTNERS: Partner[] = [
     name: "Retro",
     twapId: Configs?.Retro.partner,
     liquidityHubChains: [],
+    liquidityHubID: "retro",
   },
   {
     id: "fenix",
     website: "https://fenix.finance/",
     logo: "https://s2.coinmarketcap.com/static/img/exchanges/128x128/7516.png",
     name: "Fenix",
-    twapId: '',
+    twapId: "",
     liquidityHubChains: [networks.blast.id],
+    liquidityHubID: "fenix",
   },
   {
     id: "teafi",
@@ -132,6 +145,7 @@ export const PARTNERS: Partner[] = [
     name: "Teafi",
     twapId: Configs?.TeaFi.partner,
     liquidityHubChains: [],
+    liquidityHubID: "teafi",
   },
   {
     id: "sparkdex",
@@ -140,6 +154,7 @@ export const PARTNERS: Partner[] = [
     name: "SparkDEX",
     twapId: Configs?.SparkDEX.partner,
     liquidityHubChains: [],
+    liquidityHubID: "sparkdex",
   },
   {
     id: "ramses",
@@ -148,7 +163,6 @@ export const PARTNERS: Partner[] = [
     name: "Ramses",
     twapId: Configs?.Ramses.partner,
     liquidityHubChains: [],
+    liquidityHubID: "ramses",
   },
 ];
-
-

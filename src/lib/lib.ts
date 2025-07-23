@@ -1,14 +1,8 @@
-import { getChain } from "@/helpers";
-import { TransferLog } from "@/types";
-import {
-  createPublicClient,
-  decodeEventLog,
-  erc20Abi,
-  http,
-  keccak256,
-  toBytes,
-  TransactionReceipt,
-} from "viem";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { createPublicClient, http } from "viem";
+import { getChain, normalizeSessions } from "./utils";
+import axios from "axios";
 
 export const getPublicClient = (chainId: number) => {
   const chain = getChain(chainId);
@@ -21,45 +15,15 @@ export const getPublicClient = (chainId: number) => {
   }) as ReturnType<typeof createPublicClient>;
 };
 
-const ERC20_TRANSFER_EVENT_TOPIC = keccak256(
-  toBytes("Transfer(address,address,uint256)")
-);
 
-export const getERC20Transfers = async (
-  receipt: TransactionReceipt
-): Promise<TransferLog[]> => {
-  const transferLogs = receipt.logs.filter(
-    (log) => log.topics[0]?.toLowerCase() === ERC20_TRANSFER_EVENT_TOPIC
+export const fetchElastic = async <T>(
+  url: string,
+  data: any,
+  signal?: AbortSignal
+): Promise<T[]> => {
+  const response = await axios.post(`${url}/_search`, { ...data }, { signal });
+
+  return normalizeSessions(
+    response.data.hits?.hits.map((hit: any) => hit.fields)
   );
-
-  const transfersP = transferLogs.map(async (log) => {
-    try {
-      const parsedLog = decodeEventLog({
-        abi: erc20Abi,
-        data: log.data,
-        topics: log.topics,
-        eventName: "Transfer",
-      });
-
-      return {
-        parsedLog,
-        tokenAddress: log.address,
-      };
-    } catch {
-      return undefined;
-    }
-  });
-
-  const transfers = (await Promise.all(transfersP)).filter(Boolean);
-
-  return transfers.filter(Boolean).map((transfer) => {
-    const { args } = transfer!.parsedLog;
-
-    return {
-      from: args.from,
-      to: args.to,
-      value: args.value.toString(),
-      tokenAddress: transfer!.tokenAddress,
-    };
-  });
 };

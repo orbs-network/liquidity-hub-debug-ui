@@ -1,4 +1,4 @@
-import { formatDecimals } from "@/utils";
+import { formatDecimals } from "@/lib/utils";
 import { useMemo } from "react";
 import { useNumericFormat } from "react-number-format";
 

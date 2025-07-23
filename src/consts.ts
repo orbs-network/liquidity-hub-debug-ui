@@ -1,6 +1,5 @@
 export const MOBILE = 768;
 export const MAX_LAYOUT_WIDTH = 1350;
-export const IS_ADMIN = localStorage.getItem("adminKey") === "orbs_2025";
 
 export const colors = {
   dark: {
@@ -29,6 +28,7 @@ export enum URL_QUERY_KEYS  {
   FEE_OUT_AMOUNT_USD = "fee_out_amount_usd",
   TIMESTAMP = "timestamp",
   ORDER_TYPE = "order_type",
+  SESSION_ID = "session_id",
 }
 
 
@@ -46,6 +46,7 @@ export const FILTER_KEY_NAMES = {
   [URL_QUERY_KEYS.MIN_DOLLAR_VALUE]: "Min Dollar Value",
   [URL_QUERY_KEYS.PARTNER_ID]: "Partner",
   [URL_QUERY_KEYS.ORDER_TYPE]: "Order Type",
+  [URL_QUERY_KEYS.SESSION_ID]: "Session ID",
 }
 
 

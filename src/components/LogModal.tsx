@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import styled from "styled-components";
-import { ColumnFlex } from "@/styles";
-import { Tag, Modal, Typography } from "antd";
+import { Tag, Modal } from "antd";
 import { useState } from "react";
 
 const handleValue = (value: any) => {
@@ -27,7 +25,7 @@ export const LogModal = ({
 
   return (
     <>
-      <StyledTag onClick={() => setIsModalOpen(true)}>{title}</StyledTag>
+      <Tag onClick={() => setIsModalOpen(true)}>{title}</Tag>
       <Modal
       title={title}
         okButtonProps={{
@@ -42,34 +40,18 @@ export const LogModal = ({
         style={{ top:40 }}
         
       >
-        <Container>
+        <div className="w-full max-h-[80vh] overflow-y-auto flex flex-col gap-2">
           {Object.keys(log).map((key) => {
             return (
-              <StyledModalRowTitle key={key}>
+              <div key={key}>
                 <strong>{key}:</strong> {handleValue(log[key])}
-              </StyledModalRowTitle>
+              </div>
             );
           })}
-        </Container>
+        </div>
       </Modal>
     </>
   );
 };
 
-const Container = styled(ColumnFlex)`
-  width: 100%;
-  max-height: 80vh;
-  justify-content: flex-start;
-  overflow-y: auto;
-`;
 
-const StyledTag = styled(Tag)`
-  cursor: pointer;
-`;
-
-const StyledModalRowTitle = styled(Typography)`
-  width: 100%;
-  strong {
-    font-weight: 600;
-  }
-`;

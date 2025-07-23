@@ -1,6 +1,6 @@
 import { Page } from "@/components/Page";
-import { useNavigateWithParams } from "@/hooks";
 import { ROUTES } from "@/config";
+import { useNavigateWithParams } from "@/lib/hooks/use-navigate-with-query-params";
 
 
 

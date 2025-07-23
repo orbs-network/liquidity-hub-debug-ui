@@ -1,15 +1,29 @@
 import { cn } from "@/lib/utils";
 import React from "react";
-import { Spinner } from "./ui/spinner";
+import { Skeleton } from "./ui/skeleton";
 
 export function CardContent({
   children,
   className,
+  isLoading,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
+  isLoading?: boolean;
 }) {
-  return <div className={cn("p-5", className)}>{children}</div>;
+  return (
+    <div className={cn("p-3 md:p-5 w-full h-full", className)}>
+      {isLoading ? (
+        <div className="flex flex-col gap-4 items-start justify-start w-full h-full">
+          <Skeleton className="w-[60%] h-[20px]" />
+          <Skeleton className="w-[80%] h-[20px]" />
+          <Skeleton className="w-[70%] h-[20px]" />
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  );
 }
 
 const CardHeader = ({
@@ -22,7 +36,7 @@ const CardHeader = ({
   return (
     <div
       className={cn(
-        "text-white text-[18px] font-bold bg-card-foreground  py-3 px-4 border-b border-border w-full",
+        "text-white text-[15px]  font-bold bg-card-foreground  py-3 px-4 border-b border-border w-full md:text-[18px] ",
         className
       )}
     >
@@ -34,11 +48,9 @@ const CardHeader = ({
 const Card = ({
   children,
   className,
-  isLoading,
 }: {
   children?: React.ReactNode;
   className?: string;
-  isLoading?: boolean;
 }) => {
   return (
     <div
@@ -47,13 +59,7 @@ const Card = ({
         className
       )}
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center h-[200px]">
-          <Spinner className="w-16 h-16" />
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </div>
   );
 };

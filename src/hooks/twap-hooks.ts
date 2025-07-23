@@ -1,13 +1,13 @@
 import { useMemo } from "react";
-import { getConfigByExchange, getPartnerByTwapExchange } from "@/utils";
-import { useConfigs } from "@/lib/queries/use-configs";
-import { Partner } from "@/types";
+import { getConfigByExchange, getPartnerByTwapExchange } from "@/lib/twap/utils";
+import { useTwapConfigs } from "@/lib/twap/queries";
+import { Partner } from "@/lib/types";
 
 export const useTwapConfigByExchange = (
   exchange?: string,
   chainId?: number
 ) => {
-  const {data: configs} = useConfigs();
+  const {data: configs} = useTwapConfigs();
 
   return useMemo(() => {
     if (!exchange || !chainId) return;
@@ -16,7 +16,7 @@ export const useTwapConfigByExchange = (
 };
 
 export const usePartnerConfigs = (partner?: Partner) => {
-  const {data: configs} = useConfigs();
+  const {data: configs} = useTwapConfigs();
   return useMemo(() => {
     return configs?.filter((config) => config.partner === partner?.twapId);
   }, [configs, partner]);
@@ -26,7 +26,7 @@ export const useTwapPartnerByExchange = (
   exchange?: string,
   chainId?: number
 ) => {
-  const {data: configs} = useConfigs();
+  const {data: configs} = useTwapConfigs();
   return useMemo(() => {
     if (!exchange || !chainId) return;
     return getPartnerByTwapExchange(configs || [], exchange, chainId);

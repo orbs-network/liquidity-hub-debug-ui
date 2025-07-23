@@ -1,15 +1,12 @@
-import {TransactionPage} from './transaction/TransactionPage'
-import {TransactionsPage} from './TransactionsPage'
-import {UserTransactionsPage} from './UserTransactionsPage'
+import {SwapPage} from './swap-page/swap-page'
+import {SwapsPage} from './swaps-page'
 import {RootPage} from './RootPage'
-import {SearchPage} from './LiquidityHubSearchPage'
+import {OverviewPage} from './overview-page'
 
 export const LiquidityHubPages = {
-    UserTransactionsPage,
-    TransactionsPage,
-    TransactionPage,
+    SwapsPage,
+    SwapPage,
     RootPage,
-    SearchPage
-
+    OverviewPage,
 }
 

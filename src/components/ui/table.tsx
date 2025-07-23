@@ -17,15 +17,22 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.ComponentProps<"thead">
+>(({ className, ...props }, ref) => {
   return (
     <thead
+      ref={ref}
       data-slot="table-header"
-      className={cn("[&_tr]:border-b border-border h-[50px] bg-card-foreground text-white text-[14px] font-bold", className)}
+      className={cn(
+        "[&_tr]:border-b border-border h-[50px] bg-card-foreground text-white text-[14px] font-bold",
+        className
+      )}
       {...props}
     />
   );
-}
+});
 
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
@@ -61,7 +68,7 @@ const TableRow = React.forwardRef<
     data-slot="table-row"
     ref={ref}
     className={cn(
-      "hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors",
+      "hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors text-white text-sm",
       className
     )}
     {...props}

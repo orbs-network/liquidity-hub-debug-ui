@@ -16,9 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { useAppParams } from "@/hooks";
+import { useQueryFilterParams } from "@/lib/hooks/use-query-filter-params";
 import moment from "moment";
-import { parseTimestampFromQuery } from "@/utils";
+import { parseTimestampFromQuery } from "@/lib/utils";
 import { URL_QUERY_KEYS } from "@/consts";
 
 interface DateRange {
@@ -46,7 +46,7 @@ export function DateSelector({ custom = false }: { custom?: boolean }) {
   const {
     setQuery,
     query: { timestamp },
-  } = useAppParams();
+  } = useQueryFilterParams();
 
   const onSubmitCustom = (selected: DateRange) => {
     setQuery.updateQuery({
@@ -81,7 +81,9 @@ export function DateSelector({ custom = false }: { custom?: boolean }) {
           className="flex items-center gap-2 text-[14px]"
         >
           <CalendarIcon className="w-4 h-4" />
-          {selectedTimestamp ? selectedTimestamp : "Timestamp"}
+          <p className="hidden md:block">
+            {selectedTimestamp ? selectedTimestamp : "Timestamp"}
+          </p>
           <ChevronDownIcon className="w-4 h-4" />
         </Button>
         <CustomDateSelector
@@ -102,7 +104,7 @@ export function DateSelector({ custom = false }: { custom?: boolean }) {
             className="flex items-center gap-2 text-[14px]"
           >
             <CalendarIcon className="w-4 h-4" />
-            {selectedTimestamp ? selectedTimestamp : "Timestamp"}
+            <p className="hidden md:block">Timestamp</p>
             <ChevronDownIcon className="w-4 h-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -140,12 +142,12 @@ const CustomDateSelector = ({
   setIsOpen: (isOpen: boolean) => void;
   onSubmit: (selected: DateRange) => void;
 }) => {
-  const { query } = useAppParams();
+  const { query } = useQueryFilterParams();
   const initialSelected = useMemo(() => {
     const { from, to } = parseTimestampFromQuery(query.timestamp || "");
 
     return {
-      from: from ? new Date(from) : undefined,
+      from: from ? new Date(from) : new Date(),
       to: to ? new Date(to) : new Date(),
     };
   }, [query]);
@@ -157,6 +159,7 @@ const CustomDateSelector = ({
     }
   }, [initialSelected]);
 
+  
   return (
     <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
       <DialogContent className="sm:max-w-full w-fit">

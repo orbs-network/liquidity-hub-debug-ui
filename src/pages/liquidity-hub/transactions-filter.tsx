@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SearchInput } from "@/components/SearchInput";
 import { URL_QUERY_KEYS } from "@/consts";
-import { useAppParams } from "@/hooks";
 import { useCallback } from "react";
-import { resolveOrderIdentifier, validateOrderIdentifier } from "@/utils";
 import { QueryFilters } from "@/components/query-filters";
+import { isValidLHTxId, isValidWalletAddress } from "@/lib/utils";
+import { isHash } from "viem";
+import { useQueryFilterParams } from "@/lib/hooks/use-query-filter-params";
 
 const MinDollarValueFilter = () => {
   return (
@@ -24,19 +25,48 @@ const FilterModal = () => {
   );
 };
 
-function OrderInputFilter({ className = "" }: { className?: string }) {
-  const { setQuery, query } = useAppParams();
+const resolveLHTxIdentifier = (identifier: string) => {
+  const parsedIdentifiers = identifier.split(",");
+
+  const result: Record<string, string[] | undefined> = {};
+
+  for (const value of parsedIdentifiers) {
+    if (isValidWalletAddress(value)) {
+      result[URL_QUERY_KEYS.USER] = [
+        ...(result[URL_QUERY_KEYS.USER] || []),
+        value,
+      ];
+    }
+    if (isHash(value)) {
+      result[URL_QUERY_KEYS.TX_HASH] = [
+        ...(result[URL_QUERY_KEYS.TX_HASH] || []),
+        value,
+      ];
+    }
+    if (isValidLHTxId(value)) {
+      result[URL_QUERY_KEYS.SESSION_ID] = [
+        ...(result[URL_QUERY_KEYS.SESSION_ID] || []),
+        value,
+      ];
+    }
+  }
+
+  return result;
+};
+
+function TransactionsInputFilter({ className = "" }: { className?: string }) {
+  const { setQuery, query } = useQueryFilterParams();
 
   const onSubmit = useCallback(
     (orderIdentifier: string) => {
-      if (!validateOrderIdentifier(orderIdentifier)) {
+      if (!orderIdentifier) {
         alert("Invalid order identifier");
         return;
       }
       const newQuery: any = {
         ...query,
       };
-      const resolvedIdentifier = resolveOrderIdentifier(orderIdentifier);
+      const resolvedIdentifier = resolveLHTxIdentifier(orderIdentifier);
 
       Object.entries(resolvedIdentifier).forEach(([key, value]) => {
         if (value?.length) {
@@ -55,7 +85,7 @@ function OrderInputFilter({ className = "" }: { className?: string }) {
     <SearchInput
       className={className}
       onSubmit={onSubmit}
-      placeholder="Tx Hash / Order Id / Address"
+      placeholder="Tx Hash / Session Id / User"
     />
   );
 }
@@ -64,7 +94,7 @@ export const LiquidityHubTransactionsFilter = () => {
   return (
     <div className="flex flex-col gap-2 w-full sticky top-[70px] z-10 bg-background">
       <div className="flex items-center gap-2 w-full justify-between mb-4">
-        <OrderInputFilter className="flex-1 max-w-[700px] h-[40px] text-[16px]" />
+        <TransactionsInputFilter className="flex-1 max-w-[700px] h-[40px] text-[16px]" />
         <FilterModal />
       </div>
       <QueryFilters.Active />

@@ -1,7 +1,7 @@
 import { OrdersPage } from "./orders";
 import { OrderPage } from "./order";
-import { MainPage } from "./main";
-import { OverviewPage } from "./overview/overview";
+import { MainPage } from "./root";
+import { OverviewPage } from "./overview-page";
 
 export const TwapPages = {
   Main: MainPage,

@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useState } from "react";
-import styled from "styled-components";
-import { LightButton, RowFlex, StyledInput } from "@/styles";
 import { ArrowUp } from "react-feather";
 import { notification } from "antd";
-import { colors } from "@/consts";
-import { useIsMobile } from "@/hooks";
+import { Input } from "./ui/input";
 
 export function SearchInput({
   className = "",
@@ -17,7 +14,6 @@ export function SearchInput({
   onSubmit: (value: string) => void;
 }) {
   const [value, setVale] = useState("");
-  const isMobile = useIsMobile();
   const [api, contextHolder] = notification.useNotification();
 
   const onSearch = useCallback(() => {
@@ -48,50 +44,20 @@ export function SearchInput({
   return (
     <>
       {contextHolder}
-      <StyledInputContainer className={className}>
-        <StyledInput
+      <div
+        className={`bg-card-foreground rounded-lg p-1 w-full flex flex-row gap-2 items-center h-[45px] text-[16px] ${className}`}
+      >
+        <Input
           placeholder={placeholder}
-        value={value}
+          value={value}
           onKeyDown={onKeyDown}
           onChange={(e: any) => setVale(e.target.value)}
+          className="outline-none border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 focus:placeholder:text-transparent font-mono placeholder:text-muted-foreground md:text-[16px]"
         />
-        {isMobile && (
-          <StyledButton
-            className="search-input-button"
-            $disabled={!value}
-            onClick={onSearch}
-          >
-            <ArrowUp size={16} color="white" />
-          </StyledButton>
-        )}
-      </StyledInputContainer>
+        <button disabled={!value} onClick={onSearch} className="outline-none border-none bg-slate-500/50 rounded-lg hover:bg-slate-500/70 transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-[40px] h-[33px]">
+          <ArrowUp size={16} color="white" />
+        </button>
+      </div>
     </>
   );
 }
-
-const StyledButton = styled(LightButton)<{ $disabled: boolean }>(
-  ({ $disabled }) => ({
-    borderRadius: "50%",
-    border: "none",
-    boxShadow: "none",
-    width: "35px",
-    height: "35px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 0,
-    opacity: $disabled ? 0.5 : 1,
-    position: "absolute",
-    right: 5,
-  })
-);
-
-const StyledInputContainer = styled(RowFlex)`
-  background-color: ${colors.dark.inputBg};
-  border-radius: 14px;
-  padding: 0;
-  position: relative;
-  width: 100%;
-`;
-
-

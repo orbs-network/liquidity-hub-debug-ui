@@ -1,22 +1,15 @@
-import styled from "styled-components";
-import TextOverflow from "react-text-overflow";
 import { useCallback } from "react";
 import moment from "moment";
-import { Typography } from "antd";
 import { ChevronRight } from "react-feather";
-import { RowFlex } from "@/styles";
-import { TokenAddress } from "@/components";
 import BN from "bignumber.js";
-import { useNumberFormatter } from "@/hooks";
 import { Order, OrderType as IOrderType } from "@orbs-network/twap-sdk";
 import { parseOrderType } from "../utils";
 import { colors } from "@/consts";
-import { navigation } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 import { OrderStatusBadge } from "./components";
-import { usePaginatedTwapOrders } from "@/lib/queries/use-twap-orders-query";
+import { usePaginatedTwapOrders } from "@/lib/twap/queries";
 import { VirtualTable } from "@/components/virtual-table";
 import { useNetwork } from "@/hooks/hooks";
 import { PartnerConfigs } from "./partner-configs";
@@ -27,60 +20,11 @@ import {
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTwapPartnerByExchange } from "@/hooks/twap-hooks";
-
-export const StyledRow = styled(RowFlex)`
-  text-align: left;
-  padding-right: 0px;
-`;
-
-const HEADER_LABELS = [
-  {
-    text: "ID",
-  },
-  {
-    text: "Chain",
-  },
-  {
-    text: "Partner",
-  },
-  {
-    text: "Type",
-  },
-  {
-    text: "Date",
-  },
-  {
-    text: "Tokens",
-  },
-  {
-    text: "USD",
-  },
-  {
-    text: "Price Impact",
-  },
-  {
-    text: "Status",
-  },
-  {
-    text: "Actions",
-  },
-];
-
-export function TwapOrdersTable() {
-  const { orders, isLoading, isFetchingNextPage, fetchNextPage } =
-    usePaginatedTwapOrders();
-
-  return (
-    <VirtualTable<Order>
-      isLoading={isLoading}
-      isFetchingNextPage={isFetchingNextPage}
-      fetchNextPage={fetchNextPage}
-      tableItems={orders}
-      headerLabels={HEADER_LABELS}
-      desktopRows={desktopRows}
-    />
-  );
-}
+import { useFormatNumber } from "@/hooks/use-number-format";
+import { TokenAddress } from "@/components/Address";
+import { navigation } from "@/router";
+import { abbreviate } from "@/lib/utils";
+import _ from "lodash";
 
 const GoButton = ({ item }: { item: Order }) => {
   const navigate = useNavigate();
@@ -119,19 +63,9 @@ const Timestamp = ({ item }: { item: Order }) => {
 
 const TradeUSDValue = ({ item }: { item: Order }) => {
   const value = item.tradeDollarValueIn;
-  const amountF = useNumberFormatter({
-    value,
-  }).short;
+  const amountF = abbreviate(value || 0, 2);
 
-  return (
-    <StyledItem>
-      {BN(value || 0).gt(0) ? (
-        <RowText text={`$${amountF}`} />
-      ) : (
-        <RowText text="-" />
-      )}
-    </StyledItem>
-  );
+  return <>{BN(value || 0).gt(0) ? <p>{`$${amountF}`}</p> : <p>-</p>}</>;
 };
 
 const PriceImpact = ({ item }: { item: Order }) => {
@@ -143,27 +77,23 @@ const PriceImpact = ({ item }: { item: Order }) => {
     .div(tradeDollarValueIn)
     .multipliedBy(100)
     .toNumber();
-  const priceImpactF = useNumberFormatter({
+  const priceImpactF = useFormatNumber({
     value: priceImpact,
-  }).short;
+  });
 
   if (BN(tradeDollarValueIn).lte(0) || BN(tradeDollarValueOut).lte(0)) {
-    return <RowText text="-" />;
+    return <p>-</p>;
   }
 
-  return (
-    <StyledItem>
-      <RowText text={`${priceImpactF}%`} />
-    </StyledItem>
-  );
+  return <p>{`${priceImpactF}%`}</p>;
 };
 
 const Tokens = ({ item }: { item: Order }) => {
-  const { srcTokenSymbol, dstTokenSymbol, srcTokenAddress, dstTokenAddress } =
+  const { srcTokenAddress, dstTokenAddress, srcTokenSymbol, dstTokenSymbol } =
     item;
 
   return (
-    <StyledTokens $gap={2}>
+    <div className="flex flex-row gap-2 items-center">
       <TokenAddress
         chainId={item.chainId}
         address={srcTokenAddress}
@@ -173,45 +103,17 @@ const Tokens = ({ item }: { item: Order }) => {
       <ChevronRight size={10} style={{ color: colors.dark.textMain }} />
 
       <TokenAddress
-        symbol={dstTokenSymbol}
         chainId={item.chainId}
         address={dstTokenAddress}
+        symbol={dstTokenSymbol}
       />
-    </StyledTokens>
+    </div>
   );
 };
-
-const StyledTokens = styled(StyledRow)({
-  fontSize: 13,
-  justifyContent: "flex-start",
-  "*": {
-    fontWeight: 400,
-  },
-});
 
 const OrderId = ({ item }: { item: Order }) => {
-  return <RowText text={`#${item.id.toString()}`} />;
+  return <p>{`#${item.id.toString()}`}</p>;
 };
-
-const RowText = ({ text = "-" }: { text?: string }) => {
-  return (
-    <StyledText>
-      <TextOverflow text={text} />
-    </StyledText>
-  );
-};
-
-const StyledItem = styled(StyledRow)`
-  gap: 5px;
-  justify-content: flex-start;
-`;
-
-const StyledText = styled(Typography)`
-  font-size: 13px;
-  * {
-    color: ${colors.dark.textMain};
-  }
-`;
 
 const Status = ({ item }: { item: Order }) => {
   const { chunks, fills } = item;
@@ -232,23 +134,19 @@ const Status = ({ item }: { item: Order }) => {
 };
 
 const OrderType = ({ item }: { item: Order }) => {
-  return (
-    <StyledItem>
-      <RowText text={parseOrderType(item.type as IOrderType)} />
-    </StyledItem>
-  );
+  return <p>{parseOrderType(item.type as IOrderType)}</p>;
 };
 
 const ChainId = ({ item }: { item: Order }) => {
   const chain = useNetwork(item.chainId);
   return (
-    <StyledItem>
+    <div className="flex flex-row gap-2 items-center">
       <Avatar className="w-5 h-5">
         <AvatarImage src={chain?.logoUrl} />
         <AvatarFallback>{chain?.shortname}</AvatarFallback>
       </Avatar>
-      <RowText text={chain?.shortname} />
-    </StyledItem>
+      <p>{chain?.shortname}</p>
+    </div>
   );
 };
 
@@ -256,41 +154,93 @@ const PartnerRow = ({ item }: { item: Order }) => {
   const partner = useTwapPartnerByExchange(item.exchange, item.chainId);
   if (!partner) return null;
 
-  return <PartnerConfigs partner={partner} initialChainId={item.chainId} />;
+  return (
+    <>
+      <div>
+        <div className="hidden sm:block">
+          <PartnerConfigs partner={partner} initialChainId={item.chainId} />
+        </div>
+        <div className="sm:hidden flex flex-row gap-2 items-center  ">
+          <Avatar className="w-5 h-5">
+            <AvatarImage src={partner?.logo} />
+            <AvatarFallback>{partner?.name.slice(0, 2)}</AvatarFallback>
+          </Avatar>
+          <p>{partner?.name}</p>
+        </div>
+      </div>
+    </>
+  );
 };
 
 const desktopRows = [
   {
     Component: OrderId,
+    text: "ID",
   },
   {
     Component: ChainId,
+    text: "Chain",
   },
   {
     Component: PartnerRow,
+    text: "Partner",
   },
 
   {
     Component: OrderType,
+    text: "Type",
   },
 
   {
     Component: Timestamp,
+    text: "Date",
   },
   {
     Component: Tokens,
+    text: "Tokens",
   },
   {
     Component: TradeUSDValue,
+    text: "USD",
   },
   {
     Component: PriceImpact,
+    text: "Price Impact",
   },
   {
     Component: Status,
+    text: "Status",
   },
   {
     Component: GoButton,
-    className: "w-[100px] pr-4 text-center",
+    className: "pr-4 text-center right-0 hidden sm:block",
+    text: "Action",
   },
 ];
+
+const headerLabels = _.map(desktopRows, (row) => ({
+  text: row.text,
+}));
+
+export function TwapOrdersTable() {
+  const navigate = useNavigate();
+  const { orders, isLoading, isFetchingNextPage, fetchNextPage } =
+    usePaginatedTwapOrders();
+
+
+    const onMobileRowClick = useCallback((item: Order) => {
+      navigate(navigation.twap.order(item));
+    }, [navigate]);
+
+  return (
+    <VirtualTable<Order>
+      isLoading={isLoading}
+      isFetchingNextPage={isFetchingNextPage}
+      fetchNextPage={fetchNextPage}
+      tableItems={orders}
+      headerLabels={headerLabels}
+      desktopRows={desktopRows}
+      onMobileRowClick={onMobileRowClick}
+    />
+  );
+}

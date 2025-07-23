@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useIsMobile } from "@/hooks";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useCallback } from "react";
+import { useIsMobile } from "./hooks/use-is-mobile";
 
 export const protectedApi = axios.create();
 const GOOGLE_TOKEN_KEY = "google_token";
@@ -77,7 +77,7 @@ export const useUser = () => {
   const loginMobile = useCallback(() => {
     if (typeof window === "undefined") return;
     const tokenClient = (window as any).google.accounts.oauth2.initCodeClient({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       scope,
       ux_mode: "redirect",
       redirect_uri: `${import.meta.env.VITE_PRODUCTION_URL}/auth/callback`, // Must be whitelisted in Google Console
