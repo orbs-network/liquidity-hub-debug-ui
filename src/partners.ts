@@ -165,4 +165,22 @@ export const PARTNERS: Partner[] = [
     liquidityHubChains: [],
     liquidityHubID: "ramses",
   },
+  {
+    id: "shadow",
+    website: "https://shadow.fi/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/36389.png",
+    name: "Shadow",
+    twapId: Configs?.Shadow.partner,
+    liquidityHubChains: [],
+    liquidityHubID: "shadow",
+  },
+  {
+    id: "sparkdex",
+    website: "https://sparkdex.ai/",
+    logo: "https://s2.coinmarketcap.com/static/img/coins/128x128/36569.png",
+    name: "SparkDEX",
+    twapId: Configs?.SparkDEX.partner,
+    liquidityHubChains: [],
+    liquidityHubID: "sparkdex",
+  },
 ];

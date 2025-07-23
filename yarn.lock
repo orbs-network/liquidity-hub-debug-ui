@@ -587,18 +587,18 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@orbs-network/twap-sdk@^4.0.37":
-  version "4.0.37"
-  resolved "https://registry.yarnpkg.com/@orbs-network/twap-sdk/-/twap-sdk-4.0.37.tgz#9eac78e1941f4cd0f2c449745fc8191197349009"
-  integrity sha512-IVRStXGMXU1rDWHmIO7+CWHk/g5/gYFHscABV56ZlS5qj/hRIbtVZajS9jDELrAdNYIZW/el9vGHTkD1Q6N1qg==
+"@orbs-network/twap-sdk@^4.0.38":
+  version "4.0.38"
+  resolved "https://registry.yarnpkg.com/@orbs-network/twap-sdk/-/twap-sdk-4.0.38.tgz#e2e6cb4511892516e497b1173e120656f1b6d8a0"
+  integrity sha512-STC1CrNxVdZ3+5tjQLk5v4c9efXzVihU/K172W1SsE2N3tIyMffs5uuEz6xFpQ8lJfpTvL50QQGlM5fQ+AX+SQ==
   dependencies:
-    "@orbs-network/twap" "^2.7.12"
+    "@orbs-network/twap" "^2.7.13"
     bignumber.js "9.x"
 
-"@orbs-network/twap@^2.7.12":
-  version "2.7.12"
-  resolved "https://registry.yarnpkg.com/@orbs-network/twap/-/twap-2.7.12.tgz#49ae3ccfa5f0d1b1ff1de3d62cbbc2b6c9ed1990"
-  integrity sha512-HiNBLflXrBQ3yE27rJtc0BfPBrKnCg4Mq5gseEFU1bTU7Eiw6yZpuhfIqf2DsQGBtfJTkS4MxzcbtzqFZ0KyWA==
+"@orbs-network/twap@^2.7.13":
+  version "2.7.15"
+  resolved "https://registry.yarnpkg.com/@orbs-network/twap/-/twap-2.7.15.tgz#eb1ab88ab8dc308163765b6e39e4262774304438"
+  integrity sha512-16fodldyT9bgQst6BII20/DW1PP2mrP/8y6Kv3DE0g+FONcSMy9i+tTGCZFu1sI80NsakkVWi/Hd+zd0+8zspA==
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"

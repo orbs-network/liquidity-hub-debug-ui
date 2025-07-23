@@ -50,16 +50,13 @@ export const PartnerConfigs = ({
         {trigger ? (
           trigger
         ) : (
-          <Button
-            className="flex items-center gap-2 hover:bg-slate-900/50"
-            variant="ghost"
-          >
+          <div className="flex items-center gap-2 ">
             <Avatar className="w-5 h-5">
               <AvatarImage src={partner?.logo} />
               <AvatarFallback>{partner?.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <p>{partner?.name}</p>
-          </Button>
+          </div>
         )}
       </DialogTrigger>
       <DialogContent className="md:max-w-[600px] text-white">

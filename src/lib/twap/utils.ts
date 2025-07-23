@@ -16,6 +16,7 @@ export const getTwapConfig = (exchangeAddress: string, chainId: number) => {
 };
 
 export const getPartnerByTwapConfig = (config?: TwapConfig) => {
+  
   if (!config) return;
   return _.find(PARTNERS, (p) => p.twapId === config.partner);
 };

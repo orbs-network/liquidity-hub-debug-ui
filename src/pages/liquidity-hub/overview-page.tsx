@@ -53,7 +53,7 @@ export function OverviewPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="ml-auto">
-        <DateSelector />
+        <DateSelector buttons />
       </div>
       <TotalOverview />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-4 ">
