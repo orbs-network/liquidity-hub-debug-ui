@@ -48,12 +48,15 @@ const CardHeader = ({
 const Card = ({
   children,
   className,
+  onClick,
 }: {
   children?: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) => {
   return (
     <div
+      onClick={onClick}
       className={cn(
         "bg-slate-800/50 border border-border rounded-lg text-white overflow-hidden",
         className

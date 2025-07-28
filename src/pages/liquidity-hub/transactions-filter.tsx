@@ -17,10 +17,27 @@ const MinDollarValueFilter = () => {
   );
 };
 
+const SwapStatusFilterOptions = [
+  { label: "Success", value: "success" },
+  { label: "Failed", value: "failed" },
+];
+
+const SwapStatusFilter = () => {
+  return (
+    <QueryFilters.Badge
+      queryKey={URL_QUERY_KEYS.SWAP_STATUS}
+      label="Swap Status"
+      options={SwapStatusFilterOptions}
+      singleSelect
+    />
+  );
+};
+
 const FilterModal = () => {
   return (
     <QueryFilters>
       <MinDollarValueFilter />
+      <SwapStatusFilter />
     </QueryFilters>
   );
 };

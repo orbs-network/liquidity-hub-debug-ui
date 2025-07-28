@@ -252,7 +252,16 @@ export function isValidLHTxId(value: string): boolean {
 }
 
 
-
+export const keywordScriptFilter = (field: string, values: string[]) => ({
+  script: {
+    script: {
+      source: `params.values.contains(doc['${field}'].value.toLowerCase())`,
+      params: {
+        values: values.map((v) => v.toLowerCase()),
+      },
+    },
+  },
+});
 
 export const parseTimestampFromQuery = (timestamp?: string) => {
   if (!timestamp) return { from: undefined, to: undefined };

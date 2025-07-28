@@ -1,171 +1,124 @@
+import moment from "moment";
 import { queryInitialData } from "./main";
+import { keywordScriptFilter } from "@/lib/utils";
+
+type GetSwapsParams = {
+  chainId?: string[];
+  page: number;
+  limit: number;
+  walletAddress?: string[];
+  dex?: string[];
+  minDollarValue?: string;
+  inToken?: string[];
+  outToken?: string[];
+  sessionId?: string[];
+  startDate?: number;
+  endDate?: number;
+  feeOutAmountUsd?: string;
+  txHash?: string[];
+  status?: "success" | "failed";
+};
 
 export const getSwaps = ({
-    page,
-    limit,
-    chainId,
-    walletAddress,
-    dex,
-    minDollarValue,
-    inToken,
-    outToken,
-    sessionId,
-    startDate,
-    endDate,
-    feeOutAmountUsd,
-    txHash
-  }: {
-    chainId?: string[];
-    page: number;
-    limit: number;
-    walletAddress?: string[];
-    dex?: string[];
-    minDollarValue?: string;
-    inToken?: string[];
-    outToken?: string[];
-    sessionId?: string[];
-    startDate?: string; // ISO format e.g. "2025-07-01T00:00:00Z"
-    endDate?: string;   // ISO format e.g. "2025-07-20T23:59:59Z"
-    feeOutAmountUsd?: string;
-    txHash?: string[];
-  }) => {
-    return {
-      ...queryInitialData,
-      query: {
-        bool: {
-          filter: [
-            chainId?.length && {
-              terms: {
-                chainId: chainId,
+  page,
+  limit,
+  chainId,
+  walletAddress,
+  dex,
+  minDollarValue,
+  inToken,
+  outToken,
+  sessionId,
+  startDate,
+  endDate,
+  feeOutAmountUsd,
+  txHash,
+  status = 'success',
+}: GetSwapsParams) => {
+  const dateFilter =
+    startDate || endDate
+      ? [
+          {
+            range: {
+              timestamp: {
+                format: "strict_date_optional_time",
+                ...(startDate && { gte: moment(startDate).toISOString() }),
+                ...(endDate && { lte: moment(endDate).toISOString() }),
               },
             },
-            walletAddress?.length && {
-              script: {
-                script: {
-                  source: `
-                    params.users.contains(doc['user.keyword'].value.toLowerCase())
-                  `,
-                  params: {
-                    users: walletAddress.map((a) => a.toLowerCase()),
-                  },
-                },
+          },
+        ]
+      : [];
+
+  return {
+    ...queryInitialData,
+    query: {
+      bool: {
+        filter: [
+          chainId?.length && {
+            terms: { chainId },
+          },
+          walletAddress?.length &&
+            keywordScriptFilter("user.keyword", walletAddress),
+          dex?.length && keywordScriptFilter("dex.keyword", dex),
+          txHash?.length && keywordScriptFilter("txHash.keyword", txHash),
+          {
+            term: {
+              "type.keyword": "swap",
+            },
+          },
+          inToken?.length &&
+            keywordScriptFilter("tokenInName.keyword", inToken),
+          outToken?.length &&
+            keywordScriptFilter("tokenOutName.keyword", outToken),
+          status &&
+            keywordScriptFilter("swapStatus.keyword", [status]),
+          sessionId?.length && {
+            terms: {
+              "sessionId.keyword": sessionId,
+            },
+          },
+          ...dateFilter,
+          status.includes("success") && {
+            exists: { field: "txHash.keyword" },
+          },
+          {
+            exists: { field: "swapStatus.keyword" },
+          },
+          minDollarValue && {
+            range: {
+              dollarValue: {
+                gt: minDollarValue,
               },
             },
-            dex?.length && {
-              script: {
-                script: {
-                  source: `
-                    params.dexes.contains(doc['dex.keyword'].value.toLowerCase())
-                  `,
-                  params: {
-                    dexes: dex.map((d) => d.toLowerCase()),
-                  },
-                },
+          },
+          feeOutAmountUsd && {
+            range: {
+              feeOutAmountUsd: {
+                gt: feeOutAmountUsd,
               },
             },
-            txHash?.length && {
-              script: {
-                script: {
-                  source: `
-                    params.txHashes.contains(doc['txHash.keyword'].value.toLowerCase())
-                  `,
-                  params: {
-                    txHashes: txHash.map((t) => t.toLowerCase()),
-                  },
-                },
-              },
-            },
-            {
-              term: {
-                "type.keyword": "swap",
-              },
-            },
-            inToken?.length && {
-              script: {
-                script: {
-                  source: `
-                    params.inTokens.contains(doc['tokenInName.keyword'].value.toLowerCase())
-                  `,
-                  params: {
-                    inTokens: inToken.map((t) => t.toLowerCase()),
-                  },
-                },
-              },
-            },
-            outToken?.length && {
-              script: {
-                script: {
-                  source: `
-                    params.outTokens.contains(doc['tokenOutName.keyword'].value.toLowerCase())
-                  `,
-                  params: {
-                    outTokens: outToken.map((t) => t.toLowerCase()),
-                  },
-                },
-              },
-            },
-            sessionId?.length && {
-              terms: {
-                "sessionId.keyword": sessionId,
-              },
-            },
-            (startDate || endDate) && {
-              range: {
-                timestamp: {
-                  ...(startDate ? { gte: startDate } : {}),
-                  ...(endDate ? { lte: endDate } : {}),
-                  format: "strict_date_optional_time",
-                },
-              },
-            },
-            {
-              exists: {
-                field: "txHash.keyword",
-              },
-            },
-            {
-              exists: {
-                field: "swapStatus.keyword",
-              },
-            },
-            minDollarValue && {
-              range: {
-                dollarValue: {
-                  gt: minDollarValue,
-                },
-              },
-            },
-            feeOutAmountUsd && {
-              range: {
-                feeOutAmountUsd: {
-                  gt: feeOutAmountUsd,
-                },
-              },
-            },
-          ].filter(Boolean),
-          must_not: [
-            {
-              term: {
-                "txHash.keyword": "",
-              },
-            },
-            {
-              term: {
-                "swapStatus.keyword": "",
-              },
-            },
-          ],
+          },
+        ].filter(Boolean),
+        must_not: [
+          status.includes("success") && {
+            term: { "txHash.keyword": "" },
+          },
+          {
+            term: { "swapStatus.keyword": "" },
+          },
+        ].filter(Boolean),
+      },
+    },
+    size: limit,
+    from: Math.max(0, page * limit),
+    sort: [
+      {
+        timestamp: {
+          order: "desc",
         },
       },
-      size: limit,
-      from: page * limit,
-      sort: [
-        {
-          timestamp: {
-            order: "desc",
-          },
-        },
-      ],
-    };
+    ],
+    track_total_hits: true,
   };
-  
+};

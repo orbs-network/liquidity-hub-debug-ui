@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import {
+  useDexSwapsCountByStatus,
+  useFailedSwaps,
   useLHDexFees,
   useLHDexVolume,
   useLHTotalFees,
@@ -18,6 +20,17 @@ import { DateSelector } from "@/components/date-selector";
 import { OverviewHeader } from "@/components/overview-header";
 import { ChartArea } from "lucide-react";
 import { PARTNERS } from "@/partners";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LiquidityHubSwap } from "@/lib/liquidity-hub";
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Virtuoso } from "react-virtuoso";
+import { LogDisplay } from "@/components/log-display";
+import { AuthWrapper } from "@/components/auth-wrapper";
 
 const useIntegrations = () => {
   const { data: fees } = useLHDexFees();
@@ -48,17 +61,19 @@ const useIntegrations = () => {
 };
 
 export function OverviewPage() {
-  useSetInitialTimestampFilter(moment.duration(7, "day").asMilliseconds());
+  useSetInitialTimestampFilter(moment.duration(1, "day").asMilliseconds());
   const integrations = useIntegrations();
+  
   return (
-    <div className="flex flex-col gap-4">
+    <AuthWrapper>
+      <div className="flex flex-col gap-4">
       <div className="ml-auto">
         <DateSelector />
       </div>
       <TotalOverview />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-4 ">
         {integrations.map((it) => {
-            return (
+          return (
             <Integration
               key={`${it.partner.liquidityHubID}-${it.chainId}`}
               partner={it.partner}
@@ -68,6 +83,7 @@ export function OverviewPage() {
         })}
       </div>
     </div>
+    </AuthWrapper>
   );
 }
 
@@ -118,7 +134,27 @@ const Integration = ({
 }) => {
   const { data: feesData, isLoading: isLoadingFees } = useLHDexFees();
   const { data: dexVolume, isLoading: isLoadingDexVolume } = useLHDexVolume();
+
+  
   const network = useNetwork(chainId);
+    const {data: successSwapsCount, isLoading: isLoadingSuccessSwapsCount} = useDexSwapsCountByStatus(partner.liquidityHubID, chainId, "success")
+    const {data: allFailedSwaps, isLoading: isLoadingFailedSwaps} = useFailedSwaps()
+
+  const failedSwaps = useMemo(() => {
+    return allFailedSwaps?.[partner.liquidityHubID]?.[chainId] ?? []
+  }, [allFailedSwaps, partner.liquidityHubID, chainId])
+
+
+  const successRatePercentage = useMemo(() => {
+    const result =
+      (successSwapsCount /
+        (successSwapsCount + failedSwaps.length)) *
+      100;
+    if (isNaN(result)) {
+      return 0;
+    }
+    return parseFloat(result.toFixed(2));
+  }, [successSwapsCount, failedSwaps.length]);
 
   const fees = useMemo(() => {
     return (
@@ -157,18 +193,133 @@ const Integration = ({
         className="flex flex-col gap-2"
         isLoading={isLoadingFees || isLoadingDexVolume}
       >
-        <Amount amount={volume} label="Volume" />
-        <Amount amount={fees} label="Fees" />
+        <Amount amount={volume} label="Volume" isLoading={isLoadingDexVolume} />
+        <Amount amount={fees} label="Fees" isLoading={isLoadingFees} />
+        <Value
+          children={`${successSwapsCount + failedSwaps.length}`}
+          label="Total Swaps"
+          isLoading={isLoadingSuccessSwapsCount || isLoadingFailedSwaps}
+        />
+        <Value
+          children={`${successRatePercentage}%`}
+          label="Success Rate"
+          isLoading={isLoadingSuccessSwapsCount || isLoadingFailedSwaps}
+        />
+        <ErrorsModal
+          swaps={failedSwaps || []}
+          isLoading={isLoadingFailedSwaps}
+        />
       </Card.Content>
     </Card>
   );
 };
 
-const Amount = ({ amount, label }: { amount: number; label: string }) => {
+const ErrorsModal = ({
+  swaps,
+  isLoading,
+}: {
+  swaps: LiquidityHubSwap[];
+  isLoading: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedSwap, setSelectedSwap] = useState<LiquidityHubSwap | null>(
+    null
+  );
+
+  const handleOpenChange = (open: boolean) => {
+    if (selectedSwap) {
+      setSelectedSwap(null);
+    } else {
+      setIsOpen(open);
+    }
+  };
+
+  return (
+    <Value label="Errors" isLoading={isLoading}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger>
+          <div className="text-xs bg-gray-900/70 rounded-md px-3 py-2 cursor-pointer">
+            View <span className="text-xs text-gray-400">({swaps.length})</span>
+          </div>
+        </DialogTrigger>
+        {selectedSwap ? (
+          <DialogContent className="max-h-[80vh] h-full overflow-y-auto w-full sm:max-w-[98vw] sm:max-h-[95vh]">
+            <DialogHeader>
+              <DialogTitle>Error - {selectedSwap.sessionId}</DialogTitle>
+            </DialogHeader>
+            <LogDisplay logs={selectedSwap} />
+          </DialogContent>
+        ) : (
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Errors{" "}
+                <span className="text-xs text-gray-400">({swaps.length})</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="w-full h-[70vh] max-h-[600px] overflow-y-auto">
+              <Virtuoso
+                className="h-full w-full"
+                data={swaps}
+                totalCount={swaps.length}
+                itemContent={(_, swap) => {
+                  return (
+                    <Card
+                      className="mb-2 cursor-pointer"
+                      onClick={() => setSelectedSwap(swap)}
+                    >
+                      <Card.Content className="flex items-center justify-between md:p-2">
+                        <p className="text-xs md:text-sm break-all">
+                          {swap.error}
+                        </p>
+                      </Card.Content>
+                    </Card>
+                  );
+                }}
+              />
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
+    </Value>
+  );
+};
+
+const Value = ({
+  children,
+  label,
+  isLoading,
+}: {
+  children: ReactNode;
+  label: string;
+  isLoading?: boolean;
+}) => {
   return (
     <div className="flex items-center justify-between bg-gray-700/40 rounded-md p-4 text-xs">
       <p className="text-[15px]">{label}</p>
-      <p className="text-[16px] font-bold">${abbreviate(amount)}</p>
+      {isLoading ? (
+        <Skeleton className="w-10 h-4" />
+      ) : (
+        <div className="text-[16px] font-bold">{children}</div>
+      )}
     </div>
+  );
+};
+
+const Amount = ({
+  amount,
+  label,
+  isLoading,
+}: {
+  amount: number;
+  label: string;
+  isLoading?: boolean;
+}) => {
+  return (
+    <Value
+      children={`$${abbreviate(amount)}`}
+      label={label}
+      isLoading={isLoading}
+    />
   );
 };

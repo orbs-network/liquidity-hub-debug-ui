@@ -2,7 +2,6 @@ import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/theme-github";
-import ReactJson from "react-json-view";
 import { Card } from "@/components/card";
 import { TokenAmount, TransactionDisplay } from "@/components";
 import { useCallback, useMemo, useState } from "react";
@@ -37,7 +36,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTokens } from "@/lib/queries/use-tokens-query";
 import { Token } from "@/lib/types";
-import { ROUTES } from "@/config";
 import { useNavigate } from "react-router-dom";
 import { useHeight } from "@/lib/hooks/use-height";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { navigation } from "@/router";
 import { CopyIcon } from "lucide-react";
+import { LogDisplay } from "@/components/log-display";
 
 export function SwapPage({ isPreview }: { isPreview?: boolean }) {
   const navigate = useNavigate();
@@ -54,7 +53,7 @@ export function SwapPage({ isPreview }: { isPreview?: boolean }) {
     <TransactionDisplay.Container>
       {!isPreview && (
         <TransactionDisplay.ContainerHeader
-          onBackClick={() => navigate(ROUTES.liquidityHub.root)}
+          onBackClick={() => navigate(-1)}
         />
       )}
       <State isPreview={isPreview} />
@@ -422,19 +421,4 @@ const Logs = () => {
   );
 };
 
-const LogDisplay = ({ logs }: { logs: object | object[] }) => {
-  return (
-    <ReactJson
-      src={logs}
-      name={false}
-      collapsed={1}
-      enableClipboard={true}
-      displayDataTypes={false}
-      theme="monokai"
-      style={{
-        fontSize: "14px",
-        fontFamily: "monospace",
-      }}
-    />
-  );
-};
+

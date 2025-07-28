@@ -23,6 +23,7 @@ export const useQueryFilterParams = () => {
       [URL_QUERY_KEYS.TIMESTAMP]: StringParam,
       [URL_QUERY_KEYS.ORDER_TYPE]: StringParam,
       [URL_QUERY_KEYS.SESSION_ID]: ArrayParam,
+      [URL_QUERY_KEYS.SWAP_STATUS]: StringParam,
     },
     {
       updateType: "pushIn",
@@ -74,6 +75,9 @@ export const useQueryFilterParams = () => {
           | undefined,
         [URL_QUERY_KEYS.SESSION_ID]: query[URL_QUERY_KEYS.SESSION_ID] as
           | string[]
+          | undefined,
+        [URL_QUERY_KEYS.SWAP_STATUS]: query[URL_QUERY_KEYS.SWAP_STATUS] as
+          | string
           | undefined,
       },
       setQuery: {

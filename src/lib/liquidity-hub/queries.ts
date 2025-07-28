@@ -6,14 +6,18 @@ import {
   LIQUIDITY_HUB_ELASTIC_SERVER_URL,
   TX_TRACE_SERVER,
 } from "@/config";
-import { LiquidityHubQuote, LiquidityHubSwap, SwapQueryResponse } from "../liquidity-hub/types";
+import {
+  LiquidityHubQuote,
+  LiquidityHubSwap,
+  SwapQueryResponse,
+} from "../liquidity-hub/types";
 import axios from "axios";
 import { useQueryFilterParams } from "../hooks/use-query-filter-params";
 import { fetchElastic } from "../lib";
 import { elasticQueries } from "./elastic-queries";
 import { useMemo } from "react";
-import moment from "moment";
 import { PARTNERS } from "@/partners";
+import _ from "lodash";
 
 export const useLHSwaps = () => {
   const {
@@ -26,9 +30,16 @@ export const useLHSwaps = () => {
       fee_out_amount_usd,
       user,
       session_id,
-      tx_hash
+      tx_hash,
+      timestamp,
+      swap_status,
     },
   } = useQueryFilterParams();
+
+  const { from: startDate, to: endDate } = useMemo(
+    () => parseTimestampFromQuery(timestamp),
+    [timestamp]
+  );
 
   return useInfiniteQuery({
     queryKey: [
@@ -41,7 +52,9 @@ export const useLHSwaps = () => {
       out_token,
       fee_out_amount_usd,
       session_id,
-      tx_hash
+      tx_hash,
+      timestamp,
+      swap_status,
     ],
     queryFn: async ({ signal, pageParam }) => {
       const data = elasticQueries.getSwaps({
@@ -56,6 +69,9 @@ export const useLHSwaps = () => {
         feeOutAmountUsd: fee_out_amount_usd,
         sessionId: session_id,
         txHash: tx_hash,
+        startDate: startDate,
+        endDate: endDate,
+        status: !swap_status ? 'success' : swap_status as "success" | "failed",
       });
 
       return fetchElastic<LiquidityHubSwap>(
@@ -167,7 +183,7 @@ export const useLHTotalSwapsVolume = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHTotalSwapsVolume", startDate, endDate],
+    queryKey: ["useLHTotalSwapsVolume", timestamp],
     queryFn: async ({ signal }) => {
       const data = elasticQueries.getTotalSwapsVolume(startDate, endDate);
       const response = await axios.post(
@@ -192,7 +208,7 @@ export const useLHTotalFees = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHTotalFees", startDate, endDate],
+    queryKey: ["useLHTotalFees", timestamp],
     queryFn: async ({ signal }) => {
       const data = elasticQueries.getTotalFees(startDate, endDate);
       const response = await axios.post(
@@ -216,7 +232,7 @@ export const useLHTotalSwaps = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHTotalSwaps", startDate, endDate],
+    queryKey: ["useLHTotalSwaps", timestamp],
     queryFn: async ({ signal }) => {
       const data = elasticQueries.getTotalSwap(startDate, endDate);
       const response = await axios.post(
@@ -241,7 +257,7 @@ export const useLHTotalUniqueSwappers = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHTotalUniqueSwappers", startDate, endDate],
+    queryKey: ["useLHTotalUniqueSwappers", timestamp],
     queryFn: async ({ signal }) => {
       const data = elasticQueries.getUniqueSwappers(startDate, endDate);
       const response = await axios.post(
@@ -266,10 +282,15 @@ export const useLHDexVolume = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHDexVolume", startDate, endDate],
+    queryKey: ["useLHDexVolume", timestamp],
     queryFn: async ({ signal }) => {
       const getVolume = async (partnerId: string, chainId: number) => {
-        const data = elasticQueries.getDexVolume(partnerId, chainId, startDate, endDate);
+        const data = elasticQueries.getDexVolume(
+          partnerId,
+          chainId,
+          startDate,
+          endDate
+        );
         const response = await axios.post(
           `${LIQUIDITY_HUB_ELASTIC_SERVER_URL}/_search`,
           { ...data },
@@ -282,11 +303,13 @@ export const useLHDexVolume = () => {
         };
       };
 
-      const result = await Promise.all(PARTNERS.map((partner) => {
-        return partner.liquidityHubChains.map((chainId) => {
-          return getVolume(partner.liquidityHubID, chainId);
-        });
-      }).flat());
+      const result = await Promise.all(
+        PARTNERS.map((partner) => {
+          return partner.liquidityHubChains.map((chainId) => {
+            return getVolume(partner.liquidityHubID, chainId);
+          });
+        }).flat()
+      );
 
       return result.sort((a, b) => b.value - a.value);
     },
@@ -304,14 +327,14 @@ export const useLHDexFees = () => {
   );
 
   return useQuery({
-    queryKey: ["useLHDexFees", startDate, endDate, timestamp],
+    queryKey: ["useLHDexFees", timestamp],
     queryFn: async ({ signal }) => {
       const getFees = async (partnerId: string, chainId: number) => {
         const data = elasticQueries.getDexFees(
           partnerId,
           chainId,
           startDate,
-          endDate || moment().valueOf()
+          endDate
         );
         const response = await axios.post(
           `${LIQUIDITY_HUB_ELASTIC_SERVER_URL}/_search`,
@@ -325,7 +348,6 @@ export const useLHDexFees = () => {
         };
       };
 
-
       const calls = PARTNERS.map((partner) => {
         return partner.liquidityHubChains.map((chainId) => {
           return getFees(partner.liquidityHubID, chainId);
@@ -334,8 +356,256 @@ export const useLHDexFees = () => {
 
       const result = await Promise.all(calls);
       return result.sort((a, b) => b.value - a.value);
-      
     },
     staleTime: Infinity,
+  });
+};
+
+export const useLHQuotes = () => {
+  const {
+    query: {
+      chain_id,
+      user,
+      partner_id,
+      min_dollar_value,
+      in_token,
+      out_token,
+      session_id,
+      timestamp,
+    },
+  } = useQueryFilterParams();
+  const { from: startDate, to: endDate } = useMemo(
+    () => parseTimestampFromQuery(timestamp),
+    [timestamp]
+  );
+  return useQuery({
+    queryKey: [
+      "useLiquidityHubQuotes",
+      chain_id,
+      user,
+      partner_id,
+      min_dollar_value,
+      in_token,
+      out_token,
+      session_id,
+      timestamp,
+    ],
+    queryFn: async ({ signal }) => {
+      const fetchPaginated = async (page: number) => {
+        const data = elasticQueries.getQuotes({
+          startDate: startDate,
+          endDate: endDate,
+          page: page,
+          limit: 2_000,
+        });
+
+        return fetchElastic<LiquidityHubQuote>(
+          LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+          data,
+          signal
+        );
+      };
+
+      const allResults: LiquidityHubQuote[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await fetchPaginated(page);
+        if (result.length === 0) {
+          hasMore = false;
+        } else {
+          allResults.push(...result);
+          page++;
+        }
+      }
+
+      const grouped = _.reduce(
+        allResults,
+        (result, quote) => {
+          const { dex, chainId } = quote;
+
+          // Initialize dex group if not exists
+          if (!result[dex]) {
+            result[dex] = {};
+          }
+
+          // Initialize chainId group if not exists
+          if (!result[dex][chainId]) {
+            result[dex][chainId] = [];
+          }
+
+          // Push quote into the correct group
+          result[dex][chainId].push(quote);
+
+          return result;
+        },
+        {} as Record<string, Record<number, typeof allResults>>
+      );
+
+      return grouped;
+    },
+    refetchInterval: 60_000,
+  });
+};
+
+export const useFailedSwaps = () => {
+  const {
+    query: { timestamp },
+  } = useQueryFilterParams();
+  const { from: startDate, to: endDate } = useMemo(
+    () => parseTimestampFromQuery(timestamp),
+    [timestamp]
+  );
+  return useQuery({
+    queryKey: ["useFailedSwaps", timestamp],
+    queryFn: async ({ signal }) => {
+      const fetchPaginated = async (page: number) => {
+        const data = elasticQueries.getSwaps({
+          page: page,
+          limit: 1_000,
+          startDate: startDate,
+          endDate: endDate,
+          status: "failed",
+        });
+
+        return fetchElastic<LiquidityHubSwap>(
+          LIQUIDITY_HUB_ELASTIC_SERVER_URL,
+          data,
+          signal
+        );
+      };
+
+      const allResults: LiquidityHubSwap[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await fetchPaginated(page);
+
+        if (result.length === 0) {
+          hasMore = false;
+        } else {
+          allResults.push(...result);
+          page++;
+        }
+      }
+
+      const grouped = _.reduce(
+        allResults,
+        (result, quote) => {
+          const { dex, chainId } = quote;
+
+          // Initialize dex group if not exists
+          if (!result[dex]) {
+            result[dex] = {};
+          }
+
+          // Initialize chainId group if not exists
+          if (!result[dex][chainId]) {
+            result[dex][chainId] = [];
+          }
+
+          // Push quote into the correct group
+          result[dex][chainId].push(quote);
+
+          return result;
+        },
+        {} as Record<string, Record<number, typeof allResults>>
+      );
+
+      return grouped;
+    },
+    refetchInterval: 60_000,
+    staleTime: Infinity,
+  });
+};
+
+export const useDexSwapsCountByStatus = (
+  dex: string,
+  chainId: number,
+  status: "success" | "failed"
+) => {
+  const {
+    query: { timestamp },
+  } = useQueryFilterParams();
+  const { from: startDate, to: endDate } = useMemo(
+    () => parseTimestampFromQuery(timestamp),
+    [timestamp]
+  );
+  return useQuery({
+    queryKey: ["useDexSwapsCountByStatus", timestamp, dex, chainId, status],
+    queryFn: async ({ signal }) => {
+      const data = elasticQueries.getSwapsCountByStatus({
+        dex,
+        chainId,
+        startDate,
+        endDate,
+        status,
+      });
+
+      const result = await axios.post(
+        `${LIQUIDITY_HUB_ELASTIC_SERVER_URL}/_search`,
+        { ...data },
+        { signal }
+      );
+      return result.data.aggregations.successSwaps.doc_count
+    },
+  });
+};
+
+
+
+
+export const useClientLogs = () => {
+  const {
+    query: {
+      timestamp,
+    },
+  } = useQueryFilterParams();
+
+  const { from: startDate, to: endDate } = useMemo(
+    () => parseTimestampFromQuery(timestamp),
+    [timestamp]
+  );
+
+  return useQuery({
+    queryKey: [
+      "useClientLogs",
+      timestamp
+    ],
+    queryFn: async ({ signal }) => {
+      const fetchPaginated = async (page: number) => {
+        const data = elasticQueries.getClientLogs({
+          page: page,
+          limit: 1000,
+          startDate: startDate,
+          endDate: endDate,
+        });
+  
+        return fetchElastic<LiquidityHubSwap>(
+          LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
+          data,
+          signal
+        );
+      }
+
+      const allResults: LiquidityHubSwap[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await fetchPaginated(page);
+        if (result.length === 0) {
+          hasMore = false;
+        } else {
+          allResults.push(...result);
+          page++;
+        }
+      }
+
+      return allResults;
+    },
+    refetchInterval: 10000,
   });
 };

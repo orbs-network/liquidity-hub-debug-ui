@@ -79,6 +79,7 @@ export type LiquidityHubSwap = {
   took: number;
   timeAbsoluteEnd: number;
   timestamp: string;
+  error?: string;
   rawStr: {
     route: {
       totalGasUnits: number | null;

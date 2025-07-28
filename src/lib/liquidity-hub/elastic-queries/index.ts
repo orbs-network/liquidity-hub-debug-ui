@@ -9,6 +9,9 @@ import { getTotalSwap } from "./get-total-swap";
 import { getUniqueSwappers } from "./get-unique-swappers";
 import { getDexVolume } from "./get-dex-volume";
 import { getDexFees } from "./get-dex-fees";
+import { getQuotes } from "./get-quotes";
+import { getSwapsCountByStatus } from "./get-swaps-count-by-status";
+import { getClientLogs } from "./get-client-logs";
 
 export const elasticQueries = {
   getSwapByTxHash,
@@ -22,4 +25,7 @@ export const elasticQueries = {
   getUniqueSwappers,
   getDexVolume,
   getDexFees,
+  getQuotes,
+  getSwapsCountByStatus,
+  getClientLogs,
 };
