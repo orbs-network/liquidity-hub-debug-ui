@@ -2,8 +2,7 @@ import { Outlet } from "react-router-dom";
 import { QueryParamProvider } from "use-query-params";
 import { ReactRouter6Adapter } from "use-query-params/adapters/react-router-6";
 import { ConfigProvider } from "antd";
-import { Toaster } from "sonner"
-
+import { Toaster } from "sonner";
 
 export function App() {
   return (
@@ -11,7 +10,12 @@ export function App() {
       <QueryParamProvider adapter={ReactRouter6Adapter}>
         <div className="bg-background text-white">
           <Outlet />
-          <Toaster />
+          <Toaster
+            toastOptions={{
+              className: "bg-black text-white",
+              descriptionClassName: "bg-black text-white",
+            }}
+          />
         </div>
       </QueryParamProvider>
     </ConfigProvider>

@@ -25,8 +25,6 @@ import {
 import { useParams } from "react-router-dom";
 import { useSwapPageContext } from "./use-swap-page-context";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { useAmountUI } from "@/lib/hooks/use-amount-ui";
-import { abbreviate } from "@/lib/utils";
 import { eqIgnoreCase } from "@orbs-network/twap-sdk";
 import {
   Dialog,
@@ -129,8 +127,6 @@ const Content = () => {
           <Section key={baseInfo.title} section={baseInfo} />
           <Section key={amounts.title} section={amounts} />
         </TransactionDisplay.Grid>
-      
-        
       </TransactionDisplay>
       {!isPreview && (
         <div className="flex flex-row gap-2 ml-auto">
@@ -147,16 +143,15 @@ const Content = () => {
 const DexRouterData = () => {
   const { swap } = useSwapPageContext();
   return (
-
-      <Dialog>
-        <DialogTrigger>
-          <Button variant="outline">Dex Data</Button>
-        </DialogTrigger>
-        <DialogContent className='max-h-[80vh] h-full overflow-y-auto w-full sm:max-w-[98vw] sm:max-h-[95vh]'>
-          <DialogHeader>
-            <DialogTitle>Dex Data - {swap.sessionId}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+    <Dialog>
+      <DialogTrigger>
+        <Button variant="outline">Dex Data</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[80vh] h-full overflow-y-auto w-full sm:max-w-[98vw] sm:max-h-[95vh]">
+        <DialogHeader>
+          <DialogTitle>Dex Data - {swap.sessionId}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
           <div className="flex flex-col gap-2">
             <p className="text-[17px] font-bold">Data:</p>
             <p className="text-[15px] font-mono break-all">
@@ -169,10 +164,9 @@ const DexRouterData = () => {
               {swap.dexRouteTo}
             </Address>
           </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -239,7 +233,6 @@ const FieldsComponents = ({ field }: { field: Field }) => {
   );
 };
 
-
 const Transfers = () => {
   const { swap } = useSwapPageContext();
   const transfers = useTransfers(swap).data;
@@ -280,7 +273,7 @@ const Transfers = () => {
 
 const Transfer = ({ log, tokens }: { log: TransferLog; tokens: Token[] }) => {
   const { swap } = useSwapPageContext();
-  const { valueToken, fromToken, toToken } = useMemo(() => {
+  const {  fromToken, toToken } = useMemo(() => {
     return {
       valueToken: tokens.find((it) => it.address === log.tokenAddress),
       fromToken: tokens.find((it) => it.address === log.from),
@@ -288,7 +281,6 @@ const Transfer = ({ log, tokens }: { log: TransferLog; tokens: Token[] }) => {
     };
   }, [log.tokenAddress, log.from, log.to, tokens]);
 
-  const value = useAmountUI(valueToken?.decimals, log.value);
   return (
     <div className="flex flex-row gap-2 items-center bg-slate-700/30 p-2 rounded-lg w-full text-sm flex-wrap">
       <p style={{ whiteSpace: "nowrap" }}>
@@ -319,14 +311,14 @@ const Transfer = ({ log, tokens }: { log: TransferLog; tokens: Token[] }) => {
           {eqIgnoreCase(log.to, swap.user) ? "User wallet" : undefined}
         </Address>
       )}
-      <p style={{ whiteSpace: "nowrap" }}>
-        <strong>For</strong> {abbreviate(value)}{" "}
+      <p className="flex flex-row gap-2 items-center whitespace-nowrap">
+        <strong>For</strong>{" "}
+        <TokenAmount
+          amountWei={log.value}
+          address={log.tokenAddress}
+          chainId={swap.chainId}
+        />
       </p>
-      <TokenAddress
-        chainId={swap.chainId}
-        address={log.tokenAddress}
-        symbol={valueToken?.symbol}
-      />
     </div>
   );
 };

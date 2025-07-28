@@ -1,13 +1,16 @@
 import { useNetwork } from "@/hooks/hooks";
 import { cn } from "@/lib/utils";
 import { shortenAddress } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Copy } from "lucide-react";
+import { useCopy } from "@/hooks/use-copy";
 
 export function Address({
   address,
   chainId,
   type = "address",
   className,
-  children
+  children,
 }: {
   address?: string;
   chainId: number;
@@ -16,7 +19,6 @@ export function Address({
   children?: React.ReactNode;
 }) {
   const explorer = useNetwork(chainId)?.explorer;
-
 
   return (
     <a
@@ -29,20 +31,35 @@ export function Address({
   );
 }
 
-
 export const TokenAddress = ({
   chainId,
   address,
-  symbol
+  symbol,
 }: {
   chainId?: number;
   address?: string;
   symbol?: string;
 }) => {
+  const copy = useCopy();
   const explorer = useNetwork(chainId)?.explorer;
   return (
-    <a href={`${explorer}/address/${address}`} target="_blank" className="text-sm hover:underline">
-      <p>{symbol}</p>
-    </a>
+    <Tooltip>
+      <TooltipTrigger>
+        <a
+          href={`${explorer}/address/${address}`}
+          target="_blank"
+          className="text-sm hover:underline"
+        >
+          <p>{symbol}</p>
+        </a>
+      </TooltipTrigger>
+      <TooltipContent className="flex flex-row gap-2">
+        <p className="text-[15px] font-mono">{address}</p>
+        <Copy
+          className="w-4 h-4 cursor-pointer"
+          onClick={() => copy(address || "")}
+        />
+      </TooltipContent>
+    </Tooltip>
   );
 };

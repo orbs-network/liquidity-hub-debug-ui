@@ -1,15 +1,15 @@
 import BN from "bignumber.js";
 import { useMemo } from "react";
-import { formatUnits } from "viem";
+import {parseUnits } from "viem";
 
-export const useAmountUI = (
+export const useToWeiAmount = (
   decimals?: number,
   value?: string | BN | number
 ) => {
   return useMemo(
     () => {
-      const safeValue = BN(value || 0).decimalPlaces(0).toFixed();
-      return formatUnits(BigInt(safeValue), decimals || 0)
+      const safeValue = value?.toString() || "0";
+      return parseUnits(safeValue, decimals || 0).toString();
     },
     [decimals, value]
   );

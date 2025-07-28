@@ -5,16 +5,13 @@ import { TokenAddress } from "./Address";
 import { useAmountUI } from "@/lib/hooks/use-amount-ui";
 import { useMemo } from "react";
 import { useToken } from "@/lib/queries/use-tokens-query";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useToWeiAmount } from "@/lib/hooks/use-to-wei-amout";
+import { Skeleton } from "./ui/skeleton";
+import { Copy } from "react-feather";
+import { useCopy } from "@/hooks/use-copy";
 
-export const TokenAmount = ({
-  address,
-  amountWei,
-  chainId,
-  amountUI,
-  className,
-  usd: _usd,
-  useUsdOracle = false
-}: {
+export const TokenAmount = (props: {
   address?: string;
   amountWei?: string | number;
   chainId?: number;
@@ -23,39 +20,64 @@ export const TokenAmount = ({
   usd?: string | number;
   useUsdOracle?: boolean;
 }) => {
-  const token = useToken(address, chainId)
-  const fromWeiAmount = useAmountUI(token?.decimals, amountWei);
+  const token = useToken(props.address, props.chainId)
+  const _amountWei = useToWeiAmount(token?.decimals, props.amountUI);
+  const _amountUI = useAmountUI(token?.decimals, props.amountWei);
+  const copy = useCopy()
   const { data: usdFallback } = useUsdOracleQuery({
-    address,
-    chainId,
-    disabled: !useUsdOracle,
+    address: props.address,
+    chainId: props.chainId,
+    disabled: !props.useUsdOracle,
   });
 
-  const amount = amountUI || fromWeiAmount;
-  const amountF = useMemo(() => abbreviate(amount), [amount]);
+  const amountWei = props.amountWei || _amountWei;
+  const amountUI = props.amountUI || _amountUI;
+  const amountF = useMemo(() => abbreviate(amountUI, 3), [amountUI]);
   const usdFallbackF = useMemo(() => {
     return BN(usdFallback || 0)
-      .multipliedBy(amount)
+      .multipliedBy(amountUI)
       .toFixed();
-  }, [amount, usdFallback]);
+  }, [amountUI, usdFallback]);
 
-  const usd = useMemo(
-    () => abbreviate(_usd || usdFallbackF, 2),
-    [_usd, usdFallbackF]
-  );
+  const fullUsd = props.usd || usdFallbackF;
+
+  const usd = useMemo(() => abbreviate(fullUsd, 2), [fullUsd]);
+
+  if(!token) {
+    return <Skeleton className="w-[80px] h-[15px]" />;
+  }
 
   return (
-    <div className={cn("flex flex-row gap-2", className)}>
-      {amountF || "0"}
+    <div className={cn("flex flex-row gap-2", props.className)}>
+      <Tooltip>
+        <TooltipTrigger>
+          {amountF || "0"}
+        </TooltipTrigger>
+        <TooltipContent className="flex flex-row gap-2">
+         <p className="text-[15px] font-mono">{amountWei || "0"}</p>
+         <Copy className="w-4 h-4 cursor-pointer" onClick={() => copy(amountWei.toString())} />
+
+        </TooltipContent>
+      </Tooltip>
 
       <TokenAddress
-        address={address}
-        chainId={chainId}
+        address={props.address}
+        chainId={props.chainId}
         symbol={token?.symbol}
       />
-      <p className="text-sm text-secondary-foreground font-mono">{` ($${
-        usd || "0"
-      })`}</p>
+    {usd && usd !== "0" &&  <Tooltip>
+      <TooltipTrigger>
+        <p className="text-sm text-secondary-foreground font-mono">{` ($${
+          usd || "0"
+        })`}</p>
+      </TooltipTrigger>
+      <TooltipContent className="flex flex-row gap-2">
+        <p className="text-[15px] text-secondary-foreground font-mono">{` ($${
+          abbreviate(fullUsd, 7) || "0"
+        })`}</p>
+        <Copy className="w-4 h-4 cursor-pointer" onClick={() => copy(fullUsd.toString())} />
+      </TooltipContent>
+     </Tooltip>}
     </div>
   );
 };
