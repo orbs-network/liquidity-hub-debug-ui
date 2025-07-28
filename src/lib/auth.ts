@@ -41,7 +41,6 @@ export const fetchGoogleUser = async (): Promise<User> => {
   const { data } = await protectedApi.get(
     "https://www.googleapis.com/oauth2/v3/userinfo"
   );
-    
 
   return parseUser(data);
 };
@@ -65,14 +64,14 @@ export const useUserQuery = () => {
 export const useUser = () => {
   const isMobile = useIsMobile();
   const { refetch, data: user, isLoading } = useUserQuery();
-  const loginDesktop = useGoogleLogin({
-    scope,
-    prompt: "select_account",
-    onSuccess: async ({ access_token }) => {
-      localStorage.setItem(GOOGLE_TOKEN_KEY, access_token);
-      refetch();
-    },
-  });
+  // const loginDesktopWithPrompt = useGoogleLogin({
+  //   scope,
+  //   prompt: "select_account",
+  //   onSuccess: async ({ access_token }) => {
+  //     localStorage.setItem(GOOGLE_TOKEN_KEY, access_token);
+  //     refetch();
+  //   },
+  // });
 
   const loginMobile = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -89,11 +88,23 @@ export const useUser = () => {
     tokenClient.requestCode();
   }, []);
 
+  const loginSilently = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      localStorage.setItem(GOOGLE_TOKEN_KEY, tokenResponse.access_token);
+      refetch();
+    },
+    flow: "implicit",
+    scope: "openid email profile",
+    // 👇 This is the magic that prevents the popup
+    prompt: "",
+  });
   
 
+  
   return {
     user,
-    login: isMobile ? loginMobile : loginDesktop,
-    isLoading
+    loginSilently,
+    login: isMobile ? loginMobile : loginSilently,
+    isLoading,
   };
 };
