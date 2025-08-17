@@ -71,7 +71,7 @@ export const useLHSwaps = () => {
         txHash: tx_hash,
         startDate: startDate,
         endDate: endDate,
-        status: !swap_status ? 'success' : swap_status as "success" | "failed",
+        status:  swap_status as "success" | "failed",
       });
 
       return fetchElastic<LiquidityHubSwap>(
@@ -138,6 +138,7 @@ export const useLHSwap = (identifier?: string) => {
 };
 
 export const useLHLogTrace = (swap?: LiquidityHubSwap) => {
+  
   return useQuery({
     queryKey: ["useLogTrace", swap?.sessionId],
     queryFn: async ({ signal }) => {
@@ -168,7 +169,7 @@ export const useLHLogTrace = (swap?: LiquidityHubSwap) => {
           );
       return result.data;
     },
-    enabled: !!swap,
+    enabled: !!swap && swap.swapStatus === "success",
   });
 };
 

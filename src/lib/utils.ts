@@ -86,6 +86,8 @@ export const swapStatusText = (status?: string) => {
       return "COMPLETED";
     case "failed":
       return "FAILED";
+    case "during":
+      return "PENDING";
     default:
       return "-";
   }

@@ -20,6 +20,7 @@ const MinDollarValueFilter = () => {
 const SwapStatusFilterOptions = [
   { label: "Success", value: "success" },
   { label: "Failed", value: "failed" },
+  { label: "During", value: "during" },
 ];
 
 const SwapStatusFilter = () => {

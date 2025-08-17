@@ -15,6 +15,7 @@ import { navigation } from "@/router";
 import { abbreviate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AuthWrapper } from "@/components/auth-wrapper";
+import { StatusBadge } from "@/components/StatusBadge";
 
 export const SwapsPage = () => {
   return (
@@ -94,6 +95,10 @@ const FeesUsd = ({ item }: { item: LiquidityHubSwap }) => {
 
   return feeOutAmountUsd ? `$${abbreviate(feeOutAmountUsd.toString())}` : "-";
 };
+const Status = ({ item }: { item: LiquidityHubSwap }) => {
+  return <StatusBadge swapStatus={item.swapStatus} />;
+};
+
 
 const desktopRows = [
   {
@@ -120,6 +125,10 @@ const desktopRows = [
     Component: FeesUsd,
     text: "Fees",
   },
+  {
+    Component: Status,
+    text: "Status",
+  },
 
   {
     Component: GoButton,
@@ -127,6 +136,8 @@ const desktopRows = [
     className: "pr-4 text-center hidden sm:block",
   },
 ];
+
+
 
 const headerLabels = _.map(desktopRows, (row) => ({
   text: row.text,

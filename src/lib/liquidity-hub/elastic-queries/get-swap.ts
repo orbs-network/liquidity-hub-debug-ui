@@ -33,7 +33,7 @@ export const getSwaps = ({
   endDate,
   feeOutAmountUsd,
   txHash,
-  status = 'success',
+  status,
 }: GetSwapsParams) => {
   const dateFilter =
     startDate || endDate
@@ -79,7 +79,7 @@ export const getSwaps = ({
             },
           },
           ...dateFilter,
-          status.includes("success") && {
+          status?.includes("success") && {
             exists: { field: "txHash.keyword" },
           },
           {
@@ -101,7 +101,7 @@ export const getSwaps = ({
           },
         ].filter(Boolean),
         must_not: [
-          status.includes("success") && {
+          status?.includes("success") && {
             term: { "txHash.keyword": "" },
           },
           {

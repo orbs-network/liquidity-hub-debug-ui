@@ -3,8 +3,9 @@ import { CSSProperties } from "react";
 import { swapStatusText } from "@/lib/utils";
 
 const getBg = (swapStatus?: string) => {
-  if (swapStatus === "success") return "#55a66c";
-  if (swapStatus === "failed") return "red";
+  if (swapStatus === "success") return "#5CB85C";
+  if (swapStatus === "failed") return "#D9534F";
+  if (swapStatus === "during") return "#4ea4f0"; 
   return "transparent";
 };
 
@@ -18,7 +19,7 @@ export const StatusBadge = ({
   style?: CSSProperties;
 }) => {
   return (
-    <div style={{ color: getBg(swapStatus), ...style }} className={className}>
+    <div style={{ background: getBg(swapStatus), ...style }} className={`${className} text-white flex items-center justify-center rounded-md px-2 py-1 w-fit text-xs`}>
       {swapStatusText(swapStatus)}
     </div>
   );
