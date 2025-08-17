@@ -129,7 +129,7 @@ export const useLHSwap = (identifier?: string) => {
       return {
         swap,
         quotes: quotes || [],
-        clientLogs: clientLogs || [],
+        clientLogs: clientLogs?.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) || [],
         quote: quotes[quotes.length - 1] as LiquidityHubQuote | undefined,
       };
     },

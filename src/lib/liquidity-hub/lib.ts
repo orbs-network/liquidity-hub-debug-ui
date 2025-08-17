@@ -15,9 +15,10 @@ const getGasCostOutToken = (quote: LiquidityHubQuote) => {
   const gasCost = (quote as any)["auctionData.gasCost"];
   const exchange = (quote as any)["auctionData.exchange"];
 
-  const length = exchange.length;
-  const winnerIndex = exchange.indexOf(quote.auctionWinner);
-  const padding = padArrayToLength(gasCost, length, 0);
+
+  const length = exchange?.length || 0;
+  const winnerIndex = exchange?.indexOf(quote.auctionWinner) || 0;
+  const padding = padArrayToLength(gasCost || [], length, 0);
   return padding[winnerIndex] || "";
 };
 

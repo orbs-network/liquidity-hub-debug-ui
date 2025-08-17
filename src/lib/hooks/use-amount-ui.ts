@@ -8,6 +8,8 @@ export const useAmountUI = (
 ) => {
   return useMemo(
     () => {
+      if(isNaN(Number(value))) return '0';
+      
       const safeValue = BN(value || 0).decimalPlaces(0).toFixed();
       return formatUnits(BigInt(safeValue), decimals || 0)
     },
