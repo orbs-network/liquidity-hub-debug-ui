@@ -10,6 +10,7 @@ import { PARTNERS } from "@/partners";
 import { useQueryFilterParams } from "./hooks/use-query-filter-params";
 import { FILTER_KEY_NAMES, URL_QUERY_KEYS } from "@/consts";
 import { networks } from "@/networks";
+import {UAParser} from "ua-parser-js";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -355,4 +356,46 @@ export function padArrayToLength<T = number>(arr: T[], targetLength: number, pad
   const paddingCount = Math.max(0, targetLength - arr.length);
   const padding = Array<T>(paddingCount).fill(padValue);
   return [...padding, ...arr];
+}
+
+
+
+function detectWallet(ua: string): string | undefined {
+  ua = ua.toLowerCase();
+
+  if (ua.includes("metamask")) return "MetaMask";
+  if (ua.includes("rabby")) return "Rabby Wallet";
+  if (ua.includes("phantom")) return "Phantom Wallet";
+  if (ua.includes("trust")) return "Trust Wallet";
+  if (ua.includes("coinbase")) return "Coinbase Wallet";
+  if (ua.includes("okx")) return "OKX Wallet";
+  if (ua.includes("brave")) return "Brave Wallet";
+  if (ua.includes("zerion")) return "Zerion Wallet";
+  if (ua.includes("rainbow")) return "Rainbow Wallet";
+
+  return undefined
+}
+
+export function parseUserAgent(uaString?: string) {
+  const parser = UAParser(uaString);
+
+    if(!uaString) return 
+
+  const browser = parser.browser; // { name, version }
+  const os = parser.os;           // { name, version }
+  const device = parser.device;   // { vendor, model, type }
+  const wallet = detectWallet(uaString);
+
+  return {
+    browser: browser.name 
+      ? `${browser.name} ${browser.version || ""}`.trim() 
+      : "Unknown Browser",
+    os: os.name 
+      ? `${os.name} ${os.version || ""}`.trim() 
+      : "Unknown OS",
+    device: device.type 
+      ? `${device.vendor || ""} ${device.model || ""} (${device.type})`.trim()
+      : "PC",
+    wallet
+  };
 }

@@ -12,10 +12,16 @@ import { TokenAddress } from "@/components/Address";
 import { useLHSwaps } from "@/lib/liquidity-hub";
 import { usePartner } from "@/lib/hooks/use-partner";
 import { navigation } from "@/router";
-import { abbreviate } from "@/lib/utils";
+import { abbreviate, parseUserAgent } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const SwapsPage = () => {
   return (
@@ -62,13 +68,27 @@ const Dex = ({ item }: { item: LiquidityHubSwap }) => {
 };
 
 const Tokens = ({ item }: { item: LiquidityHubSwap }) => {
-  const { tokenInAddress, chainId, tokenOutAddress, tokenInSymbol, tokenOutSymbol } = item;
+  const {
+    tokenInAddress,
+    chainId,
+    tokenOutAddress,
+    tokenInSymbol,
+    tokenOutSymbol,
+  } = item;
 
   return (
     <div className="flex gap-1 items-center text-sm">
-      <TokenAddress address={tokenInAddress} chainId={chainId} symbol={tokenInSymbol} />
+      <TokenAddress
+        address={tokenInAddress}
+        chainId={chainId}
+        symbol={tokenInSymbol}
+      />
       <ChevronRight size={10} />
-      <TokenAddress address={tokenOutAddress} chainId={chainId} symbol={tokenOutSymbol} />
+      <TokenAddress
+        address={tokenOutAddress}
+        chainId={chainId}
+        symbol={tokenOutSymbol}
+      />
     </div>
   );
 };
@@ -99,6 +119,29 @@ const Status = ({ item }: { item: LiquidityHubSwap }) => {
   return <StatusBadge swapStatus={item.swapStatus} />;
 };
 
+const Agent = ({ item }: { item: LiquidityHubSwap }) => {
+  const result = useMemo(
+    () => parseUserAgent(item.userAgent || item.ua),
+    [item.userAgent, item.ua]
+  );
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <p>{!result ? "-" : result.wallet || result.os}</p>
+        </TooltipTrigger>
+        {result && (
+          <TooltipContent>
+            <p>Browser: {result.browser}</p>
+            <p>OS: {result.os}</p>
+            <p>Device: {result.device}</p>
+            <p>Wallet: {result.wallet}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const desktopRows = [
   {
@@ -129,6 +172,10 @@ const desktopRows = [
     Component: Status,
     text: "Status",
   },
+  {
+    Component: Agent,
+    text: "Agent",
+  },
 
   {
     Component: GoButton,
@@ -136,8 +183,6 @@ const desktopRows = [
     className: "pr-4 text-center hidden sm:block",
   },
 ];
-
-
 
 const headerLabels = _.map(desktopRows, (row) => ({
   text: row.text,
@@ -150,9 +195,12 @@ export const TransactionsList = () => {
     return data?.pages.flatMap((page) => page) || [];
   }, [data]);
 
-  const onMobileRowClick = useCallback((item: LiquidityHubSwap) => {
-    navigate(navigation.liquidityHub.swap(item.sessionId));
-  }, [navigate]);
+  const onMobileRowClick = useCallback(
+    (item: LiquidityHubSwap) => {
+      navigate(navigation.liquidityHub.swap(item.sessionId));
+    },
+    [navigate]
+  );
 
   return (
     <VirtualTable<LiquidityHubSwap>

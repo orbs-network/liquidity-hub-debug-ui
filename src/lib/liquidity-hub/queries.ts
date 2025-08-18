@@ -18,6 +18,7 @@ import { elasticQueries } from "./elastic-queries";
 import { useMemo } from "react";
 import { PARTNERS } from "@/partners";
 import _ from "lodash";
+type ClientLog = { userAgent?: string, ua?: string } | undefined;
 
 export const useLHSwaps = () => {
   const {
@@ -71,14 +72,32 @@ export const useLHSwaps = () => {
         txHash: tx_hash,
         startDate: startDate,
         endDate: endDate,
-        status:  swap_status as "success" | "failed",
+        status: swap_status as "success" | "failed",
       });
 
-      return fetchElastic<LiquidityHubSwap>(
+      const swaps = await fetchElastic<LiquidityHubSwap>(
         LIQUIDITY_HUB_ELASTIC_SERVER_URL,
         data,
         signal
       );
+
+      const clientLogs = await Promise.all(
+        swaps.map(async (swap) => {
+          return fetchElastic<any>(
+            LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
+            elasticQueries.getClientBySessionId(swap.sessionId),
+            signal
+          );
+        })
+      );
+      return swaps.map((swap, index) => {
+        const swapClientLogs = clientLogs[index] as ClientLog[];
+          const clientLog = swapClientLogs[0]
+        return {
+          ...swap,
+          userAgent: swap.userAgent || clientLog?.userAgent || clientLog?.ua,
+        }
+      });
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
@@ -129,7 +148,11 @@ export const useLHSwap = (identifier?: string) => {
       return {
         swap,
         quotes: quotes || [],
-        clientLogs: clientLogs?.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) || [],
+        clientLogs:
+          clientLogs?.sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          ) || [],
         quote: quotes[quotes.length - 1] as LiquidityHubQuote | undefined,
       };
     },
@@ -138,7 +161,6 @@ export const useLHSwap = (identifier?: string) => {
 };
 
 export const useLHLogTrace = (swap?: LiquidityHubSwap) => {
-  
   return useQuery({
     queryKey: ["useLogTrace", swap?.sessionId],
     queryFn: async ({ signal }) => {
@@ -550,19 +572,14 @@ export const useDexSwapsCountByStatus = (
         { ...data },
         { signal }
       );
-      return result.data.aggregations.successSwaps.doc_count
+      return result.data.aggregations.successSwaps.doc_count;
     },
   });
 };
 
-
-
-
 export const useClientLogs = () => {
   const {
-    query: {
-      timestamp,
-    },
+    query: { timestamp },
   } = useQueryFilterParams();
 
   const { from: startDate, to: endDate } = useMemo(
@@ -571,10 +588,7 @@ export const useClientLogs = () => {
   );
 
   return useQuery({
-    queryKey: [
-      "useClientLogs",
-      timestamp
-    ],
+    queryKey: ["useClientLogs", timestamp],
     queryFn: async ({ signal }) => {
       const fetchPaginated = async (page: number) => {
         const data = elasticQueries.getClientLogs({
@@ -583,13 +597,13 @@ export const useClientLogs = () => {
           startDate: startDate,
           endDate: endDate,
         });
-  
+
         return fetchElastic<LiquidityHubSwap>(
           LIQUIDITY_HUB_ELASTIC_CLIENT_URL,
           data,
           signal
         );
-      }
+      };
 
       const allResults: LiquidityHubSwap[] = [];
       let page = 0;

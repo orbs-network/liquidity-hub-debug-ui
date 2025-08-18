@@ -7,6 +7,7 @@ export type LiquidityHubSwap = {
   timeAbsolute: number;
   delta: number;
   type: string;
+  userAgent?: string;
   amountOutSwap: number;
   timeToDecayEnd: number;
   simulateAmountOut: number;
@@ -34,7 +35,7 @@ export type LiquidityHubSwap = {
   tokenOutSymbol: string;
   tokenOutAddress: string;
   dexSimulateOutMinusGas: number;
-  amountInUSD: number;
+  amountInUSD?: number;
   tokenInName: string;
   exactOutAmountSavingsUsd: number;
   dollarValue2: number;

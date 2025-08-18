@@ -183,7 +183,7 @@ export const useAmounts = (swap: LiquidityHubSwap) => {
               value: swap.amountIn.toString(),
               address: swap.tokenInAddress,
               chainId: swap.chainId,
-              usd: swap.amountInUSD.toString(),
+              usd: swap.amountInUSD?.toString() || "0",
             };
           },
         },

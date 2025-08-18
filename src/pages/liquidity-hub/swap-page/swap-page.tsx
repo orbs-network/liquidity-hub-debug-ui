@@ -52,9 +52,7 @@ export function SwapPage({ isPreview }: { isPreview?: boolean }) {
   const content = (
     <TransactionDisplay.Container>
       {!isPreview && (
-        <TransactionDisplay.ContainerHeader
-          onBackClick={() => navigate(-1)}
-        />
+        <TransactionDisplay.ContainerHeader onBackClick={() => navigate(-1)} />
       )}
       <State isPreview={isPreview} />
     </TransactionDisplay.Container>
@@ -126,6 +124,7 @@ const Content = () => {
           <Section key={baseInfo.title} section={baseInfo} />
           <Section key={amounts.title} section={amounts} />
         </TransactionDisplay.Grid>
+        {/* <UserAgent /> */}
       </TransactionDisplay>
       {!isPreview && (
         <div className="flex flex-row gap-2 ml-auto">
@@ -138,6 +137,7 @@ const Content = () => {
     </div>
   );
 };
+
 
 const DexRouterData = () => {
   const { swap } = useSwapPageContext();
@@ -272,7 +272,7 @@ const Transfers = () => {
 
 const Transfer = ({ log, tokens }: { log: TransferLog; tokens: Token[] }) => {
   const { swap } = useSwapPageContext();
-  const {  fromToken, toToken } = useMemo(() => {
+  const { fromToken, toToken } = useMemo(() => {
     return {
       valueToken: tokens.find((it) => it.address === log.tokenAddress),
       fromToken: tokens.find((it) => it.address === log.from),
@@ -389,6 +389,7 @@ const LogTrace = () => {
 
 const Logs = () => {
   const { swap, clientLogs, quotes } = useSwapPageContext();
+
   return (
     <Dialog>
       <DialogTrigger>
@@ -420,5 +421,3 @@ const Logs = () => {
     </Dialog>
   );
 };
-
-
